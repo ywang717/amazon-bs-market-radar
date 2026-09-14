@@ -1,0 +1,10 @@
+{
+  "schema_version": "phase5-analysis-policy-v1",
+  "timezone": "Asia/Shanghai",
+  "first_eligible_analysis_date": "2026-08-10",
+  "allow_initial_weekly_analysis_before_coverage": true,
+  "analysis_frequency_after_first_run": "WEEKLY_ONLY",
+  "required_complete_market_days": 8,
+  "target_count_per_category": 30,
+  "policy": "Run the first limited Phase 5 weekly analysis on or after the first eligible date even if coverage is incomplete. Afterward, show Phase 5 analysis only in weekly reports. Treat eight complete Top 30 market days per category as the full-coverage threshold."
+}

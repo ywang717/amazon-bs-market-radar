@@ -1,0 +1,103 @@
+{
+  "schema_version": "category-registry-v1",
+  "marketplace": {
+    "context_code": "US",
+    "storage_code": "AMAZON_US"
+  },
+  "page_loading": {
+    "top_30_rule": "collect_only_verified_global_ranks_1_through_30",
+    "pagination_rule": "A later page may be inspected only to verify its global ranks. Do not use it when ranks restart at 1 or global continuity cannot be verified."
+  },
+  "categories": [
+    {
+      "category_key": "pressure_washers",
+      "slug": "pressure-washer",
+      "label_zh": "高压清洗机",
+      "label_en": "Pressure Washers",
+      "amazon_node_id": "552856",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pressure-Washers/zgbs/lawn-garden/552856",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "Pressure_Washers",
+      "classification_config_path": "config/v2-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        { "key": "all", "label_zh": "全部榜单", "product_types": [] },
+        { "key": "machines", "label_zh": "整机", "product_types": ["electric_pressure_washer", "gas_pressure_washer", "cordless_pressure_washer"] },
+        { "key": "electric", "label_zh": "电动", "product_types": ["electric_pressure_washer"] },
+        { "key": "gas", "label_zh": "燃油", "product_types": ["gas_pressure_washer"] },
+        { "key": "cordless", "label_zh": "无线", "product_types": ["cordless_pressure_washer"] }
+      ],
+      "defaults": {
+        "overview": "machines",
+        "market": "machines",
+        "products": "machines",
+        "brands": "machines",
+        "rankings": "all",
+        "reports": "machines",
+        "alerts": "machines",
+        "data_status": "machines",
+        "product_detail": "machines"
+      }
+    },
+    {
+      "category_key": "sump_pumps",
+      "slug": "sump-pump",
+      "label_zh": "污水泵",
+      "label_en": "Sump Pumps",
+      "amazon_node_id": "680335011",
+      "source_url": "https://www.amazon.com/Best-Sellers-Tools-Home-Improvement-Sump-Pumps/zgbs/hi/680335011",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "Sump_Pumps",
+      "classification_config_path": "config/v2-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        { "key": "all", "label_zh": "全部榜单", "product_types": [] }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      }
+    },
+    {
+      "category_key": "pressure_washer_accessories",
+      "slug": "pressure-washer-accessories",
+      "label_zh": "高压清洗机配件",
+      "label_en": "Pressure Washer Parts & Accessories",
+      "amazon_node_id": "3023451",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pressure-Washer-Parts-Accessories/zgbs/lawn-garden/3023451",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "Pressure_Washer_Parts_Accessories",
+      "classification_config_path": "config/v2-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        { "key": "all", "label_zh": "全部榜单", "product_types": [] },
+        { "key": "surface_cleaners", "label_zh": "表面清洁器", "product_types": ["surface_cleaner"] },
+        { "key": "guns", "label_zh": "喷枪", "product_types": ["pressure_washer_gun"] },
+        { "key": "hoses", "label_zh": "软管", "product_types": ["hose"] },
+        { "key": "nozzles", "label_zh": "喷嘴", "product_types": ["nozzle"] },
+        { "key": "other", "label_zh": "其他配件", "product_types": ["foam_cannon", "adapter_connector", "extension_wand", "sewer_jetter", "chemical_cleaner", "pump_protector", "other_accessory"] }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      }
+    }
+  ]
+}

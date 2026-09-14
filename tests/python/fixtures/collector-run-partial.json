@@ -1,0 +1,7 @@
+{
+  "charts": {
+    "pressure_washers": [{"title":"Amazon Best Sellers: Best Pressure Washers","heading":"Best Sellers in Pressure Washers","body_text":"Public chart","cards":[{"rank":"#1","asin":"B0PRESS001","title":"Pressure washer","url":"/dp/B0PRESS001"}]}],
+    "sump_pumps": [{"title":"Amazon Best Sellers: Best Sump Pumps","heading":"Best Sellers in Sump Pumps","body_text":"Public chart","cards":[{"rank":"#1","asin":"B0SUMP0001","title":"Sump pump","url":"/dp/B0SUMP0001"}]}],
+    "pressure_washer_accessories": [{"title":"Amazon Best Sellers: Best Pressure Washer Parts & Accessories","heading":"Best Sellers in Pressure Washer Parts & Accessories","body_text":"Public chart","cards":[{"rank":"#1","asin":"B0ACCESS01","title":"Pressure washer accessory","url":"/dp/B0ACCESS01"}]}]
+  }
+}

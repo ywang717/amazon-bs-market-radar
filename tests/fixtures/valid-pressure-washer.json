@@ -1,0 +1,61 @@
+{
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "source_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "marketplace": "AMAZON_US",
+  "market_date": "2026-08-03",
+  "observed_at": "2026-08-03T16:00:00Z",
+  "source_type": "BEST_SELLERS",
+  "search_term": null,
+  "category_slug": "pressure-washer",
+  "accessory_type": null,
+  "target_limit": 3,
+  "currency": "USD",
+  "items": [
+    {
+      "rank": 1,
+      "asin": "B0ABC12345",
+      "title": "Example Electric Pressure Washer 2000 PSI",
+      "brand": "ExampleClean",
+      "model": "EC-2000",
+      "url": "https://www.amazon.com/dp/B0ABC12345",
+      "price": "129.99",
+      "coupon": "10% off",
+      "rating": "4.5",
+      "review_count": 321,
+      "seller": "Example Seller",
+      "fba_status": "FBA",
+      "first_available_date": "2026-06-15"
+    },
+    {
+      "rank": 2,
+      "asin": "B0DEF67890",
+      "title": "Example Gas Pressure Washer 3000 PSI",
+      "brand": "PowerExample",
+      "model": "PE-3000",
+      "url": "https://www.amazon.com/dp/B0DEF67890",
+      "price": "249.00",
+      "coupon": "",
+      "rating": "4.3",
+      "review_count": 98,
+      "seller": "Power Example Store",
+      "fba_status": "FBM",
+      "first_available_date": "2026-07-01"
+    },
+    {
+      "rank": 3,
+      "asin": "B0GHI24680",
+      "title": "Example Compact Pressure Washer",
+      "brand": "CompactCo",
+      "model": "CC-1600",
+      "url": "https://www.amazon.com/dp/B0GHI24680",
+      "price": "89.50",
+      "coupon": "$5 off",
+      "rating": "4.1",
+      "review_count": 42,
+      "seller": "Compact Co",
+      "fba_status": "FBA",
+      "first_available_date": "2026-07-20"
+    }
+  ]
+}
+

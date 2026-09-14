@@ -1,0 +1,50 @@
+{
+  "note": "Search sources can use the official Creators API after credentials are configured. Best Sellers and Movers & Shakers require a separate approved ranking provider and are intentionally not represented as Creators API sources.",
+  "sources": [
+    {
+      "source_id": "71cc7af1-35b1-4d19-8306-ff971db318ee",
+      "provider": "CREATORS_API",
+      "source_type": "SEARCH",
+      "category_slug": "pressure-washer",
+      "accessory_type": null,
+      "search_term": "pressure washer",
+      "search_index": "GardenAndOutdoor",
+      "browse_node_id": null,
+      "target_limit": 50,
+      "max_requests_per_second": 1,
+      "max_attempts": 3,
+      "review_status": "PENDING",
+      "active": false
+    },
+    {
+      "source_id": "34246971-247c-47ed-99a6-0f75d9e4ffb6",
+      "provider": "CREATORS_API",
+      "source_type": "SEARCH",
+      "category_slug": "sump-pump",
+      "accessory_type": null,
+      "search_term": "sump pump",
+      "search_index": "ToolsAndHomeImprovement",
+      "browse_node_id": null,
+      "target_limit": 50,
+      "max_requests_per_second": 1,
+      "max_attempts": 3,
+      "review_status": "PENDING",
+      "active": false
+    },
+    {
+      "source_id": "021052f6-47df-48a3-a066-da1469e773dc",
+      "provider": "CREATORS_API",
+      "source_type": "SEARCH",
+      "category_slug": "pressure-washer-accessories",
+      "accessory_type": null,
+      "search_term": "pressure washer accessories",
+      "search_index": "GardenAndOutdoor",
+      "browse_node_id": null,
+      "target_limit": 50,
+      "max_requests_per_second": 1,
+      "max_attempts": 3,
+      "review_status": "PENDING",
+      "active": false
+    }
+  ]
+}

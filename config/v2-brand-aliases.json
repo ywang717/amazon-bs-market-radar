@@ -1,0 +1,10 @@
+{
+  "schema_version": "brand-alias-config-v1",
+  "aliases": [
+    {
+      "id": "brand-westinghouse",
+      "canonical_name": "Westinghouse",
+      "aliases": ["Westinghouse", "WESTINGHOUSE", "Westinghouse Outdoor Power Equipment"]
+    }
+  ]
+}

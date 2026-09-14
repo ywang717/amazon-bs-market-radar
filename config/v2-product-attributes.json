@@ -1,0 +1,20 @@
+{
+  "schema_version": "product-attribute-schema-v1",
+  "product_types": {
+    "electric_pressure_washer": ["工作压力", "流量", "动力类型", "软管长度", "电源线长度"],
+    "gas_pressure_washer": ["工作压力", "流量", "动力类型", "马力", "软管长度"],
+    "cordless_pressure_washer": ["工作压力", "流量", "动力类型", "电压", "软管长度"],
+    "surface_cleaner": ["接口尺寸"],
+    "pressure_washer_gun": ["接口尺寸"],
+    "hose": ["软管长度", "接口尺寸"],
+    "nozzle": ["喷嘴角度", "接口尺寸"],
+    "chemical_cleaner": [],
+    "pump_protector": [],
+    "foam_cannon": ["接口尺寸"],
+    "adapter_connector": ["接口尺寸"],
+    "extension_wand": ["接口尺寸"],
+    "sewer_jetter": ["软管长度", "接口尺寸"],
+    "other_accessory": ["接口尺寸"],
+    "unknown": []
+  }
+}

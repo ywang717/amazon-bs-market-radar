@@ -1,0 +1,92 @@
+{
+  "marketplace": {
+    "code": "AMAZON_US",
+    "country_code": "US",
+    "currency": "USD",
+    "timezone": "America/Los_Angeles"
+  },
+  "categories": [
+    {
+      "slug": "pressure-washer",
+      "name": "Pressure Washer",
+      "level": 1,
+      "parent": null,
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "sump-pump",
+      "name": "Sump Pump",
+      "level": 1,
+      "parent": null,
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "pressure-washer-accessories",
+      "name": "Pressure Washer Accessories",
+      "level": 1,
+      "parent": null,
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "spray-nozzle",
+      "name": "Spray Nozzle",
+      "level": 2,
+      "parent": "pressure-washer-accessories",
+      "accessory_type": "SPRAY_NOZZLE",
+      "active": true
+    },
+    {
+      "slug": "surface-cleaner",
+      "name": "Surface Cleaner",
+      "level": 2,
+      "parent": "pressure-washer-accessories",
+      "accessory_type": "SURFACE_CLEANER",
+      "active": true
+    },
+    {
+      "slug": "foam-cannon",
+      "name": "Foam Cannon",
+      "level": 2,
+      "parent": "pressure-washer-accessories",
+      "accessory_type": "FOAM_CANNON",
+      "active": true
+    },
+    {
+      "slug": "pressure-washer-hose",
+      "name": "Pressure Washer Hose",
+      "level": 2,
+      "parent": "pressure-washer-accessories",
+      "accessory_type": "PRESSURE_WASHER_HOSE",
+      "active": true
+    },
+    {
+      "slug": "spray-gun-wand",
+      "name": "Spray Gun / Wand",
+      "level": 2,
+      "parent": "pressure-washer-accessories",
+      "accessory_type": "SPRAY_GUN_WAND",
+      "active": true
+    },
+    {
+      "slug": "adapter-connector",
+      "name": "Adapter / Connector",
+      "level": 2,
+      "parent": "pressure-washer-accessories",
+      "accessory_type": "ADAPTER_CONNECTOR",
+      "active": true
+    },
+    {
+      "slug": "replacement-parts",
+      "name": "Replacement Parts",
+      "level": 2,
+      "parent": "pressure-washer-accessories",
+      "accessory_type": "REPLACEMENT_PARTS",
+      "active": true
+    }
+  ],
+  "sources": []
+}
+

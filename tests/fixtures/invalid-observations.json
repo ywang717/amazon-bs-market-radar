@@ -1,0 +1,61 @@
+{
+  "run_id": "22222222-2222-4222-8222-222222222222",
+  "source_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "marketplace": "AMAZON_US",
+  "market_date": "2026-08-03",
+  "observed_at": "2026-08-03T16:00:00Z",
+  "source_type": "SEARCH",
+  "search_term": "pressure washer",
+  "category_slug": "pressure-washer",
+  "accessory_type": null,
+  "target_limit": 3,
+  "currency": "USD",
+  "items": [
+    {
+      "rank": 1,
+      "asin": "B0JKL13579",
+      "title": "Valid Example Product",
+      "brand": "ValidBrand",
+      "model": "VB-1",
+      "url": "https://www.amazon.com/dp/B0JKL13579",
+      "price": "99.99",
+      "coupon": "",
+      "rating": "4.0",
+      "review_count": 10,
+      "seller": "Valid Seller",
+      "fba_status": "FBA",
+      "first_available_date": "2026-07-01"
+    },
+    {
+      "rank": 2,
+      "asin": "BAD",
+      "title": "Invalid ASIN",
+      "brand": "BadBrand",
+      "model": "BB-1",
+      "url": "https://www.amazon.com/dp/BAD",
+      "price": "10.00",
+      "coupon": "",
+      "rating": "4.0",
+      "review_count": 1,
+      "seller": "Seller",
+      "fba_status": "FBM",
+      "first_available_date": "2026-07-01"
+    },
+    {
+      "rank": 4,
+      "asin": "B0MNO11223",
+      "title": "Out of Configured Range",
+      "brand": "BadRank",
+      "model": "BR-1",
+      "url": "https://www.amazon.com/dp/B0MNO11223",
+      "price": "10.00",
+      "coupon": "",
+      "rating": "8.0",
+      "review_count": -1,
+      "seller": "Seller",
+      "fba_status": "UNKNOWN",
+      "first_available_date": "2026-07-01"
+    }
+  ]
+}
+

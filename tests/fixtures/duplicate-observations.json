@@ -1,0 +1,46 @@
+{
+  "run_id": "33333333-3333-4333-8333-333333333333",
+  "source_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "marketplace": "AMAZON_US",
+  "market_date": "2026-08-03",
+  "observed_at": "2026-08-03T16:00:00Z",
+  "source_type": "BEST_SELLERS",
+  "search_term": null,
+  "category_slug": "pressure-washer",
+  "accessory_type": null,
+  "target_limit": 2,
+  "currency": "USD",
+  "items": [
+    {
+      "rank": 1,
+      "asin": "B0PQR44556",
+      "title": "Duplicate Test Product",
+      "brand": "DuplicateCo",
+      "model": "DC-1",
+      "url": "https://www.amazon.com/dp/B0PQR44556",
+      "price": "50.00",
+      "coupon": "",
+      "rating": "4.2",
+      "review_count": 20,
+      "seller": "Duplicate Seller",
+      "fba_status": "FBA",
+      "first_available_date": "2026-07-01"
+    },
+    {
+      "rank": 1,
+      "asin": "B0PQR44556",
+      "title": "Duplicate Test Product",
+      "brand": "DuplicateCo",
+      "model": "DC-1",
+      "url": "https://www.amazon.com/dp/B0PQR44556",
+      "price": "50.00",
+      "coupon": "",
+      "rating": "4.2",
+      "review_count": 20,
+      "seller": "Duplicate Seller",
+      "fba_status": "FBA",
+      "first_available_date": "2026-07-01"
+    }
+  ]
+}
+

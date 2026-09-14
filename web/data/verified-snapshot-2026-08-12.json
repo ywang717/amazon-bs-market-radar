@@ -1,0 +1,827 @@
+{
+  "schema_version": "amazon-best-sellers-snapshot-v1",
+  "marketplace": "AMAZON_US",
+  "market_date": "2026-08-12",
+  "observed_at": "2026-08-13T00:00:03.307Z",
+  "sources": {
+    "pressure_washers": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pressure-Washers/zgbs/lawn-garden/552856",
+    "sump_pumps": "https://www.amazon.com/Best-Sellers-Tools-Home-Improvement-Sump-Pumps/zgbs/hi/680335011",
+    "pressure_washer_accessories": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pressure-Washer-Parts-Accessories/zgbs/lawn-garden/3023451"
+  },
+  "pressure_washers": [
+    {
+      "rank": 1,
+      "asin": "B0BVGSX46M",
+      "title": "Westinghouse ePX3500 Electric Pressure Washer, 2500 Max PSI 1.76 Max GPM with Anti-Tipping Technology, Onboard Soap Tank, Pro-Style Steel Wand, 5-Nozzle Set, for Cars/Fences/Driveways/Home/Patios",
+      "url": "https://www.amazon.com/Westinghouse-ePX3500-Anti-Tipping-Technology-Pro-Style/dp/B0BVGSX46M/ref=zg_bs_g_552856_d_sccl_1/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 2,
+      "asin": "B0CQMZ4BG5",
+      "title": "Westinghouse WPX3000e Electric Pressure Washer, 3000 Max PSI and 1.76 Max GPM, Induction Motor, Onboard Soap Tank, Spray Gun and Wand, 5 Nozzle Set, for Cars/Fences/Driveways/Homes/Patios/Furniture",
+      "url": "https://www.amazon.com/Westinghouse-WPX3000e-Induction-Driveways-Furniture/dp/B0CQMZ4BG5/ref=zg_bs_g_552856_d_sccl_2/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 3,
+      "asin": "B0CJZWBTW9",
+      "title": "LidoDola 14'' Pressure Washer Surface Cleaner, Power Washer Accessory | Stainless Steel Housing with 4 Wheels, 1/4\" QC, 2 Extension Wands & 2 Replacement Nozzles, for Gas & Electric Power Washer",
+      "url": "https://www.amazon.com/Pressure-Washer-Surface-Cleaner-Wheels/dp/B0CJZWBTW9/ref=zg_bs_g_552856_d_sccl_3/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 4,
+      "asin": "B0BX4KL2C8",
+      "title": "Westinghouse ePX3100v Electric Pressure Washer, 2100 Max PSI 1.76 Max GPM, Built-in Carry Handle, Detachable Foam Cannon, Pro-Style Steel Wand, 3-Nozzle Set, for Cars/Fences/Driveways/Home/Patios",
+      "url": "https://www.amazon.com/Westinghouse-ePX3100v-Detachable-Pro-Style-Driveways/dp/B0BX4KL2C8/ref=zg_bs_g_552856_d_sccl_4/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 5,
+      "asin": "B00CPGMUXW",
+      "title": "Sun Joe Pressure Washer, Electric Power Washer, 2500 Max PSI, SPX3000 | Heavy-Duty 2500 Max PSI (2030 PSI PWMA Rated)-Portable Cleaning & Washing Machine System with Patios & Sidewalks",
+      "url": "https://www.amazon.com/Sun-Joe-SPX3000-Pressure-14-5-Amp/dp/B00CPGMUXW/ref=zg_bs_g_552856_d_sccl_5/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 6,
+      "asin": "B0D739PX62",
+      "title": "Pressure Washer, Portable Power Washer, 4 Quick Connect Nozzles, High Pressure Cleaning Machine for Car Fence Driveway Patio Washing and More(Light Green)",
+      "url": "https://www.amazon.com/Electric-Pressure-Connect-Cleaning-Driveways/dp/B0D739PX62/ref=zg_bs_g_552856_d_sccl_6/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 7,
+      "asin": "B0GYCKRBN8",
+      "title": "Cordless Portable Washer, 1450 PSI Battery Operated Washer with 6-in-1 Nozzle, 2pcs 4.0Ah Battery&Charger, Handheld Washer for Car,Home,Garden Patio",
+      "url": "https://www.amazon.com/Cordless-Portable-Battery-Operated-Handheld/dp/B0GYCKRBN8/ref=zg_bs_g_552856_d_sccl_7/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.1,
+      "reviews": 4
+    },
+    {
+      "rank": 8,
+      "asin": "B0HBPSRH6W",
+      "title": "Belkid 2026 Upgraded Jet Nozzle Power Washer for Garden Hose | Includes 2 High-Pressure Nozzles and Quick Connectors | Hydro Jet High Pressure Washer Tools",
+      "url": "https://www.amazon.com/Belkid-Upgraded-Nozzle-Washer-Garden/dp/B0HBPSRH6W/ref=zg_bs_g_552856_d_sccl_8/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 9,
+      "asin": "B0DC11RC2Y",
+      "title": "Greenworks 2100 PSI (1.2 GPM) Electric Pressure Washer",
+      "url": "https://www.amazon.com/Greenworks-Electric-Applicator-Sidewalks-Medium-Duty/dp/B0DC11RC2Y/ref=zg_bs_g_552856_d_sccl_9/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 10,
+      "asin": "B0D9C524DD",
+      "title": "Greenworks 3000 PSI (2.0 GPM Max) Brushless Electric Pressure Washer",
+      "url": "https://www.amazon.com/Greenworks-Brushless-Electric-Pressure-Washer/dp/B0D9C524DD/ref=zg_bs_g_552856_d_sccl_10/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 11,
+      "asin": "B094DWHPDL",
+      "title": "Westinghouse WPX3400 Gas Pressure Washer, 3400 PSI and 2.6 GPM, Onboard Soap Tank, Spray Gun and Wand, 5 Nozzle Set, for Cars/Fences/Driveways/Homes/Patios/Furniture",
+      "url": "https://www.amazon.com/Westinghouse-Outdoor-Power-Equipment-WPX3400/dp/B094DWHPDL/ref=zg_bs_g_552856_d_sccl_11/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 12,
+      "asin": "B085285X4J",
+      "title": "CRAFTSMAN Electric Pressure Washer, Cold Water, Lightweight Corded Power Washer for Cars, Driveways, Patio and Garage, Powerful 1700-PSI, 1.2-GPM, Compact, Easy to Use (CMEPW1700)",
+      "url": "https://www.amazon.com/CRAFTSMAN-CMEPW1700-Pressure-Washer-Red/dp/B085285X4J/ref=zg_bs_g_552856_d_sccl_12/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 13,
+      "asin": "B0CRNHHRDT",
+      "title": "Hourleey 14\" Pressure Washer Surface Cleaner, Stainless Steel Surface Cleaner with 4 Wheels for Concrete, Patio, Sidewalk, Deck, Pathway 1/4\" Quick Connector, 2 Extension Wand, 4000 PSI",
+      "url": "https://www.amazon.com/Hourleey-Washer-Cleaner-Stainless-Connector/dp/B0CRNHHRDT/ref=zg_bs_g_552856_d_sccl_13/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 14,
+      "asin": "B0917HCZL6",
+      "title": "Tool Daily Short Pressure Washer Gun with Foam Cannon, 1/4\" Quick Connect | 5 Power Washer Nozzle Tips Multiple Degrees, 1 Liter Soap Cannon, M22 Pressure Washing Gun, Not Compatible with GardenHose",
+      "url": "https://www.amazon.com/Tool-Daily-Pressure-Washer-Connector/dp/B0917HCZL6/ref=zg_bs_g_552856_d_sccl_14/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 15,
+      "asin": "B083B2M9NT",
+      "title": "Westinghouse ePX3100 Electric Pressure Washer, 2300 Max PSI 1.76 Max GPM with Anti-Tipping Technology, Onboard Soap Tank, Pro-Style Steel Wand, 5-Nozzle Set, for Cars/Fences/Driveways/Home/Patios",
+      "url": "https://www.amazon.com/Westinghouse-ePX3100-Anti-Tipping-Technology-Pro-Style/dp/B083B2M9NT/ref=zg_bs_g_552856_d_sccl_15/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 16,
+      "asin": "B0H837PGKK",
+      "title": "YKYI Cordless Pressure Washer 1200PSI, Portable Power Washer with 30 speeds | High Pressure, 4000mAh Batteries, 21V Brushless Motor, 24FT Hose & 6-in-1 Nozzle for Car, Driveway, Garden, Patio & Fence",
+      "url": "https://www.amazon.com/YKYI-Cordless-Pressure-1200PSI-Portable/dp/B0H837PGKK/ref=zg_bs_g_552856_d_sccl_16/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 5.0,
+      "reviews": 5
+    },
+    {
+      "rank": 17,
+      "asin": "B0CQMWRJZ2",
+      "title": "Westinghouse PWSC12 12\" Pressure Washer Surface Cleaner Attachment - 3000 Max PSI, 1/4” Connector",
+      "url": "https://www.amazon.com/Westinghouse-Outdoor-Equipment-PWSC12-Surface/dp/B0CQMWRJZ2/ref=zg_bs_g_552856_d_sccl_17/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 18,
+      "asin": "B0861V45B9",
+      "title": "McKillans® Short Pressure Washer Gun with Swivel - High Pressure Water Handle with 3/8\" Male Plug and 1/4” Quick Connector Coupler - Power Washer Gun Compatible with Foam Cannon - Car Wash Foam Gun",
+      "url": "https://www.amazon.com/McKillans-Pressure-Compatible-Equipped-Connector/dp/B0861V45B9/ref=zg_bs_g_552856_d_sccl_18/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 19,
+      "asin": "B0GRRHJ5VC",
+      "title": "Cordless Pressure Washer Battery Powered, Handheld Cordless Power Washer (GlowYellow-Black)",
+      "url": "https://www.amazon.com/Cordless-Pressure-Battery-Handheld-GlowYellow-Black/dp/B0GRRHJ5VC/ref=zg_bs_g_552856_d_sccl_19/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 20,
+      "asin": "B085NBJB71",
+      "title": "TOOLCY Pro Short Pressure Washer Gun 5000 PSI with 360° Swivel 3/8\" Inlet | Includes 3/8\" QC to M22-14mm Adapter & 5 Nozzle Tips, with 1/4\" Quick Connect Outlet For Car Sidewalk Pool Wash",
+      "url": "https://www.amazon.com/TOOLCY-Pressure-Ergonomic-M22-14mm-Connector/dp/B085NBJB71/ref=zg_bs_g_552856_d_sccl_20/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 21,
+      "asin": "B0C8NSCMG7",
+      "title": "QWORK 2 Set Air Blow Gun Pneumatic Engine Cleaning Gun with 4Ft Hose, Cleaning Degreaser Sprayer Tool",
+      "url": "https://www.amazon.com/QWORK-Pneumatic-Cleaning-Degreaser-Sprayer/dp/B0C8NSCMG7/ref=zg_bs_g_552856_d_sccl_21/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 22,
+      "asin": "B0H11R5DCD",
+      "title": "Cordless Portable Washer, 1100 PSI Battery Operated Washer with All-Copper Motor, Battery, 23FT Hose, Storage Bag; Handheld Washer; Lightweight Car Washer for Home, Garden (Pioneer Green)",
+      "url": "https://www.amazon.com/Cordless-Portable-Operated-All-Copper-Lightweight/dp/B0H11R5DCD/ref=zg_bs_g_552856_d_sccl_22/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.2,
+      "reviews": 4
+    },
+    {
+      "rank": 23,
+      "asin": "B0H7BJZTTM",
+      "title": "Imdot 4800PSI Electric Pressure Washer 2026 New 4.0GPM Potable Power Washer with 33FT Hose, 4 Nozzles, Best for Home/Cars/Fences/Windows, Blue",
+      "url": "https://www.amazon.com/Imdot-4800PSI-Electric-Pressure-Potable/dp/B0H7BJZTTM/ref=zg_bs_g_552856_d_sccl_23/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 1.0,
+      "reviews": 1
+    },
+    {
+      "rank": 24,
+      "asin": "B0CQML6RTV",
+      "title": "Westinghouse Universal 16.5” Pressure Washer Surface Cleaner Attachment - Stainless Steel - 4400 Max PSI, 1/4” Connector - for Gas and Electric Pressure Washers",
+      "url": "https://www.amazon.com/Westinghouse-Universal-Pressure-Surface-Attachment/dp/B0CQML6RTV/ref=zg_bs_g_552856_d_sccl_24/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 25,
+      "asin": "B0BTMZSQZ8",
+      "title": "GreenWorks 5210902 15\" Extension Included Surface Cleaner, Green",
+      "url": "https://www.amazon.com/GreenWorks-5210902-Extension-Included-Surface/dp/B0BTMZSQZ8/ref=zg_bs_g_552856_d_sccl_25/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 26,
+      "asin": "B0H4V4WK8L",
+      "title": "2026Upgrade Pressure Power Washer 4800PSI with Inlet Hose & Filter, 4 Quick Connect Nozzles 1 Foam Cannon, High Cleaning Machine for Cars/Fences/Driveways/Patios/Home, Yellow",
+      "url": "https://www.amazon.com/2026Upgrade-Pressure-4800PSI-Cleaning-Driveways/dp/B0H4V4WK8L/ref=zg_bs_g_552856_d_sccl_26/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 27,
+      "asin": "B0H14W19PY",
+      "title": "SKYBNNY Cordless Pressure Washer, 1200 PSI, 2 Batteries, 6-in-1 Nozzle | Portable power washer, 21V brushless motor, 30 pressure levels, 24 ft hose, 120 to 180 min combined runtime for cars",
+      "url": "https://www.amazon.com/SKYBNNY-Cordless-Pressure-Washer-Batteries/dp/B0H14W19PY/ref=zg_bs_g_552856_d_sccl_27/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 5.0,
+      "reviews": 5
+    },
+    {
+      "rank": 28,
+      "asin": "B09XX854Y8",
+      "title": "YAMATIC Pressure Washer Wand with Stainless Steel Extension Lance 4000PSI | Swivel 3/8\" Quick Connect & M22-14mm 1/4\" Outlet 5 Nozzle Tips, Replacement for Simpson, Craftsman for Foam Cannon Car Wash",
+      "url": "https://www.amazon.com/YAMATIC-Pressure-Connector-Extension-Replacement/dp/B09XX854Y8/ref=zg_bs_g_552856_d_sccl_28/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 29,
+      "asin": "B0HC14KT7M",
+      "title": "Rerennco Upgraded Jet Nozzle for Garden Hose Power Washer Wand | Hydro Jet High Pressure Washer Tools with 2 Different Nozzles and Hose Quick Connectors",
+      "url": "https://www.amazon.com/Rerennco-Upgraded-Nozzle-Garden-Washer/dp/B0HC14KT7M/ref=zg_bs_g_552856_d_sccl_29/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 30,
+      "asin": "B0H87FQ8H3",
+      "title": "Washer 5000PSI with Adj-8-Level Touch Screen, 34\" Tall Power Washer, 4 Quick Connect Nozzles, Inlet Hose&Filter&500mlFoam Cannon for Cars/Fences/Driveways/Home Cleaning，Yellow",
+      "url": "https://www.amazon.com/2026Upgraded-Adj-8-Level-500mlFoam-Driveways-Cleaning%EF%BC%8CYellow/dp/B0H87FQ8H3/ref=zg_bs_g_552856_d_sccl_30/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 1.0,
+      "reviews": 1
+    }
+  ],
+  "sump_pumps": [
+    {
+      "rank": 1,
+      "asin": "B089274RH8",
+      "title": "AgiiMan 850GPH Pool Cover Pump, Submersible Sump Pump above Ground | 16FT Drain Hose, 25FT Power Cord, 3 Adapters, Compact Design, Fast Water Removal for Pool Covers and Above Ground Pools",
+      "url": "https://www.amazon.com/Pool-Cover-Pump-above-Ground/dp/B089274RH8/ref=zg_bs_g_680335011_d_sccl_1/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 2,
+      "asin": "B000SM342Q",
+      "title": "Little Giant VCMA-20ULS 115 Volt, 80 GPH, 1/30 HP Automatic Condensate Removal Pump for HVAC/Refrigeration Systems/Dehumidifiers with Overflow Detection Switch and 6-Foot Cord, White/Black, 554425",
+      "url": "https://www.amazon.com/Little-554425-VCMA-20ULS-Condensate-Removal/dp/B000SM342Q/ref=zg_bs_g_680335011_d_sccl_2/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 3,
+      "asin": "B09Y918453",
+      "title": "FOTING Sump Pump 1HP Clean/Dirty Submersible Water Pump,4600GPH Utility Pump Thermoplastic Electric Portable Transfer Water Pump for Swimming Pool Pond Basement with 10ft Power Cord,Manual",
+      "url": "https://www.amazon.com/FOTING-Submersible-Portable-Swimming-Basement/dp/B09Y918453/ref=zg_bs_g_680335011_d_sccl_3/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 4,
+      "asin": "B0002YVPQW",
+      "title": "WAYNE CDU800 1/2 HP Submersible Sump Pump – Cast Iron & Stainless Steel, Vertical Float Switch, 5,100 GPH, 3-Year Warranty",
+      "url": "https://www.amazon.com/CDU800-Submersible-Integrated-Vertical-Switch/dp/B0002YVPQW/ref=zg_bs_g_680335011_d_sccl_4/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 5,
+      "asin": "B000X05G1A",
+      "title": "Superior Pump 91250 1800GPH Thermoplastic Submersible Utility Pump with 10-Foot Cord, 1/4 HP",
+      "url": "https://www.amazon.com/Superior-Pump-91250-Submersible-Thermoplastic/dp/B000X05G1A/ref=zg_bs_g_680335011_d_sccl_5/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 6,
+      "asin": "B000JGD3H2",
+      "title": "Little Giant VCMA-20ULST 115 Volt, 80 GPH, 1/30 HP Automatic Condensate Removal Pump for HVAC/Refrigeration Systems/Dehumidifiers with Overflow Detection Switch and 20-Foot Tubing, White/Black, 554435 | 6' cord w/ plug, Safety Switch, 20' Tubing, 1/30 HP, 20' shutoff, Automatic, 1/2 gal tank, For HVAC/ dehumidifiers, 554435",
+      "url": "https://www.amazon.com/Little-554435-VCMA-20ULST-115-Condensate-Removal/dp/B000JGD3H2/ref=zg_bs_g_680335011_d_sccl_6/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 7,
+      "asin": "B000H5PYR2",
+      "title": "Zoeller M53 Mighty-mate Submersible Sump Pump, 1/3 Hp",
+      "url": "https://www.amazon.com/Zoeller-Mighty-mate-Submersible-Sump-Pump/dp/B000H5PYR2/ref=zg_bs_g_680335011_d_sccl_7/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 8,
+      "asin": "B0GD7MQLHP",
+      "title": "SEESII 1HP Submersible Water Pump, 4755 GPH High Flow w/ 23ft Hose | Anti-Clogging Filter Bag, Sump Pump for Swimming Pool, Hot Tub, Pond, Flooded Basement, Rooftop, Garden Water Removal",
+      "url": "https://www.amazon.com/SEESII-Submersible-Water-Pump-Anti-Clogging/dp/B0GD7MQLHP/ref=zg_bs_g_680335011_d_sccl_8/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 9,
+      "asin": "B0GH7GZGQM",
+      "title": "VEVOR 2500W Sump Pump Battery Backup System, LCD Display, Auto Switches to Battery Inverter Power for Sump Pump, Pure Sine Wave, for Basement Protection Emergency and Power Outage, Battery Not Include | for Basement Power Outages, with Pure Sine Wave, Automatic Transfer, USB Port and AC Outlet; 12V Battery Sold Separately",
+      "url": "https://www.amazon.com/VEVOR-Switches-Inverter-Protection-Emergency/dp/B0GH7GZGQM/ref=zg_bs_g_680335011_d_sccl_9/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 5.0,
+      "reviews": 5
+    },
+    {
+      "rank": 10,
+      "asin": "B0G4GHSVPC",
+      "title": "PANRANO 1/3 HP Submersible Water Pump 2000 GPH Portable Small Sump Pump For Pool Cover, Basements, Puddles, Gardens Ponds With 16.4 Ft Power Cord and Hose Adapters, Lemon Yellow",
+      "url": "https://www.amazon.com/PANRANO-Submersible-Portable-Basements-Adapters/dp/B0G4GHSVPC/ref=zg_bs_g_680335011_d_sccl_10/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.1,
+      "reviews": 4
+    },
+    {
+      "rank": 11,
+      "asin": "B0H4Y2X4CS",
+      "title": "PANRANO Sump Pump 1HP Submersible Water Pump 3700GPH Electric Thermoplastic | Swimming Pool Draining Transfer Water From Hot Tub Basement Garden Ponds Low Water Level 16.4FT Power Cord Portable",
+      "url": "https://www.amazon.com/PANRANO-Submersible-3700GPH-Electric-Thermoplastic/dp/B0H4Y2X4CS/ref=zg_bs_g_680335011_d_sccl_11/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 12,
+      "asin": "B018LRUDUU",
+      "title": "WAYNE WaterBUG Submersible Water Pump for Water Removal",
+      "url": "https://www.amazon.com/WWB-WaterBUG-Submersible-Multi-Flo-Technology/dp/B018LRUDUU/ref=zg_bs_g_680335011_d_sccl_12/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 13,
+      "asin": "B0DNJN6XF6",
+      "title": "Acquaer 1/3 HP Automatic Submersible Water Pump, 2160 GPH Sump Pump, 115V | Thermoplastic Utility Pump with 3/4” Garden Hose Adapter for Swimming Pool Hot Tubs Flooded House Basement with 10 ft Cord",
+      "url": "https://www.amazon.com/Acquaer-Automatic-Submersible-Swimming-Basement/dp/B0DNJN6XF6/ref=zg_bs_g_680335011_d_sccl_13/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 14,
+      "asin": "B0C1S27T7S",
+      "title": "Automatic Small Sump Pump with Water Sensor, 5 FT Lift 55 GPH 115V/230V Mini Condensate Pump with Float Switch, Water Removal for Dehumidifier, Air Conditioner, Ice Maker, Basement, Auto On Off",
+      "url": "https://www.amazon.com/MSELTOS-Dehumidifier-Condensate-Conditioner-Submersible/dp/B0C1S27T7S/ref=zg_bs_g_680335011_d_sccl_14/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.0,
+      "reviews": 4
+    },
+    {
+      "rank": 15,
+      "asin": "B00554SP3K",
+      "title": "WAYNE CDU980E 3/4 HP Submersible Sump Pump – Cast Iron & Stainless Steel, Vertical Float Switch, 5,490 GPH, 5-Year Warranty",
+      "url": "https://www.amazon.com/CDU980E-Submersible-Stainless-Integrated-Vertical/dp/B00554SP3K/ref=zg_bs_g_680335011_d_sccl_15/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 16,
+      "asin": "B094X6TS3V",
+      "title": "Green Expert 1/3HP Submersible Sump Pump with Water Sensor Switch, Low Water Last-Inch Drain Pump, 2000GPH Automatic/Manual Water Removal for Flooded Basement, Garage, Hot Tub Easy to Use Backup Pump",
+      "url": "https://www.amazon.com/Green-Expert-Pump-Sensor-Water/dp/B094X6TS3V/ref=zg_bs_g_680335011_d_sccl_16/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.0,
+      "reviews": 4
+    },
+    {
+      "rank": 17,
+      "asin": "B0BRCX97HR",
+      "title": "Lanchez Sump Pump, 1/2 HP 2450GPH Submersible Water Pump, Utility Pump Thermoplastic Portable Electric Transfer Pump for Hot Tub Swimming Pool Basement Garden Pond Tubs Draining with 10FT Cord",
+      "url": "https://www.amazon.com/Lanchez-Submersible-Draining-Basement-Transfer/dp/B0BRCX97HR/ref=zg_bs_g_680335011_d_sccl_17/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 18,
+      "asin": "B0CH9Q56NS",
+      "title": "MEDAS 1HP 3434 GPH Sump Pump Submersible Clean/Dirty Water Pump Portable Utility Pump with 16.4ft Cord for Swimming Pool Garden Basement Tub Pond Draining",
+      "url": "https://www.amazon.com/MEDAS-Submersible-Portable-Swimming-Basement/dp/B0CH9Q56NS/ref=zg_bs_g_680335011_d_sccl_18/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 3.9,
+      "reviews": 3
+    },
+    {
+      "rank": 19,
+      "asin": "B08KDKKK7R",
+      "title": "Prostormer 1HP 3500GPH Sumbersible Sump Pump with Built-in Float Switch | Clean/Dirty Water Pump, for Pools/Ponds/Gardens/Flooded Cellars/Irrigation Orange",
+      "url": "https://www.amazon.com/Prostormer-3500GPH-Sumbersible-Built-Switch/dp/B08KDKKK7R/ref=zg_bs_g_680335011_d_sccl_19/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.0,
+      "reviews": 4
+    },
+    {
+      "rank": 20,
+      "asin": "B0969R86H4",
+      "title": "6699 1/6HP Portable Utility Pump Submersible Small Backup Sump Pump Draining Tool to Remove Water from Flooding House Basement Pool Tankless Heater Flushing Pump with 10-Foot Cord SUB 1100",
+      "url": "https://www.amazon.com/6699-Submersible-Portable-Drainage-Household/dp/B0969R86H4/ref=zg_bs_g_680335011_d_sccl_20/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 21,
+      "asin": "B0DGQ7RRHD",
+      "title": "VEVOR 2500W Sump Pump Battery Backup System LCD Display Corded Auto Switch | Automatically Shifts to Inverter Power, Uninterrupted Operation, Battery Backup Inverter, for Emergencies & Power Failures",
+      "url": "https://www.amazon.com/VEVOR-Automatically-Uninterrupted-Operation-Emergencies/dp/B0DGQ7RRHD/ref=zg_bs_g_680335011_d_sccl_21/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.2,
+      "reviews": 4
+    },
+    {
+      "rank": 22,
+      "asin": "B0H83B1WF4",
+      "title": "POXURIO 1HP Submersible Sump Pump, 5300GPH High Flow Dirty Clean Submersible Water Pump with Automatic Float Switch, 26FT Long Cord for Swimming Pool, Flooded Basement, Rooftop, Garden Water Removal",
+      "url": "https://www.amazon.com/POXURIO-Submersible-Automatic-Swimming-Basement/dp/B0H83B1WF4/ref=zg_bs_g_680335011_d_sccl_22/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 23,
+      "asin": "B0FY23QDG2",
+      "title": "Automatic Mini Sump Pump for Dehumidifier with Level Sensor to Remove Water | 100–240V, Max. 87 GPH, 8.2 FT Max Lift, Submersible Water Pump for AC Drain Pans, Float Switch Alternative with Auto Shut-Off",
+      "url": "https://www.amazon.com/Submersible-Condensate-Dehumidifier-Hydroponic-Replacement/dp/B0FY23QDG2/ref=zg_bs_g_680335011_d_sccl_23/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 3.6,
+      "reviews": 3
+    },
+    {
+      "rank": 24,
+      "asin": "B0FRRVSTJK",
+      "title": "LANCHEZ Sump Pump, 1.6HP High Flow Submersible Water Pump with Float Switch, 6000GPH Automatic Transfer Utility Pump Pump for Swimming Pool Basement Flooded Pit Sewage Sink Tub, Stainless Steel Large",
+      "url": "https://www.amazon.com/LANCHEZ-Stainless-Submersible-Automatic-Transfer/dp/B0FRRVSTJK/ref=zg_bs_g_680335011_d_sccl_24/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.2,
+      "reviews": 4
+    },
+    {
+      "rank": 25,
+      "asin": "B09NY3TGWY",
+      "title": "Acquaer 1/3HP Submersible Sump Pump 3040GPH Clean/Dirty Water Pump | Adjustable Float Switch, 10ft Power Cord, Water Removal for Garden Ponds, Basement, Flooded House, Hot Tub and Irrigation",
+      "url": "https://www.amazon.com/Acquaer-Submersible-Automatic-Basement-Irrigation/dp/B09NY3TGWY/ref=zg_bs_g_680335011_d_sccl_25/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 26,
+      "asin": "B0DHV65Q26",
+      "title": "Tenzzola Sump Pump Submersible Utility Water Pump Thermoplastic Portable Electric Water Removal Transfer Pump with 16.4FT Cord for Swimming Pool Basement Garden Pond Tubs Draining, 1/3 HP",
+      "url": "https://www.amazon.com/Tenzzola-Submersible-Thermoplastic-Portable-Electric/dp/B0DHV65Q26/ref=zg_bs_g_680335011_d_sccl_26/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 27,
+      "asin": "B0FBF979ZT",
+      "title": "Cleartide 1/3 HP Submersible Utility Pump, 2790 GPH High Flow, Portable Sump Pump with Auto Water Sensor, Ideal for Flooded Basement & Yard, Hot Tub, Pond and Garden Draining",
+      "url": "https://www.amazon.com/Cleartide-Submersible-High-Capacity-Basement-Drainage/dp/B0FBF979ZT/ref=zg_bs_g_680335011_d_sccl_27/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 28,
+      "asin": "B0967RL93B",
+      "title": "Green Expert 1HP Submersible Sump Pump, 4000GPH Full 304 Stainless Steel Manual Utility Pump with Adapter Kit, Oil-Free Top Discharge Water Removal for Basements, Pools, Hot Tubs & Drainage Pits",
+      "url": "https://www.amazon.com/Submersible-Stainless-Oil-Free-Discharge-Basements/dp/B0967RL93B/ref=zg_bs_g_680335011_d_sccl_28/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.1,
+      "reviews": 4
+    },
+    {
+      "rank": 29,
+      "asin": "B08BX6H22H",
+      "title": "The Basement Watchdog Combo Preassembled Primary & Battery Backup Sump Pump System w/Monitoring Controller (CITS-50); Copper-Wound PSC Motor; WiFi-Capable w/Add-on Module",
+      "url": "https://www.amazon.com/Preassembled-Monitoring-CITS-50-Copper-Wound-WiFi-Capable/dp/B08BX6H22H/ref=zg_bs_g_680335011_d_sccl_29/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 30,
+      "asin": "B0D5CNJSLM",
+      "title": "VEVOR Utility Sink Pump 1/2 HP 3500 GPH 28 ft Head Under-Sink Sump Pump | for Laundry Sink, 120-Volt Fully Automatic System, Cast Aluminum, with 6 Gallon Drainage Basin, 1-1/2\" NPT Outlet, Black",
+      "url": "https://www.amazon.com/VEVOR-Utility-120-Volt-Under-Sink-Automatic/dp/B0D5CNJSLM/ref=zg_bs_g_680335011_d_sccl_30/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    }
+  ],
+  "pressure_washer_accessories": [
+    {
+      "rank": 1,
+      "asin": "B07HC898GM",
+      "title": "Tool Daily Foam Cannon with 1/4 Inch Quick Connector, 1 Liter, 5 Pressure Washer Nozzle Tips | Foam Cannon for Pressure Washer, 5 Power Washer Nozzle Tips Multiple Degrees for Car Washing",
+      "url": "https://www.amazon.com/Tool-Daily-Cannon-Connector-Pressure/dp/B07HC898GM/ref=zg_bs_g_3023451_d_sccl_1/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 2,
+      "asin": "B0BVGSX46M",
+      "title": "Westinghouse ePX3500 Electric Pressure Washer, 2500 Max PSI 1.76 Max GPM with Anti-Tipping Technology, Onboard Soap Tank, Pro-Style Steel Wand, 5-Nozzle Set, for Cars/Fences/Driveways/Home/Patios",
+      "url": "https://www.amazon.com/Westinghouse-ePX3500-Anti-Tipping-Technology-Pro-Style/dp/B0BVGSX46M/ref=zg_bs_g_3023451_d_sccl_2/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 3,
+      "asin": "B0H23YXWP8",
+      "title": "High Pressure Hose Nozzle Metal Fits US Garden Hoses with 3 Spray Modes | Heavy-Duty Metal Direct Spray Hose Gun with 3/4\" GHT Brass Quick Connect for Watering Plants, Lawn, Car Washing, Patio, Pet",
+      "url": "https://www.amazon.com/Pressure-Nozzle-Metal-Garden-Hoses/dp/B0H23YXWP8/ref=zg_bs_g_3023451_d_sccl_3/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 3.4,
+      "reviews": 3
+    },
+    {
+      "rank": 4,
+      "asin": "B08W8BFRRW",
+      "title": "AstroAI Foam Cannon for Pressure Washer with 1/4\" Quick Connect Plug, 1 L | Thick Foam, Car Wash, Heavy Duty Durable Foam Sprayer, Wide Neck, Adjustable Snow Foam Lance, Easy Install, Detailing, Brass",
+      "url": "https://www.amazon.com/AstroAI-Blaster-Adjustable-Pressure-Connector/dp/B08W8BFRRW/ref=zg_bs_g_3023451_d_sccl_4/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 5,
+      "asin": "B07HLPGWL7",
+      "title": "YAMATIC Pressure Washer Hose 50 FT 1/4\", 3200 PSI, M22-14mm Females | Kink-Resistant Hose With Solid Brass Fittings Replacement For Ryobi Greenworks Troy-Bilt Craftsman, Black",
+      "url": "https://www.amazon.com/YAMATIC-Resistant-Pressure-Replacement-Craftsman/dp/B07HLPGWL7/ref=zg_bs_g_3023451_d_sccl_5/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 6,
+      "asin": "B07DQWPZN1",
+      "title": "YAMATIC Pressure Washer Hose 25 FT 1/4\", M22-14mm Females | 3200 PSI, Kink-Resistant Hose With Solid Brass Fittings Replacement For Ryobi Greenworks Troy-Bilt Craftsman",
+      "url": "https://www.amazon.com/YAMATIC-Pressure-Washer-M22-14mm-Females/dp/B07DQWPZN1/ref=zg_bs_g_3023451_d_sccl_6/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 7,
+      "asin": "B072HFKLFX",
+      "title": "Tool Daily Pressure Washer Nozzle Tips Multiple Degrees, 1/4 Inch, 2.5 GPM | Power Washer Tips Set for Car Washing, 1/4\" Quick Connect, 4000 PSI, 5 Pack",
+      "url": "https://www.amazon.com/Tool-Daily-Pressure-Multiple-Degrees/dp/B072HFKLFX/ref=zg_bs_g_3023451_d_sccl_7/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 8,
+      "asin": "B0HBPSRH6W",
+      "title": "Belkid 2026 Upgraded Jet Nozzle Power Washer for Garden Hose | Includes 2 High-Pressure Nozzles and Quick Connectors | Hydro Jet High Pressure Washer Tools",
+      "url": "https://www.amazon.com/Belkid-Upgraded-Nozzle-Washer-Garden/dp/B0HBPSRH6W/ref=zg_bs_g_3023451_d_sccl_8/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 9,
+      "asin": "B07PGXSWF5",
+      "title": "CARBO Instruments 2-1/2\" Water Pressure Test Gauge, 0-200 PSI, Red Max Pointer, 3/4\" Female Hose Thread, Rust-Free Corrosion-Resistant Case, Brass Connector, for Home, Garden, RV, Indoor/Outdoor",
+      "url": "https://www.amazon.com/CARBO-Instruments-Pressure-Female-Pointer/dp/B07PGXSWF5/ref=zg_bs_g_3023451_d_sccl_9/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 10,
+      "asin": "B0D5D133PJ",
+      "title": "Pressure Washer Extension Wand, 2 Pack 17 Inch Stainless Steel Heavy Duty Wands with 1/4 Inch Quick Connect, Fits Most Pressure and Power Washers",
+      "url": "https://www.amazon.com/Pressure-Washer-Extension-Wand-Stainless/dp/B0D5D133PJ/ref=zg_bs_g_3023451_d_sccl_10/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 11,
+      "asin": "B0917HCZL6",
+      "title": "Tool Daily Short Pressure Washer Gun with Foam Cannon, 1/4\" Quick Connect | 5 Power Washer Nozzle Tips Multiple Degrees, 1 Liter Soap Cannon, M22 Pressure Washing Gun, Not Compatible with GardenHose",
+      "url": "https://www.amazon.com/Tool-Daily-Pressure-Washer-Connector/dp/B0917HCZL6/ref=zg_bs_g_3023451_d_sccl_11/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 12,
+      "asin": "B0BHQ8W2K8",
+      "title": "YAMATIC Flexible Pressure Washer Hose 50 FT 1/4\", M22-14mm Females | With 3/8\" Quick-Connect Adapters, 3200 PSI Kink-Resistant, Replacement/Extension Hose For Power Washing, Green",
+      "url": "https://www.amazon.com/YAMATIC-Flexible-Resistant-Extension-Replacement/dp/B0BHQ8W2K8/ref=zg_bs_g_3023451_d_sccl_12/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 13,
+      "asin": "B0CRNHHRDT",
+      "title": "Hourleey 14\" Pressure Washer Surface Cleaner, Stainless Steel Surface Cleaner with 4 Wheels for Concrete, Patio, Sidewalk, Deck, Pathway 1/4\" Quick Connector, 2 Extension Wand, 4000 PSI",
+      "url": "https://www.amazon.com/Hourleey-Washer-Cleaner-Stainless-Connector/dp/B0CRNHHRDT/ref=zg_bs_g_3023451_d_sccl_13/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 14,
+      "asin": "B08Y8NWX44",
+      "title": "AURORA CAR Pressure Washer Tips Turbo Nozzle Pressure Washer 4000 PSI Max | Rotating Pressure Washer Nozzle with 1/4'' Quick Connect for Cleaning Brick, Concrete, and Vinyl Surfaces，4.0 GPM 4.0 Orifice",
+      "url": "https://www.amazon.com/AURORA-CAR-Pressure-Rotating-Surfaces%EF%BC%8C4-0/dp/B08Y8NWX44/ref=zg_bs_g_3023451_d_sccl_14/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 15,
+      "asin": "B0FMRS3D34",
+      "title": "NBRINGO 84 Pieces Power Pressure Washer O Rings, Garden Hose Washers Rubber & Screen Filter Washers Kit (5 Sizes) - Leak Proof for 1/4\", 3/8\" Quick Coupler & M22, Water Hose, Gun, Wand, Tip",
+      "url": "https://www.amazon.com/NBRINGO-Pieces-Pressure-Washer-Washers/dp/B0FMRS3D34/ref=zg_bs_g_3023451_d_sccl_15/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 16,
+      "asin": "B07MY17MGX",
+      "title": "Twinkle Star Pressure Washer Adapter Set, Quick Disconnect Kit | M22 14mm Quick Connect Swivel to 3/8\" Fittings, 3/4\" to Quick Release",
+      "url": "https://www.amazon.com/Twinkle-Star-Pressure-Adapter-Disconnect/dp/B07MY17MGX/ref=zg_bs_g_3023451_d_sccl_16/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 17,
+      "asin": "B00E45LZM4",
+      "title": "Flexzilla Pressure Washer Replacement Hose, 1/4 in. x 50 ft., 3100 PSI, M22 Fittings, No-Kink, Lightweight, ZillaGreen",
+      "url": "https://www.amazon.com/Flexzilla-HFZPW3450M-Pressure-Washer-Green/dp/B00E45LZM4/ref=zg_bs_g_3023451_d_sccl_17/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 18,
+      "asin": "B06XSHM8WB",
+      "title": "Twinkle Star Pressure Washer Nozzle Tips Multiple Degrees, 1/4 INCH (2.5 GPM) | 1/4 Inch Power Washer Nozzle Tips Set, Pressure Washing Tips Set",
+      "url": "https://www.amazon.com/Twinkle-Star-Pressure-Multiple-Degrees/dp/B06XSHM8WB/ref=zg_bs_g_3023451_d_sccl_18/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 19,
+      "asin": "B0CRNRF8VY",
+      "title": "Hourleey Pressure Washer Tips, Pressure Washer Nozzle Tip with Holder, 7 Nozzle Tips, 1/4 Inch Quick Connect, 4000 PSI",
+      "url": "https://www.amazon.com/Hourleey-Pressure-Tips-Nozzle-Connect/dp/B0CRNRF8VY/ref=zg_bs_g_3023451_d_sccl_19/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.7,
+      "reviews": 4
+    },
+    {
+      "rank": 20,
+      "asin": "B07YC2QFJ9",
+      "title": "Tool Daily Deluxe Pressure Washer Gun, Replacement Wand Extension, 40 Inch | 5 Spray Nozzle Tips with Holder, M22 Fittings, 5000 PSI, Not Compatible with GardenHose",
+      "url": "https://www.amazon.com/Tool-Daily-Pressure-Replacement-Extension/dp/B07YC2QFJ9/ref=zg_bs_g_3023451_d_sccl_20/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 21,
+      "asin": "B0CQMWRJZ2",
+      "title": "Westinghouse PWSC12 12\" Pressure Washer Surface Cleaner Attachment - 3000 Max PSI, 1/4” Connector",
+      "url": "https://www.amazon.com/Westinghouse-Outdoor-Equipment-PWSC12-Surface/dp/B0CQMWRJZ2/ref=zg_bs_g_3023451_d_sccl_21/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 22,
+      "asin": "B09WDQRLH7",
+      "title": "PWACCS Pressure Washer Hose, 50 FT x 1/4\", 3600 PSI, M22 Fittings | Kink Resistant, Pressure Washing Extension Hose Replacement, 5 Adapters for Electric Power Washers",
+      "url": "https://www.amazon.com/PWACCS-Pressure-Washer-Hose-Power/dp/B09WDQRLH7/ref=zg_bs_g_3023451_d_sccl_22/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 23,
+      "asin": "B0861V45B9",
+      "title": "McKillans® Short Pressure Washer Gun with Swivel - High Pressure Water Handle with 3/8\" Male Plug and 1/4” Quick Connector Coupler - Power Washer Gun Compatible with Foam Cannon - Car Wash Foam Gun",
+      "url": "https://www.amazon.com/McKillans-Pressure-Compatible-Equipped-Connector/dp/B0861V45B9/ref=zg_bs_g_3023451_d_sccl_23/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 24,
+      "asin": "B085NBJB71",
+      "title": "TOOLCY Pro Short Pressure Washer Gun 5000 PSI with 360° Swivel 3/8\" Inlet | Includes 3/8\" QC to M22-14mm Adapter & 5 Nozzle Tips, with 1/4\" Quick Connect Outlet For Car Sidewalk Pool Wash",
+      "url": "https://www.amazon.com/TOOLCY-Pressure-Ergonomic-M22-14mm-Connector/dp/B085NBJB71/ref=zg_bs_g_3023451_d_sccl_24/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 25,
+      "asin": "B01BMB4C86",
+      "title": "KÄRCHER Multi Purpose Pressure Washer Detergent, Highly Concentrated | Removes Dirt and Grime from Fences, Siding, Patios, Driveways, Sidewalks, Concrete and More, Makes up to 40 gal of Cleaner",
+      "url": "https://www.amazon.com/K%C3%A4rcher-Detergent-Driveways-Sidewalks-Concentrated/dp/B01BMB4C86/ref=zg_bs_g_3023451_d_sccl_25/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.4,
+      "reviews": 4
+    },
+    {
+      "rank": 26,
+      "asin": "B07DVJSNJF",
+      "title": "Simple Green Oxy Solve Deck and Fence Pressure Washer Cleaner, Colorless to Pale Straw, Unscented, 128 Fl Oz (Packaging May Vary)",
+      "url": "https://www.amazon.com/Simple-Green-Colorless-Unscented-Packaging/dp/B07DVJSNJF/ref=zg_bs_g_3023451_d_sccl_26/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    },
+    {
+      "rank": 27,
+      "asin": "B018H74H74",
+      "title": "UBERFLEX™ Kink Resistant Pressure Washer Hose 1/4\", 3,100 PSI with (2) 22MM - Made in USA - (50 Feet) | Flexible power washer hose, 3,100 PSI kink resistant, 50 feet, includes (2) 22MM fittings, made in USA",
+      "url": "https://www.amazon.com/UBERFLEX-Kink-Resistant-Pressure-Washer/dp/B018H74H74/ref=zg_bs_g_3023451_d_sccl_27/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.6,
+      "reviews": 4
+    },
+    {
+      "rank": 28,
+      "asin": "B0F5HFGYNB",
+      "title": "Short Pressure Washer Gun with 1/4\" QC,with 5 Spray Nozzle Tips | 4350 PSI High Pressure Washer Gun,3/8'' Male Plug and M22-14/15mm Fittings, Power Washer Gun Compatible with Foam Cannon",
+      "url": "https://www.amazon.com/Pressure-Washer-Connector-Fittings-Compatible/dp/B0F5HFGYNB/ref=zg_bs_g_3023451_d_sccl_28/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 29,
+      "asin": "B07KMY34ZZ",
+      "title": "YAMATIC Horizontal 3/4\" Shaft Pressure Washer Pump 3400 PSI 2.5 GPM | Fits Honda GC160 GC190, AR RMV 2.5G30, Homelite, Troybilt, Simpson, Karcher, Replacement Pump for Power Washer",
+      "url": "https://www.amazon.com/YAMATIC-Horizontal-Pressure-Washer-Replacement/dp/B07KMY34ZZ/ref=zg_bs_g_3023451_d_sccl_29/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.5,
+      "reviews": 4
+    },
+    {
+      "rank": 30,
+      "asin": "B0D28QY45Q",
+      "title": "Hourleey Pressure Washer Hose 50 FT, 3600 PSI Flexible Kink Resistant Power Washer Hose Replacement, 1/4\" Quick Connect Pressure Washer Hose Extension With M22 x 3/8\", Blue",
+      "url": "https://www.amazon.com/Hourleey-Pressure-Washer-Hose-Blue/dp/B0D28QY45Q/ref=zg_bs_g_3023451_d_sccl_30/142-3971470-8584200?psc=1",
+      "price": null,
+      "rating": 4.3,
+      "reviews": 4
+    }
+  ]
+}

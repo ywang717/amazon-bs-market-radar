@@ -1,0 +1,34 @@
+{
+  "marketplace": "AMAZON_US",
+  "page_loading": {
+    "pagination_rule": "A later page may be inspected only to verify its global ranks. Do not use it when ranks restart at 1 or global continuity cannot be verified.",
+    "top_30_rule": "collect_only_verified_global_ranks_1_through_30"
+  },
+  "sources": [
+    {
+      "active": true,
+      "amazon_node_id": "552856",
+      "category_key": "pressure_washers",
+      "category_slug": "pressure-washer",
+      "display_name": "Pressure Washers Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pressure-Washers/zgbs/lawn-garden/552856"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "680335011",
+      "category_key": "sump_pumps",
+      "category_slug": "sump-pump",
+      "display_name": "Sump Pumps Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Tools-Home-Improvement-Sump-Pumps/zgbs/hi/680335011"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "3023451",
+      "category_key": "pressure_washer_accessories",
+      "category_slug": "pressure-washer-accessories",
+      "display_name": "Pressure Washer Parts & Accessories Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pressure-Washer-Parts-Accessories/zgbs/lawn-garden/3023451"
+    }
+  ],
+  "target_count": 30
+}

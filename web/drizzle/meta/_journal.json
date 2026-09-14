@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1786590227508,
+      "tag": "0000_naive_multiple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1787215942032,
+      "tag": "0001_nervous_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787715305162,
+      "tag": "0002_seller_intelligence",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787827704330,
+      "tag": "0003_product_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788078189302,
+      "tag": "0004_product_metadata_brand_conflict_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789021021311,
+      "tag": "0005_category_capture_receipts",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "searchResult": {
+    "items": [
+      {
+        "asin": "B0AAA00001",
+        "detailPageURL": "https://www.amazon.com/dp/B0AAA00001?tag=example-20",
+        "itemInfo": {
+          "title": {
+            "displayValue": "Example Electric Pressure Washer"
+          },
+          "byLineInfo": {
+            "brand": {
+              "displayValue": "ExampleClean"
+            }
+          },
+          "manufactureInfo": {
+            "model": {
+              "displayValue": "EC-2100"
+            }
+          }
+        },
+        "offersV2": {
+          "listings": [
+            {
+              "isBuyBoxWinner": true,
+              "merchantInfo": {
+                "name": "Amazon.com"
+              },
+              "price": {
+                "money": {
+                  "amount": 139.99,
+                  "currency": "USD"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "asin": "B0BBB00002",
+        "detailPageURL": "https://www.amazon.com/dp/B0BBB00002?tag=example-20",
+        "itemInfo": {
+          "title": {
+            "displayValue": "Example Compact Pressure Washer"
+          },
+          "byLineInfo": {
+            "brand": {
+              "displayValue": "CompactCo"
+            }
+          }
+        },
+        "offersV2": {
+          "listings": [
+            {
+              "isBuyBoxWinner": true,
+              "merchantInfo": {
+                "name": "Compact Seller"
+              },
+              "price": {
+                "money": {
+                  "amount": 89.5,
+                  "currency": "USD"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "totalResultCount": 250,
+    "searchURL": "https://www.amazon.com/s?k=pressure+washer"
+  }
+}
+

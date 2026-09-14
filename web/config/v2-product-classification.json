@@ -1,0 +1,52 @@
+{
+  "schema_version": "product-classification-config-v1",
+  "rule_version": "product-rules-v4",
+  "reviewed_asin_overrides": [
+    {
+      "id": "reviewed-asin-b0d739px62",
+      "asin": "B0D739PX62",
+      "product_type": "electric_pressure_washer",
+      "confidence": "high",
+      "category_keys": ["pressure_washers"],
+      "evidence": ["AMAZON_PRODUCT_DETAIL:POWER_SOURCE=AC"],
+      "source_url": "https://www.amazon.com/dp/B0D739PX62",
+      "reviewed_on": "2026-09-01"
+    },
+    {
+      "id": "reviewed-asin-b0h87bhw4y",
+      "asin": "B0H87BHW4Y",
+      "product_type": "electric_pressure_washer",
+      "confidence": "high",
+      "category_keys": ["pressure_washers"],
+      "evidence": ["AMAZON_PRODUCT_DETAIL:MOTOR=1800W"],
+      "source_url": "https://www.amazon.com/dp/B0H87BHW4Y",
+      "reviewed_on": "2026-09-01"
+    },
+    {
+      "id": "reviewed-asin-b0h8p3jvtp",
+      "asin": "B0H8P3JVTP",
+      "product_type": "electric_pressure_washer",
+      "confidence": "high",
+      "category_keys": ["pressure_washers"],
+      "evidence": ["AMAZON_PRODUCT_DETAIL:POWER_SOURCE=ELECTRIC"],
+      "source_url": "https://www.amazon.com/dp/B0H8P3JVTP",
+      "reviewed_on": "2026-09-01"
+    }
+  ],
+  "rules": [
+    { "id": "accessory-surface-cleaner", "product_type": "surface_cleaner", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["surface cleaner"] },
+    { "id": "accessory-gun", "product_type": "pressure_washer_gun", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["pressure washer gun", "short pressure washer gun", "spray gun", "trigger gun", "wand kit"] },
+    { "id": "accessory-hose", "product_type": "hose", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["pressure washer hose", "high pressure hose", "replacement hose"] },
+    { "id": "accessory-nozzle", "product_type": "nozzle", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["nozzle tip", "nozzle tips", "spray nozzle", "jet nozzle", "turbo nozzle", "rotating nozzle"] },
+    { "id": "accessory-chemical", "product_type": "chemical_cleaner", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["chemical cleaner", "cleaning concentrate", "pressure washer soap", "cleaner solution", "detergent"] },
+    { "id": "accessory-pump-protector", "product_type": "pump_protector", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["pump protector", "pump saver"] },
+    { "id": "accessory-foam-cannon", "product_type": "foam_cannon", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["foam cannon", "foam blaster"] },
+    { "id": "accessory-adapter-connector", "product_type": "adapter_connector", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["pressure washer adapter", "adapter connector", "quick connect adapter", "quick connector"] },
+    { "id": "accessory-extension-wand", "product_type": "extension_wand", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["extension wand", "telescoping wand", "extension lance"] },
+    { "id": "accessory-sewer-jetter", "product_type": "sewer_jetter", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["sewer jetter", "sewer jetting", "drain jetter"] },
+    { "id": "machine-cordless", "product_type": "cordless_pressure_washer", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["cordless pressure washer", "battery powered pressure washer", "battery-powered pressure washer", "cordless portable washer"] },
+    { "id": "machine-gas", "product_type": "gas_pressure_washer", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["gas pressure washer", "gasoline pressure washer"] },
+    { "id": "machine-electric", "product_type": "electric_pressure_washer", "confidence": "high", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["electric pressure washer", "electric power washer", "corded pressure washer"] },
+    { "id": "accessory-other", "product_type": "other_accessory", "confidence": "medium", "category_keys": ["pressure_washers", "pressure_washer_accessories"], "any_phrases": ["fitting", "replacement accessory", "universal accessory", "pressure test gauge", "o-rings", "o rings"] }
+  ]
+}

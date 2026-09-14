@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.invalid/schemas/category-registry.schema.json",
+  "title": "Amazon Best Sellers Category Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "marketplace", "page_loading", "categories"],
+  "properties": {
+    "schema_version": { "const": "category-registry-v1" },
+    "marketplace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["context_code", "storage_code"],
+      "properties": {
+        "context_code": { "const": "US" },
+        "storage_code": { "const": "AMAZON_US" }
+      }
+    },
+    "page_loading": { "$ref": "#/definitions/page_loading" },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/category" }
+    }
+  },
+  "definitions": {
+    "page_loading": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top_30_rule", "pagination_rule"],
+      "properties": {
+        "top_30_rule": { "type": "string", "minLength": 1 },
+        "pagination_rule": { "type": "string", "minLength": 1 }
+      }
+    },
+    "category": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category_key",
+        "slug",
+        "label_zh",
+        "label_en",
+        "amazon_node_id",
+        "source_url",
+        "target_count",
+        "enabled",
+        "report_file_token",
+        "classification_config_path",
+        "attribute_schema_path",
+        "segments",
+        "defaults"
+      ],
+      "properties": {
+        "category_key": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "label_zh": { "type": "string", "minLength": 1 },
+        "label_en": { "type": "string", "minLength": 1 },
+        "amazon_node_id": { "type": "string", "pattern": "^[0-9]+$" },
+        "source_url": { "type": "string", "pattern": "^https://www\\.amazon\\.com/.+/zgbs/.+/[0-9]+$" },
+        "target_count": { "type": "integer", "minimum": 1 },
+        "enabled": { "type": "boolean" },
+        "report_file_token": { "type": "string", "pattern": "^[A-Za-z0-9_]+$" },
+        "classification_config_path": { "type": "string", "pattern": "^config/[A-Za-z0-9._/-]+\\.json$" },
+        "attribute_schema_path": { "type": "string", "pattern": "^config/[A-Za-z0-9._/-]+\\.json$" },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/segment" }
+        },
+        "defaults": { "$ref": "#/definitions/defaults" }
+      }
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "label_zh", "product_types"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "label_zh": { "type": "string", "minLength": 1 },
+        "product_types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overview", "market", "products", "brands", "rankings", "reports", "alerts", "data_status", "product_detail"],
+      "properties": {
+        "overview": { "type": "string", "minLength": 1 },
+        "market": { "type": "string", "minLength": 1 },
+        "products": { "type": "string", "minLength": 1 },
+        "brands": { "type": "string", "minLength": 1 },
+        "rankings": { "type": "string", "minLength": 1 },
+        "reports": { "type": "string", "minLength": 1 },
+        "alerts": { "type": "string", "minLength": 1 },
+        "data_status": { "type": "string", "minLength": 1 },
+        "product_detail": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

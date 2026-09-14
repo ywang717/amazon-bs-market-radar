@@ -1,0 +1,35 @@
+{
+  "schema_version": "local-package-runtime-v1",
+  "platform": "windows-x64",
+  "components": {
+    "python": {
+      "identifier": "python-3.12.10-windows-x64-installer",
+      "filename": "python-3.12.10-amd64.exe",
+      "url": "https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe",
+      "sha256": "67b5635e80ea51072b87941312d00ec8927c4db9ba18938f7ad2d27b328b95fb",
+      "checksum_verified": true,
+      "destination_path": ".local\\python",
+      "expected_path": ".local\\python\\python.exe"
+    },
+    "postgresql": {
+      "identifier": "postgresql-18.4-windows-x64-binaries",
+      "filename": "postgresql-18.4-1-windows-x64-binaries.zip",
+      "url": "https://get.enterprisedb.com/postgresql/postgresql-18.4-1-windows-x64-binaries.zip",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "checksum_verified": false,
+      "destination_path": ".local\\postgresql",
+      "expected_path": ".local\\postgresql\\bin\\initdb.exe",
+      "archive_root": "pgsql"
+    },
+    "playwright_chromium": {
+      "identifier": "playwright-1.49.1-chromium-1148-windows-x64",
+      "filename": "chromium-1148-win64.zip",
+      "url": "https://cdn.playwright.dev/dbazure/download/playwright/builds/chromium/1148/chromium-win64.zip",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "checksum_verified": false,
+      "destination_path": ".local\\playwright",
+      "expected_path": ".local\\playwright\\chromium-1148\\chrome-win\\chrome.exe",
+      "archive_root": "chromium-1148"
+    }
+  }
+}
