@@ -53,6 +53,28 @@ launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.amazon-bs.dai
 
 ## 开始使用
 
+### macOS
+
+先安装 Homebrew 运行时：
+
+```bash
+brew install node powershell postgresql@16
+cd "/Users/你的用户名/Documents/亚马逊bestseller榜单监控"
+./scripts/install-macos-runtime.sh
+cd web && npm install && npm exec playwright install chromium
+cd ..
+chmod +x Start-Amazon-BS-macos.sh
+./Start-Amazon-BS-macos.sh -Mode Test
+```
+
+测试通过后运行日常采集：
+
+```bash
+./Start-Amazon-BS-macos.sh -Mode DailyAuto -MarketDate 2026-08-12
+```
+
+定时运行请按下方“计划任务”章节配置 `launchd`。如果提示 `env: node: No such file or directory`，先执行 `export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"`，再重新运行启动脚本。
+
 在 Windows 10/11 x64 上双击 `Start-Amazon-BS.bat`。也可从 PowerShell 显式运行某个模式：
 
 ```powershell
