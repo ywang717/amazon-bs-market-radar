@@ -4,6 +4,51 @@
 
 在 macOS 上使用 `Start-Amazon-BS-macos.sh`。macOS 不支持 Windows Task Scheduler；需要定时运行时，请将 `config/macos.launchd.plist.example` 中的 `PROJECT_ROOT` 替换为项目绝对路径后复制到 `~/Library/LaunchAgents/`，再执行 `launchctl load`。采集脚本仍依赖项目内 PowerShell、PostgreSQL 和 Chromium 运行时。
 
+## macOS 使用说明
+
+支持 macOS 12 或更高版本（Apple Silicon 和 Intel）。先安装 Homebrew，然后安装运行时：
+
+```bash
+brew install node powershell postgresql@16
+cd "/Users/你的用户名/Documents/亚马逊bestseller榜单监控"
+./scripts/install-macos-runtime.sh
+cd web
+npm install
+npm exec playwright install chromium
+```
+
+回到项目根目录启动：
+
+```bash
+cd "/Users/你的用户名/Documents/亚马逊bestseller榜单监控"
+chmod +x Start-Amazon-BS-macos.sh
+./Start-Amazon-BS-macos.sh
+```
+
+首次运行建议使用测试模式：
+
+```bash
+./Start-Amazon-BS-macos.sh -Mode Test
+```
+
+日常采集、导入和健康检查示例：
+
+```bash
+./Start-Amazon-BS-macos.sh -Mode DailyAuto -MarketDate 2026-08-12
+./Start-Amazon-BS-macos.sh -Mode DailyImport -SnapshotPath "/绝对路径/amazon-bestsellers.json" -SkipEmail
+./Start-Amazon-BS-macos.sh -Mode Health -MarketDate 2026-08-12
+```
+
+macOS 使用 `launchd` 定时运行，不使用 Windows 计划任务。复制 `config/macos.launchd.plist.example`，将其中每个 `PROJECT_ROOT` 替换为项目绝对路径，再加载任务：
+
+```bash
+mkdir -p "$HOME/Library/LaunchAgents"
+sed "s#PROJECT_ROOT#$(pwd)#g" config/macos.launchd.plist.example > "$HOME/Library/LaunchAgents/com.amazon-bs.daily.plist"
+launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.amazon-bs.daily.plist"
+```
+
+如果出现 `env: node: No such file or directory`，请确认当前终端已加载 Homebrew 路径（Apple Silicon 通常是 `/opt/homebrew/bin`），或重新执行启动脚本；脚本会自动搜索 Homebrew 和系统 `pwsh`。
+
 本仓库不包含已下载的运行时、浏览器、数据库、报告、快照或任何凭证。下文描述的是本地操作约定，不代表本仓库已经执行过浏览器采集、邮件投递、安装、计划任务注册或外部服务集成。
 
 ## 开始使用
