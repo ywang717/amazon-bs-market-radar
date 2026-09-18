@@ -7,7 +7,7 @@ if [ ! -r "$SECRET_PATH" ]; then
   echo "Dashboard sync secret is missing: $SECRET_PATH" >&2
   exit 1
 fi
-IFS= read -r AMAZON_BS_DASHBOARD_SYNC_SECRET < "$SECRET_PATH"
+AMAZON_BS_DASHBOARD_SYNC_SECRET="$(< "$SECRET_PATH")"
 export AMAZON_BS_DASHBOARD_SYNC_SECRET
 export PATH="$PROJECT_ROOT/.local/node/bin:$PROJECT_ROOT/.local/powershell:$PROJECT_ROOT/web/node_modules/.bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 PWSH="$PROJECT_ROOT/.local/powershell/pwsh"
