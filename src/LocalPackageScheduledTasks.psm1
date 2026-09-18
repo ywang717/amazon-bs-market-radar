@@ -94,13 +94,15 @@ function Register-LocalPackageScheduledTasks {
             $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
             $script = Join-Path $ProjectRoot 'Start-Amazon-BS-macos.sh'
             $jobs = @(
-                @{ Label='com.amazonbs.daily'; Hour=8; Minute=0; Args='-Mode DailyAuto' },
-                @{ Label='com.amazonbs.weekly'; Hour=6; Minute=0; Args='-Mode Weekly' }
+                @{ Label='com.amazonbs.daily'; Hour=8; Minute=0; Args='-Mode DailyAuto -SkipEmail'; Program=$script },
+                @{ Label='com.amazonbs.weekly'; Hour=6; Minute=0; Args='-Mode Weekly'; Program=$script },
+                @{ Label='com.amazonbs.publish'; Hour=10; Minute=0; Args=''; Program=(Join-Path $ProjectRoot 'scripts/Publish-MacosDashboard.sh') }
             )
             $tasks = foreach ($job in $jobs) {
                 $plist = Join-Path $launchDir ($job.Label + '.plist')
+                $argumentXml = if ($job.Label -eq 'com.amazonbs.daily') { '<string>-Mode</string><string>DailyAuto</string><string>-SkipEmail</string>' } elseif ($job.Label -eq 'com.amazonbs.weekly') { '<string>-Mode</string><string>Weekly</string>' } else { '' }
                 $xml = @"
-<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>Label</key><string>$($job.Label)</string><key>ProgramArguments</key><array><string>$script</string><string>-Mode</string><string>$(if($job.Args -eq '-Mode Weekly'){'Weekly'}else{'DailyAuto'})</string></array><key>WorkingDirectory</key><string>$ProjectRoot</string><key>StartCalendarInterval</key><dict><key>Hour</key><integer>$($job.Hour)</integer><key>Minute</key><integer>$($job.Minute)</integer>$(if($job.Args -eq '-Mode Weekly'){'<key>Weekday</key><integer>1</integer>'})</dict><key>StandardOutPath</key><string>$(Join-Path $ProjectRoot '.local/launchd.log')</string><key>StandardErrorPath</key><string>$(Join-Path $ProjectRoot '.local/launchd-error.log')</string></dict></plist>
+<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>Label</key><string>$($job.Label)</string><key>ProgramArguments</key><array><string>$($job.Program)</string>$argumentXml</array><key>WorkingDirectory</key><string>$ProjectRoot</string><key>StartCalendarInterval</key><dict><key>Hour</key><integer>$($job.Hour)</integer><key>Minute</key><integer>$($job.Minute)</integer>$(if($job.Args -eq '-Mode Weekly'){'<key>Weekday</key><integer>1</integer>'})</dict><key>StandardOutPath</key><string>$(Join-Path $ProjectRoot '.local/launchd.log')</string><key>StandardErrorPath</key><string>$(Join-Path $ProjectRoot '.local/launchd-error.log')</string></dict></plist>
 "@
                 [IO.File]::WriteAllText($plist,$xml)
                 & launchctl bootstrap "gui/$(id -u)" $plist 2>$null
