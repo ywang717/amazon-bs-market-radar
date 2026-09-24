@@ -16,10 +16,11 @@ export type ReportView = ReportRecord & {
   sizeLabel: string;
 };
 
-export type ReportArchiveState = "loading" | "empty" | "ready";
+export type ReportArchiveState = "loading" | "empty" | "ready" | "error";
 
-export function resolveReportArchiveState(loaded: boolean, reportCount: number): ReportArchiveState {
+export function resolveReportArchiveState(loaded: boolean, reportCount: number, failed = false): ReportArchiveState {
   if (!loaded) return "loading";
+  if (failed) return "error";
   return reportCount > 0 ? "ready" : "empty";
 }
 

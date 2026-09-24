@@ -46,7 +46,7 @@ test("market context controls are URL-local accessible selects and never use glo
   assert.match(context, /<select[^>]*aria-label="市场分群"/);
   assert.match(context, /router\.push/);
   assert.match(context, /router\.replace/);
-  assert.match(context, /params\.delete\("date"\)/);
+  assert.doesNotMatch(context, /resetDate|params\.delete\("date"\)/);
   assert.match(contextLink, /serializeMarketContext/);
   assert.match(navigation, /contextKey/);
   assert.match(navigation, /category=\$\{context\.category\}&segment=\$\{context\.segment\}/);

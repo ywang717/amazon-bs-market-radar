@@ -20,9 +20,8 @@ export function MarketContext({ marketDate, validMarketDates = [marketDate], con
     if (resolved.needsNormalization || resolvedDate.needsNormalization) router.replace(`${pathname}?${normalizedQuery}`, { scroll: false });
   }, [normalizedQuery, pathname, resolved.needsNormalization, resolvedDate.needsNormalization, router]);
 
-  function navigate(next: MarketContextValue, options: { resetDate?: boolean } = {}) {
+  function navigate(next: MarketContextValue) {
     const params = new URLSearchParams(currentQuery);
-    if (options.resetDate) params.delete("date");
     const query = serializeMarketContext(next, params);
     router.push(`${pathname}?${query}`, { scroll: false });
   }
@@ -32,7 +31,7 @@ export function MarketContext({ marketDate, validMarketDates = [marketDate], con
       <span className="marketplaceLabel"><span aria-hidden="true">🇺🇸</span> 美国站</span><i aria-hidden="true">/</i>
       <label>市场<span className="srOnly">分类</span><select aria-label="市场分类" value={context.category} onChange={(event) => {
         const category = event.target.value as MarketContextValue["category"];
-        navigate({ ...context, category, segment: resolveSegmentForCategory(page, category, context.segment) }, { resetDate: true });
+        navigate({ ...context, category, segment: resolveSegmentForCategory(page, category, context.segment) });
       }}>{Object.values(MARKET_CONFIG).map((market) => <option value={market.categoryId} key={market.categoryId}>{market.label}</option>)}</select></label><i aria-hidden="true">/</i>
       <label>分群<select aria-label="市场分群" value={context.segment} onChange={(event) => navigate({ ...context, segment: event.target.value as MarketContextValue["segment"] })}>{MARKET_CONFIG[context.category].segments.map((segment) => <option value={segment.key} key={segment.key}>{segment.label}</option>)}</select></label>
     </div>

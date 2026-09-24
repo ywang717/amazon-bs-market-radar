@@ -67,7 +67,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
       <a href={analysisHref("seller_alert")} target="_top"><span>02</span><h2>经营预警</h2><p>高优先级 / 观察变化与人工核查项</p><b>进入 →</b></a>
       <a href={analysisHref("competition_strategy")} target="_top"><span>03</span><h2>竞争观察</h2><p>基于充分证据的描述性市场事实</p><b>进入 →</b></a>
     </section>
-    <div className="sectionHeading reportArchiveHeading"><div><h2>已验证报告归档</h2><p>只有已验证 PDF 才提供下载</p></div><button className="selectButton">全部报告⌄</button></div>
+    <div className="sectionHeading reportArchiveHeading"><div><h2>已验证报告归档</h2><p>只有已验证 PDF 才提供下载</p></div><a className="selectButton" href="#report-archive">全部报告⌄</a></div>
     <ReportsArchive context={context} marketDate={category.marketDate} />
   </>;
 }

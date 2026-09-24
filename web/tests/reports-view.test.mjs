@@ -26,9 +26,11 @@ test("ignores report records with unsafe keys or unknown categories", () => {
   assert.deepEqual(rows, []);
 });
 
-test("resolves report archive loading, empty, and ready states", () => {
+test("resolves report archive loading, empty, ready, and error states", () => {
   assert.equal(typeof reportsView.resolveReportArchiveState, "function");
   assert.equal(reportsView.resolveReportArchiveState(false, 0), "loading");
   assert.equal(reportsView.resolveReportArchiveState(true, 0), "empty");
   assert.equal(reportsView.resolveReportArchiveState(true, 2), "ready");
+  assert.equal(reportsView.resolveReportArchiveState(true, 0, true), "error");
+  assert.equal(reportsView.resolveReportArchiveState(true, 2, true), "error");
 });
