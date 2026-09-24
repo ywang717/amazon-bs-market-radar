@@ -16,7 +16,10 @@ export function ContextLink({ href, children, className, target, ...props }: {
   const searchParams = useSearchParams();
   const [browserSearch, setBrowserSearch] = useState("");
   useEffect(() => {
-    const sync = () => setBrowserSearch(window.location.search.slice(1));
+    const sync = (event?: Event) => {
+      const detail = event instanceof CustomEvent && typeof event.detail?.search === "string" ? event.detail.search : window.location.search.slice(1);
+      setBrowserSearch(detail.replace(/^\?/, ""));
+    };
     sync();
     window.addEventListener("popstate", sync);
     window.addEventListener("market-radar:navigation", sync);

@@ -50,7 +50,7 @@ test("market context controls are URL-local accessible selects and never use glo
   assert.match(contextLink, /serializeMarketContext/);
   assert.match(contextLink, /window\.location\.search\.slice\(1\)/);
   assert.match(contextLink, /market-radar:navigation/);
-  assert.match(context, /market-radar:navigation/);
+  assert.match(context, /CustomEvent\("market-radar:navigation", \{ detail: \{ search: query \} \}\)/);
   assert.match(navigation, /contextKey/);
   assert.match(navigation, /category=\$\{context\.category\}&segment=\$\{context\.segment\}/);
   assert.doesNotMatch(`${context}\n${navigation}\n${contextLink}`, /localStorage|sessionStorage|storage event/i);

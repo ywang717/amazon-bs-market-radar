@@ -24,7 +24,7 @@ export function MarketContext({ marketDate, validMarketDates = [marketDate], con
     const params = new URLSearchParams(currentQuery);
     const query = serializeMarketContext(next, params);
     router.push(`${pathname}?${query}`, { scroll: false });
-    window.dispatchEvent(new Event("market-radar:navigation"));
+    window.dispatchEvent(new CustomEvent("market-radar:navigation", { detail: { search: query } }));
   }
 
   return <><div className="marketContextBar">
@@ -39,8 +39,9 @@ export function MarketContext({ marketDate, validMarketDates = [marketDate], con
     <label className="dateControl"><span className="srOnly">市场日期</span><select aria-label="市场日期" value={marketDate} onChange={(event) => {
       const params = new URLSearchParams(currentQuery);
       params.set("date", event.target.value);
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-      window.dispatchEvent(new Event("market-radar:navigation"));
+      const query = params.toString();
+      router.push(`${pathname}?${query}`, { scroll: false });
+      window.dispatchEvent(new CustomEvent("market-radar:navigation", { detail: { search: query } }));
     }}>{validMarketDates.toSorted().toReversed().map((date) => <option value={date} key={date}>{formatMarketDate(date)}</option>)}</select></label>
   </div>{resolvedDate.needsNormalization ? <p className="sourceNotice" role="status">所选日期 {searchParams.get("date")} 不是有效市场日，已回落到 {resolvedDate.marketDate ? formatMarketDate(resolvedDate.marketDate) : "最近有效市场日"}。</p> : null}</>;
 }
