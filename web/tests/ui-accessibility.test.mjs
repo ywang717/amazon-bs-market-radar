@@ -48,6 +48,9 @@ test("market context controls are URL-local accessible selects and never use glo
   assert.match(context, /router\.replace/);
   assert.doesNotMatch(context, /resetDate|params\.delete\("date"\)/);
   assert.match(contextLink, /serializeMarketContext/);
+  assert.match(contextLink, /window\.location\.search\.slice\(1\)/);
+  assert.match(contextLink, /market-radar:navigation/);
+  assert.match(context, /market-radar:navigation/);
   assert.match(navigation, /contextKey/);
   assert.match(navigation, /category=\$\{context\.category\}&segment=\$\{context\.segment\}/);
   assert.doesNotMatch(`${context}\n${navigation}\n${contextLink}`, /localStorage|sessionStorage|storage event/i);
@@ -56,7 +59,7 @@ test("market context controls are URL-local accessible selects and never use glo
 test("context links disable Vinext prefetch while keeping context-aware client navigation", () => {
   const contextLink = read("../app/components/ContextLink.tsx");
   assert.match(contextLink, /<Link[^>]*prefetch=\{false\}/);
-  assert.match(contextLink, /searchParams\.has\("segment"\)/);
+  assert.match(contextLink, /activeParams\.has\("segment"\)/);
   assert.match(contextLink, /hasExplicitSegment \? current\.segment : null/);
   for (const file of ["../app/analysis/page.tsx", "../app/analysis/SellerIntelligenceCenter.tsx", "../app/products/[asin]/page.tsx"]) {
     const source = read(file);

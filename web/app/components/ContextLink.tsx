@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { pageMarketForPath, resolvePageMarketContext, resolveSegmentForCategory, serializeMarketContext } from "@/lib/market-context";
 
 export function ContextLink({ href, children, className, target, ...props }: {
@@ -13,10 +14,23 @@ export function ContextLink({ href, children, className, target, ...props }: {
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const current = resolvePageMarketContext(pageMarketForPath(pathname), new URLSearchParams(searchParams.toString())).context;
-  const hasExplicitSegment = searchParams.has("segment");
+  const [browserSearch, setBrowserSearch] = useState("");
+  useEffect(() => {
+    const sync = () => setBrowserSearch(window.location.search.slice(1));
+    sync();
+    window.addEventListener("popstate", sync);
+    window.addEventListener("market-radar:navigation", sync);
+    return () => {
+      window.removeEventListener("popstate", sync);
+      window.removeEventListener("market-radar:navigation", sync);
+    };
+  }, []);
+  const activeSearch = browserSearch || searchParams.toString();
+  const activeParams = new URLSearchParams(activeSearch);
+  const current = resolvePageMarketContext(pageMarketForPath(pathname), activeParams).context;
+  const hasExplicitSegment = activeParams.has("segment");
   const targetUrl = new URL(href, "https://market-radar.local");
-  const currentDate = searchParams.get("date");
+  const currentDate = activeParams.get("date");
   if (currentDate && !targetUrl.searchParams.has("date")) targetUrl.searchParams.set("date", currentDate);
   const targetPage = pageMarketForPath(targetUrl.pathname);
   const context = { ...current, segment: resolveSegmentForCategory(targetPage, current.category, hasExplicitSegment ? current.segment : null) };
