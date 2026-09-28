@@ -156,6 +156,8 @@ function buildStrategyFacts(rows: DashboardView["categoryRows"], completeMarketD
         retainedTop10: [...currentTop10].filter((asin) => previousTop10.has(asin)).length,
         entries: [...currentTop10].filter((asin) => !previousTop10.has(asin)).length,
         exits: [...previousTop10].filter((asin) => !currentTop10.has(asin)).length,
+        currentTop10Slots: currentTop10.size,
+        baselineTop10Slots: previousTop10.size,
         baselineDate: row.comparison.baselineDate,
       }
     : null;

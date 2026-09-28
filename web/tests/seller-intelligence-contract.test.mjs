@@ -330,3 +330,37 @@ test("rejects malformed weekly field coverage without throwing", () => {
   assert.equal(result.ok, false);
   assert.match(result.errors.join(" "), /覆盖率|策略/);
 });
+
+test("accepts actual segment Top10 slot counts and conserves asymmetric entry and exit sets", () => {
+  const report = {
+    ...alert,
+    key: "competition-strategy/weekly/2026-08-24/pressure_washers.json",
+    reportKind: "weekly",
+    profile: "competition_strategy",
+    signals: [],
+    sections: [{ title: "证据说明", statements: ["当前仅展示可验证事实。"] }],
+    strategy: {
+      priceBands: [{ lower: 100, upper: 200, sampleSize: 7 }],
+      rankingConcentration: { top10RankWeightPercent: 50, top10Slots: 7 },
+      topStability: {
+        retainedTop10: 4,
+        entries: 3,
+        exits: 1,
+        currentTop10Slots: 7,
+        baselineTop10Slots: 5,
+        baselineDate: "2026-08-23",
+      },
+      competitorPool: null,
+      specificationTrend: null,
+    },
+  };
+  assert.equal(validateSellerIntelligenceReport(report).ok, true);
+  assert.equal(validateSellerIntelligenceReport({
+    ...report,
+    strategy: { ...report.strategy, topStability: { ...report.strategy.topStability, entries: 4 } },
+  }).ok, false);
+  assert.equal(validateSellerIntelligenceReport({
+    ...report,
+    strategy: { ...report.strategy, topStability: { ...report.strategy.topStability, exits: 2 } },
+  }).ok, false);
+});

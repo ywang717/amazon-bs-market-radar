@@ -661,3 +661,40 @@ test("live seller intelligence uses the shared analytical market universe", asyn
   });
   assert.equal(report.evidence.sampleSize, 3);
 });
+
+test("competition strategy keeps real segment Top10 sets with asymmetric slot counts", async () => {
+  const { buildLiveSellerIntelligence } = await loadSellerIntelligenceModule();
+  const data = strategyDashboard(5);
+  const focus = data.categoryRows[0];
+  const current = focus.observations;
+  const previous = Array.from({ length: 30 }, (_, index) => index === 4
+    ? observation(5, { asin: "B000000099" })
+    : index === 5 || index === 6
+      ? observation(index + 1, { asin: `B00000009${index}` })
+      : observation(index + 1));
+  data.categoryRows[0] = {
+    ...focus,
+    previousObservations: previous,
+    comparison: { ...focus.comparison, ready: true, baselineDate: "2026-08-23" },
+    history: Array.from({ length: 5 }, (_, index) => ({
+      marketDate: `2026-08-${String(20 + index).padStart(2, "0")}`,
+      observations: index === 3 ? previous : current,
+    })),
+  };
+  data.productMetadata = [...current.slice(0, 7), previous[4]].map(({ asin }) => ({ asin, productType: "electric_pressure_washer" }));
+  const report = await buildLiveSellerIntelligence(data, {
+    profile: "competition_strategy",
+    categoryKey: "pressure_washers",
+    context: { marketplace: "US", category: "pressure_washers", segment: "machines" },
+  });
+  assert.equal(report.evidence.sampleSize, 7);
+  assert.equal(report.strategy.rankingConcentration.top10Slots, 7);
+  assert.deepEqual(report.strategy.topStability, {
+    retainedTop10: 4,
+    entries: 3,
+    exits: 1,
+    currentTop10Slots: 7,
+    baselineTop10Slots: 5,
+    baselineDate: "2026-08-23",
+  });
+});
