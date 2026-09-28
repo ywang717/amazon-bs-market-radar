@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { buildReportView, resolveReportArchiveState, type ReportRecord, type ReportView } from "@/lib/reports-view";
+import { buildReportView, resolveReportArchiveState, type ReportKindFilter, type ReportRecord, type ReportView } from "@/lib/reports-view";
 import { QualityBadge } from "../components/QualityBadge";
 import { serializeMarketContext, type MarketContext } from "@/lib/market-context";
 
-export function ReportsArchive({ context, marketDate }: { context: MarketContext; marketDate: string }) {
+export function ReportsArchive({ context, marketDate, kind }: { context: MarketContext; marketDate: string; kind: ReportKindFilter }) {
   const [reports, setReports] = useState<ReportView[]>([]);
   const [loadedQuery, setLoadedQuery] = useState("");
   const [errorQuery, setErrorQuery] = useState("");
-  const query = serializeMarketContext(context, { date: marketDate });
+  const query = serializeMarketContext(context, { date: marketDate, kind });
   const loaded = loadedQuery === query;
   const visibleReports = loaded ? reports : [];
 
@@ -35,5 +35,5 @@ export function ReportsArchive({ context, marketDate }: { context: MarketContext
   const badgeLabel = status === "loading" ? "正在读取" : status === "ready" ? `已同步 ${visibleReports.length} 份` : status === "error" ? "读取失败" : "暂无归档";
   const badgeTone = status === "ready" ? "good" : status === "error" ? "danger" : "warning";
   const emptyLabel = status === "loading" ? "正在读取已验证报告…" : status === "error" ? "报告服务暂时不可用，请稍后重试。" : "暂无已验证报告归档";
-  return <><section className="reportSummary"><article className="panel"><span>已同步日报</span><strong>{dailyCount}</strong><small>每榜单独立 PDF</small></article><article className="panel"><span>已同步周报</span><strong>{weeklyCount}</strong><small>按榜单独立归档</small></article><article className="panel"><span>当前同步状态</span><strong className="smaller">{statusLabel}</strong><small>只展示已成功上传的 PDF</small></article></section><section id="report-archive" className="panel reportList"><div className="panelHead"><div><h2>报告归档</h2><p>报告标题包含对应市场日信息</p></div><QualityBadge tone={badgeTone}>{badgeLabel}</QualityBadge></div>{status === "ready" ? visibleReports.map((report) => <article key={report.key}><div className="pdfIcon">PDF</div><div><b>{report.label}</b><p>{report.kindLabel} · 市场日 {report.market_date}</p></div><span>{report.sizeLabel}</span><a className="downloadButton" href={report.href} target="_blank" rel="noreferrer">查看 PDF</a></article>) : <p className="emptyReports">{emptyLabel}</p>}</section></>;
+  return <><section className="reportSummary"><article className="panel"><span>已同步日报</span><strong>{dailyCount}</strong><small>每榜单独立 PDF</small></article><article className="panel"><span>已同步周报</span><strong>{weeklyCount}</strong><small>按榜单独立归档</small></article><article className="panel"><span>当前同步状态</span><strong className="smaller">{statusLabel}</strong><small>只展示已成功上传的 PDF</small></article></section><section id="report-archive" className="panel reportList"><div className="panelHead"><div><h2>报告归档</h2><p>报告标题包含对应市场日信息</p></div><QualityBadge tone={badgeTone}>{badgeLabel}</QualityBadge></div>{status === "ready" ? visibleReports.map((report) => <article key={report.key}><div className="pdfIcon">PDF</div><div><b>{report.label}</b><p>{report.kindLabel} · 市场日 {report.market_date} · {report.segmentLabel}</p></div><span>{report.sizeLabel}</span><a className="downloadButton" href={report.href} target="_blank" rel="noreferrer">查看 PDF</a></article>) : <p className="emptyReports">{emptyLabel}</p>}</section></>;
 }

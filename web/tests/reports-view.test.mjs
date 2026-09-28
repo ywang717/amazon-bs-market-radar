@@ -3,7 +3,18 @@ import test from "node:test";
 
 import * as reportsView from "../lib/reports-view.ts";
 
-const { buildReportView } = reportsView;
+const { buildReportView, filterReportRecords, parseReportKindFilter } = reportsView;
+
+test("filters archived reports by the requested report type without changing records", () => {
+  const records = [
+    { key: "daily/2026-08-12/pressure_washers.pdf", market_date: "2026-08-12", category_key: "pressure_washers", kind: "daily", title: "Daily", byte_count: 1 },
+    { key: "weekly/2026-08-12/pressure_washers.pdf", market_date: "2026-08-12", category_key: "pressure_washers", kind: "weekly", title: "Weekly", byte_count: 2 },
+  ];
+  assert.equal(parseReportKindFilter("unknown"), "all");
+  assert.deepEqual(filterReportRecords(records, "daily").map(({ key }) => key), ["daily/2026-08-12/pressure_washers.pdf"]);
+  assert.deepEqual(filterReportRecords(records, "weekly").map(({ key }) => key), ["weekly/2026-08-12/pressure_washers.pdf"]);
+  assert.equal(filterReportRecords(records, "all"), records);
+});
 
 test("turns uploaded report records into Chinese downloadable report rows", () => {
   const rows = buildReportView([

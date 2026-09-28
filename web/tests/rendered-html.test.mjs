@@ -520,7 +520,7 @@ test("renders dense market intelligence routes with shared product and rank sema
   assert.match(marketHtml, /7(?:<!-- -->)?D/);
   assert.match(marketHtml, /30(?:<!-- -->)?D/);
   assert.match(marketHtml, /整机样本/);
-  assert.match(marketHtml, /Top30 商品结构[\s\S]*表面清洁器/);
+  assert.match(marketHtml, /Amazon 原始 Top30 商品结构[\s\S]*不受整机\/配件分群筛选影响[\s\S]*表面清洁器/);
   assert.doesNotMatch(marketHtml, /view=brands/);
   assert.match(marketHtml, /href="\/brands\?[^"]*category=pressure_washers[^"]*segment=machines/);
 
@@ -545,6 +545,12 @@ test("renders dense market intelligence routes with shared product and rank sema
   assert.doesNotMatch(reportHtml, /北京时间|北京时区|Beijing|Asia\/Shanghai|UTC\+8|China Standard Time/i);
   assert.match(reportHtml, /细分市场变化[\s\S]*表面清洁器/);
   assert.doesNotMatch(reportHtml, /High \/ Watch/);
+
+  const weeklyReports = await render("/reports?category=pressure_washers&segment=machines&kind=weekly", env);
+  const weeklyReportHtml = await weeklyReports.text();
+  assert.match(weeklyReportHtml, /href="\?date=2026-08-13&amp;kind=daily&amp;category=pressure_washers&amp;segment=machines"/);
+  assert.match(weeklyReportHtml, /aria-current="page"[^>]*href="\?date=2026-08-13&amp;kind=weekly&amp;category=pressure_washers&amp;segment=machines"/);
+  assert.match(weeklyReportHtml, /全部报告⌄/);
 });
 
 test("keeps movers and entrants on the 1D valid-market-day contract", async () => {

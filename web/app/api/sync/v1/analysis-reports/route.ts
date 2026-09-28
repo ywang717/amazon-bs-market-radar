@@ -39,9 +39,9 @@ async function storeDailyReportBundle(payload: unknown) {
   const marketDate = reports[0].marketDate;
   const receiptSha256 = reports[0].receiptSha256;
   const now = new Date().toISOString();
-  const incomingRows = reports.map((_, index) => `${index === 0 ? "SELECT" : "UNION ALL SELECT"} ? AS key, ? AS report_kind, ? AS market_date, ? AS category_key, ? AS generated_at, ? AS generator_version, ? AS content_sha256, ? AS content_json, ? AS imported_at`).join(" ");
+  const incomingRows = reports.map((_, index) => `${index === 0 ? "SELECT" : "UNION ALL SELECT"} ? AS key, ? AS report_kind, ? AS market_date, ? AS category_key, ? AS segment_key, ? AS generated_at, ? AS generator_version, ? AS content_sha256, ? AS content_json, ? AS imported_at`).join(" ");
   const placeholders = reportScopes.map(() => "?").join(", ");
-  const guardedUpsert = `INSERT INTO analysis_reports (key, report_kind, market_date, category_key, generated_at, generator_version, content_sha256, content_json, imported_at)
+  const guardedUpsert = `INSERT INTO analysis_reports (key, report_kind, market_date, category_key, segment_key, generated_at, generator_version, content_sha256, content_json, imported_at)
     WITH existing_cohort AS (
       SELECT key,
         CASE
@@ -56,7 +56,7 @@ async function storeDailyReportBundle(payload: unknown) {
       FROM analysis_reports
       WHERE report_kind = 'daily' AND market_date = ?
     )
-    SELECT incoming.key, incoming.report_kind, incoming.market_date, incoming.category_key, incoming.generated_at, incoming.generator_version, incoming.content_sha256, incoming.content_json, incoming.imported_at
+    SELECT incoming.key, incoming.report_kind, incoming.market_date, incoming.category_key, incoming.segment_key, incoming.generated_at, incoming.generator_version, incoming.content_sha256, incoming.content_json, incoming.imported_at
     FROM (${incomingRows}) AS incoming
     WHERE EXISTS (SELECT 1 FROM snapshots WHERE market_date = ? AND lower(receipt_sha256) = ?)
       AND (
@@ -74,8 +74,8 @@ async function storeDailyReportBundle(payload: unknown) {
           AND (SELECT MAX(receipt_sha256) FROM existing_cohort) <> ?
         )
       )
-    ON CONFLICT(key) DO UPDATE SET report_kind=excluded.report_kind, market_date=excluded.market_date, category_key=excluded.category_key, generated_at=excluded.generated_at, generator_version=excluded.generator_version, content_sha256=excluded.content_sha256, content_json=excluded.content_json, imported_at=excluded.imported_at`;
-  const values = reports.flatMap((report) => [report.key, report.reportKind, report.marketDate, report.categoryKey, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify(report), now]);
+    ON CONFLICT(key) DO UPDATE SET report_kind=excluded.report_kind, market_date=excluded.market_date, category_key=excluded.category_key, segment_key=excluded.segment_key, generated_at=excluded.generated_at, generator_version=excluded.generator_version, content_sha256=excluded.content_sha256, content_json=excluded.content_json, imported_at=excluded.imported_at`;
+  const values = reports.flatMap((report) => [report.key, report.reportKind, report.marketDate, report.categoryKey, report.segmentKey ?? null, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify(report), now]);
   values.unshift(marketDate);
   values.push(marketDate, receiptSha256, ...reports.map((report) => report.key), receiptSha256);
   const writeResult = await db.prepare(guardedUpsert).bind(...values).run();
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     if (existing.content_sha256 === report.contentSha256) return Response.json({ status: "duplicate", key: report.key });
     return Response.json({ error: "immutable_key_conflict" }, { status: 409 });
   }
-  await db.prepare("INSERT INTO analysis_reports (key, report_kind, market_date, category_key, generated_at, generator_version, content_sha256, content_json, imported_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    .bind(report.key, report.reportKind, report.marketDate, report.categoryKey, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify(report), new Date().toISOString()).run();
+  await db.prepare("INSERT INTO analysis_reports (key, report_kind, market_date, category_key, segment_key, generated_at, generator_version, content_sha256, content_json, imported_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .bind(report.key, report.reportKind, report.marketDate, report.categoryKey, report.segmentKey ?? null, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify(report), new Date().toISOString()).run();
   return Response.json({ status: "imported", key: report.key }, { status: 201 });
 }

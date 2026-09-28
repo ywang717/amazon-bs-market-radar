@@ -84,3 +84,17 @@ test("applies the dedicated product metadata conflict guard migration twice over
   assert.match(guard.sql, /product_metadata_brand_conflict_guard_check/);
   database.close();
 });
+
+test("adds nullable report segment context without rewriting legacy rows", () => {
+  const database = new DatabaseSync(":memory:");
+  database.exec("CREATE TABLE reports (key TEXT PRIMARY KEY, market_date TEXT NOT NULL, category_key TEXT, kind TEXT NOT NULL, title TEXT NOT NULL, byte_count INTEGER NOT NULL, uploaded_at TEXT NOT NULL)");
+  database.exec("CREATE TABLE analysis_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)");
+  database.exec("CREATE TABLE seller_intelligence_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, profile TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)");
+  database.exec("INSERT INTO reports VALUES ('daily/2026-08-24/pressure_washers.pdf','2026-08-24','pressure_washers','daily','legacy',10,'2026-08-25')");
+  const migration = readFileSync(`${drizzleDirectory}0006_report_segment_context.sql`, "utf8");
+  for (const statement of migration.split("--> statement-breakpoint").map((value) => value.trim()).filter(Boolean)) database.exec(statement);
+  const columns = database.prepare("SELECT name FROM pragma_table_info('reports')").all().map(({ name }) => name);
+  assert.ok(columns.includes("segment_key"));
+  assert.equal(database.prepare("SELECT segment_key FROM reports WHERE key = ?").get("daily/2026-08-24/pressure_washers.pdf").segment_key, null);
+  database.close();
+});

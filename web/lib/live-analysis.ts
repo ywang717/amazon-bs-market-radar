@@ -1,5 +1,6 @@
 import type { AnalysisReport, AnalysisReportKind } from "./analysis-report-contract.ts";
 import type { CategoryKey } from "./catalog.ts";
+import type { SegmentKey } from "./generated/category-registry.ts";
 
 type LiveRow = {
   key: CategoryKey;
@@ -26,7 +27,7 @@ async function sha256(value: unknown) {
   return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export async function buildLiveAnalysisReport(data: LiveDashboard, options: { reportKind: AnalysisReportKind; categoryKey: CategoryKey | null }): Promise<AnalysisReport> {
+export async function buildLiveAnalysisReport(data: LiveDashboard, options: { reportKind: AnalysisReportKind; categoryKey: CategoryKey | null; segmentKey?: SegmentKey | null }): Promise<AnalysisReport> {
   const rows = options.categoryKey ? data.categoryRows.filter((row) => row.key === options.categoryKey) : data.categoryRows;
   const complete = rows.length > 0 && rows.every((row) => row.quality.complete);
   const label = options.categoryKey ? rows[0]?.label ?? "所选榜单" : "三个榜单";
@@ -54,6 +55,7 @@ export async function buildLiveAnalysisReport(data: LiveDashboard, options: { re
     reportKind: options.reportKind,
     marketDate: data.marketDate,
     categoryKey: options.categoryKey,
+    ...(options.segmentKey ? { segmentKey: options.segmentKey } : {}),
     generatedAt: data.observedAt,
     generatorVersion: "rules-v1",
     evidence: { level: data.evidence, completeMarketDays: data.completeMarketDays, sampleSize, complete, fieldCoverage: { price: coverage("priceCoverage"), rating: coverage("ratingCoverage"), reviews: coverage("reviewsCoverage") } },

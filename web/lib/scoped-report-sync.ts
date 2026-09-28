@@ -1,5 +1,5 @@
 type CategoryReport = {
-  key: string; reportKind: string; marketDate: string; categoryKey: string | null;
+  key: string; reportKind: string; marketDate: string; categoryKey: string | null; segmentKey?: string | null;
   generatedAt: string; generatorVersion: string; contentSha256: string; profile?: string;
 };
 
@@ -20,8 +20,8 @@ export async function storeCategoryReport(db: D1Database, table: "analysis_repor
     OR (EXISTS (SELECT 1 FROM snapshots WHERE market_date = ? AND lower(receipt_sha256) = ?)
       AND NOT EXISTS (SELECT 1 FROM category_capture_receipts WHERE market_date = ? AND category_key = ?))`;
   const authorizationValues = [report.marketDate, report.categoryKey, receiptSha256, report.marketDate, receiptSha256, report.marketDate, report.categoryKey];
-  const columns = ["key", "report_kind", "market_date", "category_key", "generated_at", "generator_version", "content_sha256", "content_json", "imported_at"];
-  const values = [report.key, report.reportKind, report.marketDate, report.categoryKey, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify({ ...report, receiptSha256 }), new Date().toISOString()];
+  const columns = ["key", "report_kind", "market_date", "category_key", "segment_key", "generated_at", "generator_version", "content_sha256", "content_json", "imported_at"];
+  const values = [report.key, report.reportKind, report.marketDate, report.categoryKey, report.segmentKey ?? null, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify({ ...report, receiptSha256 }), new Date().toISOString()];
   if (table === "seller_intelligence_reports") {
     columns.push("profile");
     values.push(report.profile ?? "");

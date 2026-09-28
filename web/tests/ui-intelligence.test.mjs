@@ -24,6 +24,7 @@ import {
   formatExactNumber,
   formatReviewChange,
   formatPrice,
+  formatPriceChange,
   formatDeal,
   formatRating,
   formatPercentage,
@@ -517,6 +518,19 @@ test("formats market numbers dates and long titles consistently", () => {
   assert.equal(formatCompactDate("2026-08-26"), "Aug 26");
   assert.equal(compactProductTitle("Short title"), "Short title");
   assert.equal(compactProductTitle("One two three four five six seven eight nine ten eleven twelve thirteen fourteen", 30), "One two three four five six…");
+});
+
+test("keeps a one-cent price move as an Activity signal", () => {
+  const current = [observation("CENTMOVE", 5, "Cent move", { price: 349.98 })];
+  const previous = [observation("CENTMOVE", 5, "Cent move", { price: 349.99 })];
+  const row = { key: "pressure_washers", label: "高压清洗机", marketDate: "2026-08-27", observations: current, previousObservations: previous, comparison: { ready: true, baselineDate: "2026-08-26", movers: [] } };
+  const signal = buildMarketSignals({ categoryRows: [row] }).find(({ kind }) => kind === "price_change");
+  assert.equal(signal?.level, "activity");
+  assert.equal(signal?.magnitude, 0);
+});
+
+test("formats cent-level price changes precisely and keeps tiny moves ordinary", () => {
+  assert.equal(formatPriceChange(349.99, 349.98), "$349.99 → $349.98 · 差额 $0.01（下降） · 变化幅度小于 0.1%");
 });
 
 test("formats malformed numeric display values as missing instead of crashing", () => {

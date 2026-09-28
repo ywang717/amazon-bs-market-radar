@@ -1,5 +1,5 @@
 import type { MarketSignal } from "@/lib/ui-intelligence";
-import { compactProductTitle, formatCompactNumber, formatExactNumber, formatPrice, formatReviewChange } from "@/lib/ui-intelligence";
+import { compactProductTitle, formatCompactNumber, formatExactNumber, formatPrice, formatPriceChange, formatReviewChange } from "@/lib/ui-intelligence";
 import { RankDelta, RankDisplay } from "./RankDisplay";
 import { serializeMarketContext, type MarketContext } from "@/lib/market-context";
 
@@ -51,6 +51,9 @@ export function SignalCard({ signal, context, marketDate, featured = false }: { 
   const badge = signal.level === "high" ? "高优先级" : signal.level === "watch" ? "观察" : "动态";
   const brandSeatSignal = signal.kind === "brand_expansion" || signal.kind === "brand_contraction";
   const brandSeatExplanation = signal.delta === null ? "品牌席位无变化" : `较上一有效市场日${signal.delta > 0 ? "增加" : "减少"} ${Math.abs(signal.delta)} 个席位`;
+  const priceChange = signal.kind === "price_change" && typeof signal.previousValue === "number" && typeof signal.currentValue === "number"
+    ? formatPriceChange(signal.previousValue, signal.currentValue)
+    : null;
   const reviewChange = (signal.kind === "review_momentum" || signal.kind === "review_anomaly") && typeof signal.previousValue === "number" && typeof signal.currentValue === "number"
     ? formatReviewChange(signal.previousValue, signal.currentValue)
     : null;
@@ -59,7 +62,7 @@ export function SignalCard({ signal, context, marketDate, featured = false }: { 
     <div className="signalHeader"><span className={`signalBadge ${signal.level}`}>{badge}</span><span>{signal.categoryLabel}</span></div>
     <h3 title={signal.title}>{compactProductTitle(signal.title, featured ? 72 : 48)}</h3><p className="signalSummary">{signalLabels[signal.kind]}</p>
     {(signal.previousRank !== null || signal.currentRank !== null) && <div className="signalRanks">{signal.previousRank !== null && <strong>#{signal.previousRank}</strong>}<span aria-hidden="true">→</span><RankDisplay rank={signal.currentRank} delta={signal.delta} /></div>}
-    {signal.previousValue !== undefined && signal.currentValue !== undefined && <p className="signalValueChange">{reviewChange ? <b>{reviewChange}</b> : <><b>{signalValue(signal, signal.previousValue)}</b> → <b>{signalValue(signal, signal.currentValue)}</b>{signal.magnitude !== null && signal.magnitude !== undefined ? ` · 变化幅度 ${signal.magnitude}${signal.kind === "price_change" ? "%" : ""}` : ""}</>}</p>}
+    {signal.previousValue !== undefined && signal.currentValue !== undefined && <p className="signalValueChange">{priceChange ? <b>{priceChange}</b> : reviewChange ? <b>{reviewChange}</b> : <><b>{signalValue(signal, signal.previousValue)}</b> → <b>{signalValue(signal, signal.currentValue)}</b>{signal.magnitude !== null && signal.magnitude !== undefined ? ` · 变化幅度 ${signal.magnitude}${signal.kind === "price_change" ? "%" : ""}` : ""}</>}</p>}
     <div className="signalFacts">
       {signal.delta !== null && <span>变化 {brandSeatSignal
         ? <span className={`rankDelta ${signal.delta > 0 ? "up" : signal.delta < 0 ? "down" : "neutral"}`} aria-label={brandSeatExplanation} title={brandSeatExplanation}><span aria-hidden="true">{signal.delta > 0 ? "↑" : signal.delta < 0 ? "↓" : "—"}</span>{signal.delta === 0 ? null : `${Math.abs(signal.delta)} 席`}</span>

@@ -9,6 +9,7 @@ import { SignalCard } from "../components/SignalCard";
 import { EmptyState } from "../components/EmptyState";
 import { ProductIdentity, productTypeLabel } from "../components/ProductIdentity";
 import { RankDelta, RankDisplay } from "../components/RankDisplay";
+import { parseReportKindFilter, type ReportKindFilter } from "@/lib/reports-view";
 
 export const metadata: Metadata = { title: "报告" };
 
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ReportsPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const query = searchParams ? await searchParams : {};
+  const kind = parseReportKindFilter(typeof query.kind === "string" ? query.kind : undefined);
   const { context } = resolvePageMarketContext("reports", query);
   const labels = marketContextLabels(context);
   const data = await loadLiveDashboard({ marketDate: typeof query.date === "string" ? query.date : undefined });
@@ -67,7 +69,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
       <a href={analysisHref("seller_alert")} target="_top"><span>02</span><h2>经营预警</h2><p>高优先级 / 观察变化与人工核查项</p><b>进入 →</b></a>
       <a href={analysisHref("competition_strategy")} target="_top"><span>03</span><h2>竞争观察</h2><p>基于充分证据的描述性市场事实</p><b>进入 →</b></a>
     </section>
-    <div className="sectionHeading reportArchiveHeading"><div><h2>已验证报告归档</h2><p>只有已验证 PDF 才提供下载</p></div><a className="selectButton" href="#report-archive">全部报告⌄</a></div>
-    <ReportsArchive context={context} marketDate={category.marketDate} />
+    <div className="sectionHeading reportArchiveHeading"><div><h2>已验证报告归档</h2><p>只有已验证 PDF 才提供下载</p></div><nav className="archiveFilters" aria-label="报告类型筛选">{(["all", "daily", "weekly"] as ReportKindFilter[]).map((filter) => <a key={filter} className={`selectButton${kind === filter ? " active" : ""}`} aria-current={kind === filter ? "page" : undefined} href={`?${serializeMarketContext(context, { date: category.marketDate, kind: filter })}`}>{filter === "all" ? "全部报告⌄" : filter === "daily" ? "日报" : "周报"}</a>)}</nav></div>
+    <ReportsArchive context={context} marketDate={category.marketDate} kind={kind} />
   </>;
 }

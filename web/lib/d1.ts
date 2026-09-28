@@ -18,9 +18,9 @@ export async function ensureSchema(db: D1Database) {
     `CREATE TABLE IF NOT EXISTS category_days (market_date TEXT NOT NULL, category_key TEXT NOT NULL, source_url TEXT NOT NULL, observation_count INTEGER NOT NULL, complete INTEGER NOT NULL, missing_ranks_json TEXT NOT NULL, PRIMARY KEY (market_date, category_key))`,
     `CREATE TABLE IF NOT EXISTS observations (market_date TEXT NOT NULL, category_key TEXT NOT NULL, rank INTEGER NOT NULL, asin TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL, price REAL, rating REAL, reviews INTEGER, PRIMARY KEY (market_date, category_key, rank))`,
     `CREATE TABLE IF NOT EXISTS observation_discounts (market_date TEXT NOT NULL, category_key TEXT NOT NULL, rank INTEGER NOT NULL, has_discount INTEGER, discounts_json TEXT NOT NULL, PRIMARY KEY (market_date, category_key, rank))`,
-    `CREATE TABLE IF NOT EXISTS reports (key TEXT PRIMARY KEY, market_date TEXT NOT NULL, category_key TEXT, kind TEXT NOT NULL, title TEXT NOT NULL, byte_count INTEGER NOT NULL, uploaded_at TEXT NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS analysis_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS seller_intelligence_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, profile TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS reports (key TEXT PRIMARY KEY, market_date TEXT NOT NULL, category_key TEXT, segment_key TEXT, kind TEXT NOT NULL, title TEXT NOT NULL, byte_count INTEGER NOT NULL, uploaded_at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS analysis_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, segment_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS seller_intelligence_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, profile TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, segment_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS product_metadata (marketplace TEXT NOT NULL, asin TEXT NOT NULL, product_type TEXT NOT NULL, classification_confidence TEXT NOT NULL, classification_rule_id TEXT, classification_rule_version TEXT NOT NULL, classification_evidence_json TEXT NOT NULL, raw_brand TEXT, normalized_brand TEXT, normalized_brand_key TEXT, brand_alias_rule_id TEXT, brand_source TEXT NOT NULL, first_seen_market_date TEXT NOT NULL, last_seen_market_date TEXT NOT NULL, PRIMARY KEY (marketplace, asin))`,
     `CREATE TABLE IF NOT EXISTS product_metadata_brand_conflict_guard (guard_key TEXT PRIMARY KEY, conflict INTEGER NOT NULL, CONSTRAINT product_metadata_brand_conflict_guard_check CHECK (conflict = 0))`,
     `CREATE INDEX IF NOT EXISTS idx_observations_asin_date ON observations (asin, market_date)`,
@@ -31,4 +31,7 @@ export async function ensureSchema(db: D1Database) {
     `CREATE INDEX IF NOT EXISTS idx_product_metadata_brand ON product_metadata (normalized_brand_key)`,
   ];
   await db.batch(statements.map((sql) => db.prepare(sql)));
+  for (const table of ["reports", "analysis_reports", "seller_intelligence_reports"]) {
+    try { await db.prepare(`ALTER TABLE ${table} ADD COLUMN segment_key TEXT`).run(); } catch { /* Existing deployments already have the nullable column. */ }
+  }
 }

@@ -5,7 +5,7 @@ import type { AnalysisReport } from "@/lib/analysis-report-contract";
 import { categories } from "@/lib/catalog";
 import { marketContextLabels, serializeMarketContext, type MarketContext } from "@/lib/market-context";
 
-type ReportListRow = Pick<AnalysisReport, "key" | "marketDate" | "categoryKey" | "generatedAt" | "generatorVersion"> & { report_kind: "daily" | "weekly" };
+type ReportListRow = Pick<AnalysisReport, "key" | "marketDate" | "categoryKey" | "segmentKey" | "generatedAt" | "generatorVersion"> & { report_kind: "daily" | "weekly" };
 
 const labelFor = (categoryKey: string | null) => categoryKey ? categories.find(({ key }) => key === categoryKey)?.label ?? "未知榜单" : "跨榜单总览";
 

@@ -640,11 +640,11 @@ test("list and live routes validate inputs and keep database failures private", 
     environment({ throwOnLiveRead: true }),
   );
   assert.equal(failedLive.status, 503);
-  assert.deepEqual(await failedLive.json(), { error: "unavailable" });
+  assert.deepEqual(await failedLive.json(), { error: { code: "database", message: "数据服务暂时不可用，请稍后重试。" } });
 
   const failedList = await request("/api/public/seller-intelligence", environment({ throwOnList: true }));
-  assert.equal(failedList.status, 200);
-  assert.deepEqual(await failedList.json(), { reports: [] });
+  assert.equal(failedList.status, 503);
+  assert.deepEqual(await failedList.json(), { error: { code: "database", message: "数据服务暂时不可用，请稍后重试。" } });
 });
 
 test("live seller intelligence uses the shared analytical market universe", async () => {
@@ -688,6 +688,8 @@ test("competition strategy keeps real segment Top10 sets with asymmetric slot co
     context: { marketplace: "US", category: "pressure_washers", segment: "machines" },
   });
   assert.equal(report.evidence.sampleSize, 7);
+  assert.equal(report.segmentKey, "machines");
+  assert.match(report.key, /pressure_washers\/machines\.json$/);
   assert.equal(report.strategy.rankingConcentration.top10Slots, 7);
   assert.deepEqual(report.strategy.topStability, {
     retainedTop10: 4,

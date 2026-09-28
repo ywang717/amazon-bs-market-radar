@@ -1,4 +1,6 @@
 import { categories, type CategoryKey } from "./catalog.ts";
+import { productionCategoryRegistry } from "./category-registry.ts";
+import type { SegmentKey } from "./generated/category-registry.ts";
 
 export type SellerProfile = "seller_alert" | "competition_strategy";
 export type SellerReportKind = "daily" | "weekly";
@@ -59,6 +61,7 @@ export type SellerIntelligenceReport = {
   profile: SellerProfile;
   marketDate: string;
   categoryKey: CategoryKey | null;
+  segmentKey?: SegmentKey | null;
   generatedAt: string;
   generatorVersion: string;
   contentSha256: string;
@@ -92,6 +95,7 @@ const privateDetail =
 const weeklyTrendTerms = /趋势|周度|策略|关联|相关|因果|份额/;
 const sellerBundleScopes: readonly (CategoryKey | "overview")[] = ["overview", ...categories.map(({ key }) => key)];
 const categoryKeys = new Set<string>(categories.map(({ key }) => key));
+const segmentKeys = new Set<string>(productionCategoryRegistry.categories.flatMap(({ segments }) => segments.map(({ key }) => key)));
 
 function isIntegerOrNull(value: unknown): value is number | null {
   return value === null || (Number.isInteger(value) && Number(value) >= 0);
@@ -105,11 +109,11 @@ function isCoverageValue(value: unknown): value is number {
   return Number.isFinite(value) && Number(value) >= 0 && Number(value) <= 100;
 }
 
-function parseSellerReportKey(key: string): { profile: SellerProfile; reportKind: SellerReportKind; marketDate: string; scope: CategoryKey | "overview" } | null {
-  const alert = key.match(/^seller-alert\/daily\/(\d{4}-\d{2}-\d{2})\/([a-z0-9_]+)\.json$/);
-  if (alert && (alert[2] === "overview" || categoryKeys.has(alert[2]))) return { profile: "seller_alert", reportKind: "daily", marketDate: alert[1], scope: alert[2] as CategoryKey | "overview" };
-  const strategy = key.match(/^competition-strategy\/weekly\/(\d{4}-\d{2}-\d{2})\/([a-z0-9_]+)\.json$/);
-  if (strategy && (strategy[2] === "overview" || categoryKeys.has(strategy[2]))) return { profile: "competition_strategy", reportKind: "weekly", marketDate: strategy[1], scope: strategy[2] as CategoryKey | "overview" };
+function parseSellerReportKey(key: string): { profile: SellerProfile; reportKind: SellerReportKind; marketDate: string; scope: CategoryKey | "overview"; segmentKey: SegmentKey | null } | null {
+  const alert = key.match(/^seller-alert\/daily\/(\d{4}-\d{2}-\d{2})\/([a-z0-9_]+)(?:\/([a-z0-9_]+))?\.json$/);
+  if (alert && (alert[2] === "overview" || categoryKeys.has(alert[2])) && (!alert[3] || segmentKeys.has(alert[3]))) return { profile: "seller_alert", reportKind: "daily", marketDate: alert[1], scope: alert[2] as CategoryKey | "overview", segmentKey: (alert[3] as SegmentKey | undefined) ?? null };
+  const strategy = key.match(/^competition-strategy\/weekly\/(\d{4}-\d{2}-\d{2})\/([a-z0-9_]+)(?:\/([a-z0-9_]+))?\.json$/);
+  if (strategy && (strategy[2] === "overview" || categoryKeys.has(strategy[2])) && (!strategy[3] || segmentKeys.has(strategy[3]))) return { profile: "competition_strategy", reportKind: "weekly", marketDate: strategy[1], scope: strategy[2] as CategoryKey | "overview", segmentKey: (strategy[3] as SegmentKey | undefined) ?? null };
   return null;
 }
 
@@ -184,6 +188,8 @@ export function validateSellerIntelligenceReport(
   } else if (parsedKey && report.categoryKey !== parsedKey.scope) {
     errors.push("榜单键必须与报告范围一致");
   }
+  if (report.segmentKey !== undefined && report.segmentKey !== null && (!report.categoryKey || !segmentKeys.has(report.segmentKey) || parsedKey?.segmentKey !== report.segmentKey)) errors.push("分群键必须与报告范围一致");
+  if (parsedKey && (report.segmentKey ?? null) !== parsedKey.segmentKey) errors.push("报告键必须与分群上下文一致");
   if (typeof report.generatedAt !== "string" || Number.isNaN(Date.parse(report.generatedAt))) errors.push("生成时间无效");
   if (typeof report.generatorVersion !== "string" || !/^seller-rules-v\d+(?:\.\d+)*$/.test(report.generatorVersion)) errors.push("生成版本无效");
   if (!sha256.test(String(report.contentSha256 ?? ""))) errors.push("内容哈希无效");

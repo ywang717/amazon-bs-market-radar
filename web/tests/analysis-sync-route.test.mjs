@@ -33,14 +33,14 @@ function reportBundle(overrides = {}) {
 function environment({ snapshotReceipt = null, existingReports = {}, beforeAnalysisMutation = null } = {}) {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec("CREATE TABLE snapshots (market_date TEXT PRIMARY KEY, observed_at TEXT NOT NULL, receipt_sha256 TEXT NOT NULL UNIQUE, public_status TEXT NOT NULL, complete_category_count INTEGER NOT NULL, imported_at TEXT NOT NULL)");
-  sqlite.exec("CREATE TABLE analysis_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)");
+  sqlite.exec("CREATE TABLE analysis_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, segment_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)");
   if (snapshotReceipt) sqlite.prepare("INSERT INTO snapshots VALUES (?, ?, ?, ?, ?, ?)").run("2026-08-24", "2026-08-25T00:00:00Z", snapshotReceipt, "ready", 3, "2026-08-25T00:00:00Z");
   for (const [key, stored] of Object.entries(existingReports)) {
     let parsed = {};
     try { parsed = JSON.parse(stored.content_json); } catch { parsed = {}; }
     const [reportKind, marketDate, fileName] = key.split("/");
     const scope = fileName.replace(/\.json$/, "");
-    sqlite.prepare("INSERT INTO analysis_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(key, parsed.reportKind ?? reportKind, parsed.marketDate ?? marketDate, parsed.categoryKey ?? (scope === "overview" ? null : scope), parsed.generatedAt ?? "2026-08-25T01:00:00Z", parsed.generatorVersion ?? "rules-v1", stored.content_sha256, stored.content_json, "2026-08-25T00:00:00Z");
+    sqlite.prepare("INSERT INTO analysis_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(key, parsed.reportKind ?? reportKind, parsed.marketDate ?? marketDate, parsed.categoryKey ?? (scope === "overview" ? null : scope), parsed.segmentKey ?? null, parsed.generatedAt ?? "2026-08-25T01:00:00Z", parsed.generatorVersion ?? "rules-v1", stored.content_sha256, stored.content_json, "2026-08-25T00:00:00Z");
   }
   const mutationStatements = [];
   let mutationHookPending = typeof beforeAnalysisMutation === "function";

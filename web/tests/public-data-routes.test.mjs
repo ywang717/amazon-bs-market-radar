@@ -16,6 +16,7 @@ function dynamicD1Environment(marketDate, {
   observationRowCounts = {},
   productMetadata: suppliedProductMetadata,
   reportRows = [],
+  throwOnReports = false,
 } = {}) {
   const dates = suppliedDates ?? ["2026-08-12", marketDate];
   const snapshots = dates.map((market_date) => ({ market_date, observed_at: `${market_date}T09:00:00Z`, complete_category_count: 3 }));
@@ -63,7 +64,10 @@ function dynamicD1Environment(marketDate, {
           bind(...bound) { values = bound; return this; },
           async first() { return null; },
           async all() {
-            if (sql.includes("FROM reports")) return { results: reportRows.filter((row) => row.category_key === values[0]) };
+            if (sql.includes("FROM reports")) {
+              if (throwOnReports) throw new Error("simulated D1 failure");
+              return { results: reportRows.filter((row) => row.category_key === values[0]) };
+            }
             if (sql.includes("FROM snapshots")) return { results: snapshots };
             if (sql.includes("FROM category_days")) return { results: categoryDays };
             if (sql.includes("FROM product_metadata")) return { results: productMetadata };
@@ -144,6 +148,7 @@ test("public routes expose the same latest market day without internal details",
 test("reports validates and isolates the requested page-local market", async () => {
   const rows = [
     { key: "daily/2026-08-13/pressure_washers.pdf", market_date: "2026-08-13", category_key: "pressure_washers", kind: "daily", title: "PW", byte_count: 100 },
+    { key: "weekly/2026-08-13/pressure_washers.pdf", market_date: "2026-08-13", category_key: "pressure_washers", kind: "weekly", title: "PW week", byte_count: 120 },
     { key: "daily/2026-08-13/sump_pumps.pdf", market_date: "2026-08-13", category_key: "sump_pumps", kind: "daily", title: "Sump", byte_count: 100 },
   ];
   const env = dynamicD1Environment("2026-08-13", { reportRows: rows });
@@ -152,8 +157,17 @@ test("reports validates and isolates the requested page-local market", async () 
   const body = await response.json();
   assert.deepEqual(body.reports.map(({ category_key }) => category_key), ["sump_pumps"]);
 
+  const weekly = await request("/api/public/reports?category=pressure_washers&segment=all&kind=weekly", env);
+  assert.deepEqual((await weekly.json()).reports.map(({ kind }) => kind), ["weekly"]);
+
   const invalid = await request("/api/public/reports?category=sump_pumps&segment=machines", env);
   assert.equal(invalid.status, 400);
+});
+
+test("reports expose archive failures instead of returning a false empty archive", async () => {
+  const response = await request("/api/public/reports?category=pressure_washers&segment=all", dynamicD1Environment("2026-08-13", { throwOnReports: true }));
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "report_archive_unavailable", message: "报告归档暂时不可用，请稍后重试。" });
 });
 
 test("public product route returns not_found when healthy D1 has no ASIN", async () => {

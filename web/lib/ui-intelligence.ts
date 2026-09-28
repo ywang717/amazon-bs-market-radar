@@ -175,6 +175,15 @@ export function formatPrice(value: number | null) {
   return typeof value !== "number" || !Number.isFinite(value) ? "—" : `$${value.toFixed(2)}`;
 }
 
+export function formatPriceChange(previous: number, current: number) {
+  const delta = current - previous;
+  const absoluteDelta = Math.abs(delta);
+  const percentage = previous > 0 ? absoluteDelta / previous * 100 : null;
+  const percentageLabel = percentage !== null && percentage < 0.1 ? "变化幅度小于 0.1%" : percentage === null ? "变化幅度待补充" : `变化幅度 ${percentage.toFixed(1)}%`;
+  const direction = delta < 0 ? "下降" : delta > 0 ? "上升" : "不变";
+  return `${formatPrice(previous)} → ${formatPrice(current)} · 差额 ${formatPrice(absoluteDelta)}（${direction}） · ${percentageLabel}`;
+}
+
 export function formatDeal(observation: Pick<Observation, "has_discount" | "discounts"> & { price?: number | null }) {
   if (observation.has_discount === false) return "—";
   if (observation.has_discount !== true) return "优惠信息待确认";

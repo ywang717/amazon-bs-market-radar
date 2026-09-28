@@ -1,4 +1,5 @@
 import { buildLiveSellerIntelligence, liveCacheHeader, loadVerifiedLiveDashboardFromD1, parseSellerIntelligenceLiveQuery } from "@/lib/seller-intelligence";
+import { publicSellerIntelligenceError } from "@/lib/seller-intelligence-errors";
 
 export async function GET(request: Request) {
   const parsed = parseSellerIntelligenceLiveQuery(new URL(request.url));
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
       context: parsed.context ?? undefined,
     });
     return Response.json(report, { headers: liveCacheHeader });
-  } catch {
-    return Response.json({ error: "unavailable" }, { status: 503 });
+  } catch (error) {
+    return Response.json(publicSellerIntelligenceError(error), { status: 503 });
   }
 }

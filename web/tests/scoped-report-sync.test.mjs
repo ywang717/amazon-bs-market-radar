@@ -7,7 +7,7 @@ function environment() {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(`CREATE TABLE category_capture_receipts (market_date TEXT, category_key TEXT, receipt_sha256 TEXT);
     CREATE TABLE snapshots (market_date TEXT, receipt_sha256 TEXT);
-    CREATE TABLE analysis_reports (key TEXT PRIMARY KEY,report_kind TEXT,market_date TEXT,category_key TEXT,generated_at TEXT,generator_version TEXT,content_sha256 TEXT,content_json TEXT,imported_at TEXT);
+    CREATE TABLE analysis_reports (key TEXT PRIMARY KEY,report_kind TEXT,market_date TEXT,category_key TEXT,segment_key TEXT,generated_at TEXT,generator_version TEXT,content_sha256 TEXT,content_json TEXT,imported_at TEXT);
     INSERT INTO category_capture_receipts VALUES ('2026-09-09','sump_pumps','${'a'.repeat(64)}');`);
   const db = { prepare(sql) { let args=[]; return {
     bind(...values) { args=values; return this; },

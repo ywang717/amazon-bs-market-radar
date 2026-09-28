@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const selectedMarketDate = categoryRows[0]?.marketDate ?? dashboard.marketDate;
     const report = await buildLiveAnalysisReport(
       { ...dashboard, marketDate: selectedMarketDate, categoryRows },
-      { reportKind: kind, categoryKey: category as CategoryKey | null },
+      { reportKind: kind, categoryKey: category as CategoryKey | null, segmentKey: context?.segment ?? null },
     );
     return Response.json(report, { headers: { "cache-control": "public, max-age=300" } });
   } catch { return Response.json({ error: "unavailable" }, { status: 503 }); }

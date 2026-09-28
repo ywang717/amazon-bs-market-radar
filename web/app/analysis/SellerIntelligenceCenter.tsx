@@ -11,6 +11,7 @@ import {
 import type { SellerIntelligenceReport, SellerProfile, SellerSignal } from "@/lib/seller-intelligence-contract";
 import { isValidAsin, isValidMarketDate } from "@/lib/public-validation";
 import { marketContextLabels, serializeMarketContext, type MarketContext } from "@/lib/market-context";
+import { classifySellerIntelligenceError, type SellerIntelligenceErrorCode } from "@/lib/seller-intelligence-errors";
 
 type Workspace = SellerProfile | "archive";
 type AlertFilter = "alerts" | "high" | "watch" | "activity" | "all";
@@ -306,6 +307,7 @@ function ArchiveWorkspace({
   date: string;
   reports: ArchivedReportRow[];
   selected: SellerIntelligenceReport | null;
+  errorCode?: SellerIntelligenceErrorCode | null;
 }) {
   return (
     <>
@@ -334,7 +336,7 @@ function ArchiveWorkspace({
               在线阅读
             </Link>
           </article>
-        )) : <p className="emptyReports">暂无符合筛选条件的卖家归档。</p>}
+        )) : <p className="emptyReports">{errorCode ? "卖家归档读取失败，请稍后重试。" : "暂无符合筛选条件的卖家归档。"}</p>}
       </section>
       {selected && <EvidenceSummary report={selected} />}
       {selected?.profile === "seller_alert" && <AlertSignals report={selected} context={context} marketDate={selected.marketDate} />}
@@ -361,6 +363,8 @@ export async function SellerIntelligenceCenter({
   let liveReport: SellerIntelligenceReport | null = null;
   let archivedReports: ArchivedReportRow[] = [];
   let selectedArchivedReport: SellerIntelligenceReport | null = null;
+  let archiveErrorCode: SellerIntelligenceErrorCode | null = null;
+  let liveErrorCode: SellerIntelligenceErrorCode | null = null;
 
   if (workspace === "archive") {
     try {
@@ -368,13 +372,15 @@ export async function SellerIntelligenceCenter({
         profile: archiveProfile,
         category: categoryKey,
         date: date || null,
+        segment: context.segment,
       });
       if (selectedReportKey && isSafeSellerIntelligenceKey(selectedReportKey) && archivedReports.some((report) => report.key === selectedReportKey)) {
         const detail = await readSellerIntelligenceReport(selectedReportKey);
         selectedArchivedReport = detail.status === "found" ? detail.report : null;
       }
-    } catch {
+    } catch (error) {
       archivedReports = [];
+      archiveErrorCode = classifySellerIntelligenceError(error).code;
     }
   } else {
     try {
@@ -384,8 +390,9 @@ export async function SellerIntelligenceCenter({
         categoryKey: liveCategory,
         context,
       });
-    } catch {
+    } catch (error) {
       liveReport = null;
+      liveErrorCode = classifySellerIntelligenceError(error).code;
     }
   }
 
@@ -430,6 +437,7 @@ export async function SellerIntelligenceCenter({
           date={date}
           reports={archivedReports}
           selected={selectedArchivedReport}
+          errorCode={archiveErrorCode}
         />
       ) : liveReport ? (
         <>
@@ -443,7 +451,7 @@ export async function SellerIntelligenceCenter({
       ) : (
         <article className="panel sellerEmptyState" role="status">
           <h2>{workspace === "seller_alert" ? "经营预警" : "竞争观察"}</h2>
-          <p>当前暂时无法读取卖家情报，请稍后重试。</p>
+          <p>{liveErrorCode === "no_data" ? "当前范围暂无已验证数据。" : liveErrorCode === "contract" ? "报告数据未通过验证，暂不展示。" : liveErrorCode === "threshold" ? "当前完整市场日不足，暂不输出稳定观察。" : "卖家情报读取失败，请稍后重试。"}</p>
         </article>
       )}
     </>

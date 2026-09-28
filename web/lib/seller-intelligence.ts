@@ -45,15 +45,16 @@ function isCategory(value: string | null): value is CategoryKey {
 }
 
 function safeListKey(value: string) {
-  const match = value.match(/^(seller-alert\/daily|competition-strategy\/weekly)\/\d{4}-\d{2}-\d{2}\/([a-z0-9_]+)\.json$/);
+  const match = value.match(/^(seller-alert\/daily|competition-strategy\/weekly)\/\d{4}-\d{2}-\d{2}\/([a-z0-9_]+)(?:\/([a-z0-9_]+))?\.json$/);
   return Boolean(match && (match[2] === overviewScope || isCategory(match[2])));
 }
 
-function liveKey(profile: SellerProfile, marketDate: string, categoryKey: CategoryKey | null) {
+function liveKey(profile: SellerProfile, marketDate: string, categoryKey: CategoryKey | null, segment?: string) {
   const scope = categoryKey ?? overviewScope;
+  const suffix = segment && categoryKey ? `/${segment}` : "";
   return profile === "seller_alert"
-    ? `seller-alert/daily/${marketDate}/${scope}.json`
-    : `competition-strategy/weekly/${marketDate}/${scope}.json`;
+    ? `seller-alert/daily/${marketDate}/${scope}${suffix}.json`
+    : `competition-strategy/weekly/${marketDate}/${scope}${suffix}.json`;
 }
 
 function labelFor(categoryKey: CategoryKey | null, rows: DashboardView["categoryRows"]) {
@@ -227,6 +228,7 @@ export function parseSellerIntelligenceListQuery(url: URL) {
     profile: profile as SellerProfile | null,
     category: category as CategoryKey | null,
     date: date ?? null,
+    segment: segment && category ? segment : null,
   };
 }
 
@@ -262,6 +264,7 @@ type SellerIntelligenceListRow = {
   profile: string;
   market_date: string;
   category_key: string | null;
+  segment_key: string | null;
   generated_at: string;
   generator_version: string;
   content_sha256: string;
@@ -289,6 +292,8 @@ function isSafeSellerIntelligenceMetadataRow(row: unknown): row is SellerIntelli
   if (scope === null) return false;
   if (candidate.profile === "seller_alert" && candidate.report_kind !== "daily") return false;
   if (candidate.profile === "competition_strategy" && candidate.report_kind !== "weekly") return false;
+  const segmentKey = candidate.segment_key ?? null;
+  if (segmentKey !== null && (typeof segmentKey !== "string" || !validateMarketContext({ marketplace: "US", category: String(candidate.category_key ?? ""), segment: segmentKey }).ok)) return false;
 
   if (scope === overviewScope) {
     return candidate.category_key === null;
@@ -301,6 +306,7 @@ export async function listSellerIntelligenceReports(filters: {
   profile: SellerProfile | null;
   category: CategoryKey | null;
   date: string | null;
+  segment: string | null;
 }) {
   const clauses: string[] = [];
   const values: string[] = [];
@@ -316,11 +322,15 @@ export async function listSellerIntelligenceReports(filters: {
     clauses.push("market_date = ?");
     values.push(filters.date);
   }
+  if (filters.segment && filters.category) {
+    clauses.push("(segment_key = ? OR segment_key IS NULL)");
+    values.push(filters.segment);
+  }
   const where = clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "";
   const db = getD1();
   const rows = await db
     .prepare(
-      `SELECT key, report_kind, profile, market_date, category_key, generated_at, generator_version, content_sha256 FROM seller_intelligence_reports${where} ORDER BY market_date DESC, report_kind, profile, category_key LIMIT 100`,
+      `SELECT key, report_kind, profile, market_date, category_key, segment_key, generated_at, generator_version, content_sha256 FROM seller_intelligence_reports${where} ORDER BY market_date DESC, report_kind, profile, category_key LIMIT 100`,
     )
     .bind(...values)
     .all();
@@ -427,11 +437,12 @@ export async function buildLiveSellerIntelligence(
 
   const draft = {
     schemaVersion: "seller-intelligence-v1" as const,
-    key: liveKey(options.profile, scopeMarketDate, options.categoryKey),
+    key: liveKey(options.profile, scopeMarketDate, options.categoryKey, options.context?.segment),
     reportKind: options.profile === "seller_alert" ? "daily" as const : "weekly" as const,
     profile: options.profile,
     marketDate: scopeMarketDate,
     categoryKey: options.categoryKey,
+    ...(options.context?.segment ? { segmentKey: options.context.segment } : {}),
     generatedAt: data.observedAt,
     generatorVersion: "seller-rules-v1",
     evidence: {

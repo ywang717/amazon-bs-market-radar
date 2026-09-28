@@ -104,7 +104,7 @@ function bundleEnvironment({ existing = new Map(), failImportBatch = false } = {
         importBatches.push(inserts);
         if (failImportBatch) throw new Error("storage unavailable");
         for (const statement of inserts) {
-          existing.set(statement.values[0], { contentSha256: statement.values[7] });
+          existing.set(statement.values[0], { contentSha256: statement.values[8] });
         }
         return inserts.map(() => ({ meta: { changes: 1 } }));
       },
@@ -115,10 +115,10 @@ function bundleEnvironment({ existing = new Map(), failImportBatch = false } = {
 function sqliteBundleEnvironment({ snapshotReceipt, existingReports = [], beforeSellerMutation = null } = {}) {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec("CREATE TABLE snapshots (market_date TEXT PRIMARY KEY, observed_at TEXT NOT NULL, receipt_sha256 TEXT NOT NULL UNIQUE, public_status TEXT NOT NULL, complete_category_count INTEGER NOT NULL, imported_at TEXT NOT NULL)");
-  sqlite.exec("CREATE TABLE seller_intelligence_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, profile TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)");
+  sqlite.exec("CREATE TABLE seller_intelligence_reports (key TEXT PRIMARY KEY, report_kind TEXT NOT NULL, profile TEXT NOT NULL, market_date TEXT NOT NULL, category_key TEXT, segment_key TEXT, generated_at TEXT NOT NULL, generator_version TEXT NOT NULL, content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL, imported_at TEXT NOT NULL)");
   if (snapshotReceipt) sqlite.prepare("INSERT INTO snapshots VALUES (?, ?, ?, ?, ?, ?)").run("2026-08-24", "2026-08-25T00:00:00Z", snapshotReceipt, "ready", 3, "2026-08-25T00:00:00Z");
   for (const stored of existingReports) {
-    sqlite.prepare("INSERT INTO seller_intelligence_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(stored.key, stored.reportKind, stored.profile, stored.marketDate, stored.categoryKey, stored.generatedAt, stored.generatorVersion, stored.contentSha256, JSON.stringify(stored), "2026-08-25T00:00:00Z");
+    sqlite.prepare("INSERT INTO seller_intelligence_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(stored.key, stored.reportKind, stored.profile, stored.marketDate, stored.categoryKey, stored.segmentKey ?? null, stored.generatedAt, stored.generatorVersion, stored.contentSha256, JSON.stringify(stored), "2026-08-25T00:00:00Z");
   }
   let mutationHookPending = typeof beforeSellerMutation === "function";
   function prepare(sql) {

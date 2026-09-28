@@ -1,4 +1,6 @@
 import { categories, type CategoryKey } from "./catalog.ts";
+import { productionCategoryRegistry } from "./category-registry.ts";
+import type { SegmentKey } from "./generated/category-registry.ts";
 
 export type AnalysisReportKind = "daily" | "weekly";
 export type AnalysisEvidenceLevel = "有限" | "可用" | "充分";
@@ -9,6 +11,7 @@ export type AnalysisReport = {
   reportKind: AnalysisReportKind;
   marketDate: string;
   categoryKey: CategoryKey | null;
+  segmentKey?: SegmentKey | null;
   generatedAt: string;
   generatorVersion: string;
   contentSha256: string;
@@ -27,6 +30,7 @@ const sha256 = /^[a-f0-9]{64}$/i;
 const privateDetail = /(?:[A-Z]:\\|\/Users\/|smtp|password|secret|authorization|@)/i;
 const trendTerms = /趋势|关联|相关|因果|留存/;
 const categoryKeys = new Set<string>(categories.map(({ key }) => key));
+const segmentKeys = new Set<string>(productionCategoryRegistry.categories.flatMap(({ segments }) => segments.map(({ key }) => key)));
 
 export function validateAnalysisReport(input: unknown): { ok: true; report: AnalysisReport } | { ok: false; errors: string[] } {
   const report = (input ?? {}) as Partial<AnalysisReport>;
@@ -36,6 +40,7 @@ export function validateAnalysisReport(input: unknown): { ok: true; report: Anal
   if (report.reportKind !== "daily" && report.reportKind !== "weekly") errors.push("报告类型无效");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(report.marketDate ?? ""))) errors.push("市场日期无效");
   if (report.categoryKey !== null && !categoryKeys.has(String(report.categoryKey))) errors.push("榜单键无效");
+  if (report.segmentKey !== undefined && report.segmentKey !== null && (!report.categoryKey || !segmentKeys.has(report.segmentKey))) errors.push("分群键无效");
   if (typeof report.generatedAt !== "string" || Number.isNaN(Date.parse(report.generatedAt))) errors.push("生成时间无效");
   if (typeof report.generatorVersion !== "string" || !/^rules-v\d+(?:\.\d+)*$/.test(report.generatorVersion)) errors.push("生成版本无效");
   if (!sha256.test(String(report.contentSha256 ?? ""))) errors.push("内容哈希无效");

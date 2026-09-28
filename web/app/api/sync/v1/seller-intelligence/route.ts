@@ -61,9 +61,9 @@ export async function POST(request: Request) {
 async function storeDailySellerIntelligenceBundle(db: D1Database, reports: SellerIntelligenceReport[], receiptSha256: string) {
   const marketDate = reports[0].marketDate;
   const now = new Date().toISOString();
-  const incomingRows = reports.map((_, index) => `${index === 0 ? "SELECT" : "UNION ALL SELECT"} ? AS key, ? AS report_kind, ? AS profile, ? AS market_date, ? AS category_key, ? AS generated_at, ? AS generator_version, ? AS content_sha256, ? AS content_json, ? AS imported_at`).join(" ");
+  const incomingRows = reports.map((_, index) => `${index === 0 ? "SELECT" : "UNION ALL SELECT"} ? AS key, ? AS report_kind, ? AS profile, ? AS market_date, ? AS category_key, ? AS segment_key, ? AS generated_at, ? AS generator_version, ? AS content_sha256, ? AS content_json, ? AS imported_at`).join(" ");
   const keyPlaceholders = reports.map(() => "?").join(", ");
-  const guardedUpsert = `INSERT INTO seller_intelligence_reports (key, report_kind, profile, market_date, category_key, generated_at, generator_version, content_sha256, content_json, imported_at)
+  const guardedUpsert = `INSERT INTO seller_intelligence_reports (key, report_kind, profile, market_date, category_key, segment_key, generated_at, generator_version, content_sha256, content_json, imported_at)
     WITH existing_cohort AS (
       SELECT key, generated_at, generator_version, json_valid(content_json) AS content_valid,
         CASE
@@ -78,7 +78,7 @@ async function storeDailySellerIntelligenceBundle(db: D1Database, reports: Selle
       FROM seller_intelligence_reports
       WHERE report_kind = 'daily' AND profile = 'seller_alert' AND market_date = ?
     )
-    SELECT incoming.key, incoming.report_kind, incoming.profile, incoming.market_date, incoming.category_key, incoming.generated_at, incoming.generator_version, incoming.content_sha256, incoming.content_json, incoming.imported_at
+    SELECT incoming.key, incoming.report_kind, incoming.profile, incoming.market_date, incoming.category_key, incoming.segment_key, incoming.generated_at, incoming.generator_version, incoming.content_sha256, incoming.content_json, incoming.imported_at
     FROM (${incomingRows}) AS incoming
     WHERE EXISTS (SELECT 1 FROM snapshots WHERE market_date = ? AND lower(receipt_sha256) = ?)
       AND (
@@ -100,10 +100,10 @@ async function storeDailySellerIntelligenceBundle(db: D1Database, reports: Selle
           )
         )
       )
-    ON CONFLICT(key) DO UPDATE SET report_kind=excluded.report_kind, profile=excluded.profile, market_date=excluded.market_date, category_key=excluded.category_key, generated_at=excluded.generated_at, generator_version=excluded.generator_version, content_sha256=excluded.content_sha256, content_json=excluded.content_json, imported_at=excluded.imported_at`;
+    ON CONFLICT(key) DO UPDATE SET report_kind=excluded.report_kind, profile=excluded.profile, market_date=excluded.market_date, category_key=excluded.category_key, segment_key=excluded.segment_key, generated_at=excluded.generated_at, generator_version=excluded.generator_version, content_sha256=excluded.content_sha256, content_json=excluded.content_json, imported_at=excluded.imported_at`;
   const values: unknown[] = [marketDate];
   for (const report of reports) {
-    values.push(report.key, report.reportKind, report.profile, report.marketDate, report.categoryKey, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify({ ...report, receiptSha256 }), now);
+    values.push(report.key, report.reportKind, report.profile, report.marketDate, report.categoryKey, report.segmentKey ?? null, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify({ ...report, receiptSha256 }), now);
   }
   values.push(marketDate, receiptSha256, ...reports.map((report) => report.key), receiptSha256);
   const result = await db.prepare(guardedUpsert).bind(...values).run();
@@ -134,7 +134,7 @@ async function storeDailySellerIntelligenceBundle(db: D1Database, reports: Selle
 function sellerIntelligenceInsert(db: D1Database, report: SellerIntelligenceReport, importedAt: string) {
   return db
     .prepare(
-      "INSERT INTO seller_intelligence_reports (key, report_kind, profile, market_date, category_key, generated_at, generator_version, content_sha256, content_json, imported_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ? <> 'daily' OR NOT EXISTS (SELECT 1 FROM category_capture_receipts WHERE market_date = ?)",
+      "INSERT INTO seller_intelligence_reports (key, report_kind, profile, market_date, category_key, segment_key, generated_at, generator_version, content_sha256, content_json, imported_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ? <> 'daily' OR NOT EXISTS (SELECT 1 FROM category_capture_receipts WHERE market_date = ?)",
     )
     .bind(
       report.key,
@@ -142,6 +142,7 @@ function sellerIntelligenceInsert(db: D1Database, report: SellerIntelligenceRepo
       report.profile,
       report.marketDate,
       report.categoryKey,
+      report.segmentKey ?? null,
       report.generatedAt,
       report.generatorVersion,
       report.contentSha256,
@@ -193,7 +194,7 @@ async function storeSellerIntelligenceBundle(db: D1Database, reports: SellerInte
 async function storeSellerIntelligenceReport(db: D1Database, report: SellerIntelligenceReport) {
   const inserted = await db
     .prepare(
-      "INSERT OR IGNORE INTO seller_intelligence_reports (key, report_kind, profile, market_date, category_key, generated_at, generator_version, content_sha256, content_json, imported_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ? <> 'daily' OR NOT EXISTS (SELECT 1 FROM category_capture_receipts WHERE market_date = ?)",
+      "INSERT OR IGNORE INTO seller_intelligence_reports (key, report_kind, profile, market_date, category_key, segment_key, generated_at, generator_version, content_sha256, content_json, imported_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ? <> 'daily' OR NOT EXISTS (SELECT 1 FROM category_capture_receipts WHERE market_date = ?)",
     )
     .bind(
       report.key,
@@ -201,6 +202,7 @@ async function storeSellerIntelligenceReport(db: D1Database, report: SellerIntel
       report.profile,
       report.marketDate,
       report.categoryKey,
+      report.segmentKey ?? null,
       report.generatedAt,
       report.generatorVersion,
       report.contentSha256,
