@@ -12,21 +12,21 @@ const storedReport = {
   sections: [{ title: "结论摘要", statements: ["三个榜单均为完整 Top 30。"] }],
 };
 
-function environment() {
+function environment({ failList = false } = {}) {
   return {
     ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
     DB: {
       prepare(sql) {
         let values = [];
-        return { bind(...bound) { values = bound; return this; }, async first() { return sql.includes("content_json") && values[0] === storedReport.key ? { content_json: JSON.stringify(storedReport) } : null; }, async all() { return sql.includes("FROM analysis_reports") ? { results: [{ key: storedReport.key, report_kind: "daily", market_date: "2026-08-24", category_key: null, generated_at: storedReport.generatedAt, generator_version: "rules-v1", content_sha256: storedReport.contentSha256 }] } : { results: [] }; } };
+        return { bind(...bound) { values = bound; return this; }, async first() { return sql.includes("content_json") && values[0] === storedReport.key ? { content_json: JSON.stringify(storedReport) } : null; }, async all() { if (failList && sql.includes("FROM analysis_reports")) throw new Error("database unavailable"); return sql.includes("FROM analysis_reports") ? { results: [{ key: storedReport.key, report_kind: "daily", market_date: "2026-08-24", category_key: null, generated_at: storedReport.generatedAt, generator_version: "rules-v1", content_sha256: storedReport.contentSha256 }] } : { results: [] }; } };
       },
       async batch() { return []; },
     },
   };
 }
 
-async function request(path) {
-  const env = environment(); for (const key of Reflect.ownKeys(workerEnvironment)) delete workerEnvironment[key]; Object.assign(workerEnvironment, env);
+async function request(path, options) {
+  const env = environment(options); for (const key of Reflect.ownKeys(workerEnvironment)) delete workerEnvironment[key]; Object.assign(workerEnvironment, env);
   const workerUrl = new URL("../dist/server/index.js", import.meta.url); workerUrl.searchParams.set("test", `${Date.now()}-${Math.random()}`); const { default: worker } = await import(workerUrl.href);
   return worker.fetch(new Request(`http://localhost${path}`), env, { waitUntil() {}, passThroughOnException() {} });
 }
@@ -41,4 +41,10 @@ test("lists and reads only validated public online analysis reports", async () =
   const detail = await request("/api/public/analysis/daily/2026-08-24/overview.json");
   assert.equal(detail.status, 200);
   assert.equal((await detail.json()).key, storedReport.key);
+});
+
+test("does not turn an analysis archive database failure into an empty archive", async () => {
+  const response = await request("/api/public/analysis?kind=daily", { failList: true });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "analysis_archive_unavailable", message: "智能报告归档暂时不可用，请稍后重试。" });
 });

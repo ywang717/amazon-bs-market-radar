@@ -24,5 +24,10 @@ export async function GET(request: Request) {
     const db = getD1(); await ensureSchema(db);
     const rows = await db.prepare(`SELECT key, report_kind, market_date, category_key, segment_key, generated_at, generator_version, content_sha256 FROM analysis_reports${where} ORDER BY market_date DESC, report_kind, category_key LIMIT 100`).bind(...values).all();
     return Response.json({ reports: rows.results }, { headers: { "cache-control": "public, max-age=300" } });
-  } catch { return Response.json({ reports: [] }, { headers: { "cache-control": "public, max-age=60" } }); }
+  } catch {
+    return Response.json(
+      { error: "analysis_archive_unavailable", message: "智能报告归档暂时不可用，请稍后重试。" },
+      { status: 503, headers: { "cache-control": "no-store" } },
+    );
+  }
 }

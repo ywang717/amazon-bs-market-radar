@@ -19,6 +19,7 @@ export function AnalysisCenter({ context, marketDate }: { context: MarketContext
   const [kind, setKind] = useState<"daily" | "weekly">("daily");
   const [live, setLive] = useState<AnalysisReport | null>(null);
   const [reports, setReports] = useState<ReportListRow[]>([]);
+  const [archiveError, setArchiveError] = useState(false);
   const [selected, setSelected] = useState<{ requestKey: string; report: AnalysisReport } | null>(null);
   const [loadedQuery, setLoadedQuery] = useState("");
   const query = serializeMarketContext(context, { date: marketDate, kind });
@@ -29,15 +30,19 @@ export function AnalysisCenter({ context, marketDate }: { context: MarketContext
   useEffect(() => {
     const controller = new AbortController();
     const endpoint = mode === "live" ? `/api/public/analysis/live?${query}` : `/api/public/analysis?${query}`;
-    fetch(endpoint, { signal: controller.signal }).then((response) => response.ok ? response.json() : null).then((data) => {
-      if (mode === "live") setLive(data); else setReports(data?.reports ?? []);
-    }).catch((error) => { if (error?.name !== "AbortError") { if (mode === "live") setLive(null); else setReports([]); } }).finally(() => { if (!controller.signal.aborted) setLoadedQuery(requestKey); });
+    fetch(endpoint, { signal: controller.signal }).then((response) => {
+      if (!response.ok) throw new Error(`Analysis request failed: ${response.status}`);
+      return response.json();
+    }).then((data) => {
+      if (mode === "live") setLive(data);
+      else { setReports(data?.reports ?? []); setArchiveError(false); }
+    }).catch((error) => { if (error?.name !== "AbortError") { if (mode === "live") setLive(null); else { setReports([]); setArchiveError(true); } } }).finally(() => { if (!controller.signal.aborted) setLoadedQuery(requestKey); });
     return () => controller.abort();
   }, [mode, query, requestKey]);
 
   const openReport = (key: string) => fetch(`/api/public/analysis/${key}`).then((response) => response.ok ? response.json() : null).then((report: AnalysisReport | null) => setSelected(report ? { requestKey, report } : null)).catch(() => setSelected(null));
   return <><section className="analysisControls panel"><div className="tabs"><button className={mode === "live" ? "active" : ""} onClick={() => { beginQueryChange(); setMode("live"); }}>实时解读</button><button className={mode === "archive" ? "active" : ""} onClick={() => { beginQueryChange(); setMode("archive"); }}>历史归档</button></div><label>类型<select value={kind} onChange={(event) => { beginQueryChange(); setKind(event.target.value as "daily" | "weekly"); }}><option value="daily">日报</option><option value="weekly">周报</option></select></label><span className="analysisMarketLabel">{marketContextLabels(context).category} · {marketContextLabels(context).segment}</span></section>
-    {mode === "live" ? (loaded && live ? <ReportBody report={live} context={context} /> : <p className="emptyReports">{loaded ? "暂时无法生成解读。" : "正在生成实时解读…"}</p>) : <section className="panel reportList"><div className="panelHead"><div><h2>历史智能报告</h2><p>只展示当前市场已验证且不可变归档的报告</p></div></div>{loaded && reports.length ? reports.map((report) => <article key={report.key}><div className="pdfIcon">AI</div><div><b>{report.report_kind === "daily" ? "智能日报" : "智能周报"} · {labelFor(report.categoryKey)}</b><p>市场日 {report.marketDate} · 生成于 {new Date(report.generatedAt).toLocaleString("zh-CN", { hour12: false })}</p></div><button className="downloadButton" onClick={() => openReport(report.key)}>在线阅读</button></article>) : <p className="emptyReports">{loaded ? "暂无符合筛选条件的已归档智能报告。" : "正在读取历史归档…"}</p>}</section>}
+    {mode === "live" ? (loaded && live ? <ReportBody report={live} context={context} /> : <p className="emptyReports">{loaded ? "暂时无法生成解读。" : "正在生成实时解读…"}</p>) : <section className="panel reportList"><div className="panelHead"><div><h2>历史智能报告</h2><p>只展示当前市场已验证且不可变归档的报告</p></div></div>{loaded && archiveError ? <p className="emptyReports">智能报告归档读取失败，请稍后重试。</p> : loaded && reports.length ? reports.map((report) => <article key={report.key}><div className="pdfIcon">AI</div><div><b>{report.report_kind === "daily" ? "智能日报" : "智能周报"} · {labelFor(report.categoryKey)}</b><p>市场日 {report.marketDate} · 生成于 {new Date(report.generatedAt).toLocaleString("zh-CN", { hour12: false })}</p></div><button className="downloadButton" onClick={() => openReport(report.key)}>在线阅读</button></article>) : <p className="emptyReports">{loaded ? "暂无符合筛选条件的已归档智能报告。" : "正在读取历史归档…"}</p>}</section>}
     {selected?.requestKey === requestKey && <ReportBody report={selected.report} context={context} />}
   </>;
 }
