@@ -12,6 +12,7 @@ import { ProductIdentity } from "../../components/ProductIdentity";
 import { QualityBadge } from "../../components/QualityBadge";
 import { RankDisplay } from "../../components/RankDisplay";
 import { TimelineEvent } from "../../components/TimelineEvent";
+import { RankHistoryChart } from "../RankHistoryChart";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "产品详情" };
@@ -66,8 +67,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
     <section className="dashboardGrid productTimelineGrid">
       <article className="panel wide trendPanel">
         <div className="panelHead"><div><h2>排名时间线</h2><p>纵轴已反转：顶部为 #1，底部为 #30</p></div><QualityBadge tone={daysListed >= 5 ? "good" : "warning"}>{daysListed} 个市场日</QualityBadge></div>
-        <div className="rankChartWrap"><span className="top10ZoneLabel">TOP10</span><div className="singlePointChart"><div className="axis"><span>#1</span><span>#10</span><span>#20</span><span>#30</span></div><div className="chartArea multi rankTimelineArea"><div className="top10Zone" aria-hidden="true" /><svg className="rankTimelineSvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{timeline.segments.filter((segment) => segment.length > 1).map((segment, index) => <polyline key={`segment-${index}`} points={segment.map((point) => `${point.xPercent},${point.yPercent}`).join(" ")} />)}</svg>{timeline.points.flatMap((row, index) => row.observation ? [<button type="button" className="historyPoint" aria-label={`${row.marketDate}，排名第 ${row.observation.rank}`} key={`${row.marketDate}-${row.observation.rank}-${index}`} style={{ top: `${row.yPercent}%`, left: `${row.xPercent}%` }} title={`${row.marketDate}\n排名 #${row.observation.rank}\n${row.delta === null || row.delta === 0 ? "—" : row.delta > 0 ? `↑${row.delta}` : `↓${Math.abs(row.delta)}`}\n${formatPrice(row.observation.price)}\n${formatExactNumber(row.observation.reviews)} Reviews`} />] : [])}</div></div><div className="rankTimelineDates" aria-hidden="true">{timeline.axisLabels.map((label) => <span key={label.marketDate} style={{ left: `${label.xPercent}%` }}>{label.marketDate.slice(5).replace("-", "/")}</span>)}</div></div>
-        <ol className="srOnly rankHistoryAccessible" aria-label="排名历史数据">{timeline.points.flatMap((row, index) => row.observation ? [<li key={`accessible-${row.marketDate}-${row.observation.rank}-${index}`}>{row.marketDate}，排名第 {row.observation.rank}</li>] : [])}</ol>
+        <RankHistoryChart points={timeline.points.map(({ marketDate, observation, delta, xPercent, yPercent }) => ({ marketDate, rank: observation?.rank ?? null, delta, xPercent, yPercent, price: observation?.price ?? null, reviews: observation?.reviews ?? null }))} axisLabels={timeline.axisLabels} />
       </article>
       <article className="panel productSnapshot"><h2>{currentObservation ? "当前状态" : `最后在榜观测（${timelineStatus.lastListedMarketDate ?? "—"}）`}</h2><dl><div><dt>历史最佳</dt><dd>#{bestRank}</dd></div><div><dt>有效在榜日</dt><dd>{daysListed}</dd></div><div><dt>证据充分度</dt><dd>{evidence}</dd></div><div><dt>优惠</dt><dd>{formatDeal(currentObservation ?? lastListedObservation)}</dd></div></dl></article>
     </section>

@@ -6,11 +6,15 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("rank history exposes focusable points and a non-visual data equivalent", () => {
   const productPage = read("../app/products/[asin]/page.tsx");
+  const historyChart = read("../app/products/RankHistoryChart.tsx");
   const dashboardData = read("../lib/dashboard-data.ts");
-  assert.match(productPage, /<svg[^>]*className="rankTimelineSvg"/);
-  assert.match(productPage, /className="historyPoint"[^>]*aria-label=/);
-  assert.match(productPage, /className="[^"]*rankHistoryAccessible[^"]*"/);
-  assert.match(productPage, /key=\{`accessible-\$\{row\.marketDate\}-\$\{row\.observation\.rank\}-\$\{index\}`\}/);
+  assert.match(historyChart, /<svg[^>]*className="rankTimelineSvg"/);
+  assert.match(historyChart, /className="historyPoint"[^>]*aria-label=/);
+  assert.match(historyChart, /className="[^"]*rankHistoryAccessible[^"]*"/);
+  assert.match(historyChart, /className="historyPoint"[^>]*onClick=/);
+  assert.match(historyChart, /aria-expanded=/);
+  assert.match(historyChart, /key=\{`accessible-\$\{point\.marketDate\}-\$\{point\.rank\}-\$\{index\}`\}/);
+  assert.match(productPage, /<RankHistoryChart /);
   assert.match(productPage, /reliableHistory = hasMetadata && dashboard\.metadataAvailable/);
   assert.match(productPage, /timelineHistory = reliableHistory\.length/);
   assert.match(dashboardData, /history = selectedHistory\.map/);
