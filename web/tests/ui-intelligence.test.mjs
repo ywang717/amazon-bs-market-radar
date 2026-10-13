@@ -713,6 +713,16 @@ test("selects only explainable low-review breakouts for further study", () => {
   ]);
 });
 
+test("worth-studying products exclude missing deltas and keep gain rank ordering with a five-row cap", () => {
+  const gains = [["NULLDELTA", 1, null], ["GAIN00001", 20, 12], ["GAIN00002", 8, 15], ["GAIN00003", 4, 15], ["GAIN00004", 18, 11], ["GAIN00005", 22, 10], ["GAIN00006", 23, 10], ["BELOWGAIN", 3, 9]];
+  const rows = gains.map(([asin, rank, delta]) => ({ ...observation(asin, rank, "Study candidate", { reviews: 64 }), brand: "Alpha", productType: "nozzle", delta, previousRank: delta === null ? null : rank + delta, isNew: false, sevenDayDelta: null, presenceDays: 2, presenceWindowDays: 24, presencePercent: 8.3 }));
+  assert.deepEqual(buildWorthStudyingProducts([rows[0], rows.at(-1)]), []);
+  const result = buildWorthStudyingProducts(rows);
+  assert.deepEqual(result.map(({ asin }) => asin), ["GAIN00003", "GAIN00002", "GAIN00001", "GAIN00004", "GAIN00005"]);
+  assert.deepEqual(result.map(({ delta }) => delta), [15, 15, 12, 11, 10]);
+  assert.equal(rows[0].delta, null);
+});
+
 test("summarizes current review competition with exact medians and minimum", () => {
   const result = buildReviewCompetition([
     observation("REVCOMP001", 1, undefined, { reviews: 10 }),

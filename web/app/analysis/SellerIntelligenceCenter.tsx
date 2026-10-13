@@ -300,6 +300,7 @@ function ArchiveWorkspace({
   date,
   reports,
   selected,
+  errorCode,
 }: {
   context: MarketContext;
   profile: SellerProfile;

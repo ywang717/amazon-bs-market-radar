@@ -73,6 +73,7 @@ function sellerIntelligenceEnvironment({
   incompleteCategoryKeys = [],
   lowCoverageCategoryKeys = [],
   reviewChange = false,
+  archiveUnavailable = false,
 } = {}) {
   const latestDate = "2026-08-24";
   const priorDates = Array.from({ length: Math.max(completeMarketDays - 1, 0) }, (_, index) => `2026-08-${String(23 - index).padStart(2, "0")}`);
@@ -237,6 +238,7 @@ function sellerIntelligenceEnvironment({
           if (sql.includes("FROM observations")) return { results: observations };
           if (sql.includes("FROM product_metadata")) return { results: [{ marketplace: "AMAZON_US", asin: "B123456789", product_type: "electric_pressure_washer", classification_confidence: "high", classification_rule_id: "machine-electric", classification_rule_version: "product-rules-v1", classification_evidence_json: "[]", raw_brand: "Greenworks", normalized_brand: "Greenworks", normalized_brand_key: "greenworks", brand_alias_rule_id: null, brand_source: "verified_metadata", first_seen_market_date: "2026-08-23", last_seen_market_date: latestDate }] };
           if (sql.includes("FROM seller_intelligence_reports")) {
+            if (archiveUnavailable) throw new Error("simulated private archive database failure");
             const rows = [
               {
                 key: archivedKey,
@@ -805,6 +807,24 @@ test("archive workspace filters change which reports render in the UI", async ()
   assert.match(sumpPumpHtml, /seller-alert\/daily\/2026-08-23\/sump_pumps\.json/);
   assert.doesNotMatch(sumpPumpHtml, /seller-alert\/daily\/2026-08-24\/pressure_washers\.json/);
   assert.doesNotMatch(sumpPumpHtml, /competition-strategy\/weekly\/2026-08-24\/pressure_washers\.json/);
+});
+
+test("seller archive renders a healthy empty result without crashing", async () => {
+  for (const profile of ["seller_alert", "competition_strategy"]) {
+    const response = await render(`/analysis?workspace=archive&profile=${profile}&category=pressure_washers&date=2026-08-22`, sellerIntelligenceEnvironment());
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, /暂无符合筛选条件的卖家归档。/);
+    assert.doesNotMatch(html, /卖家归档读取失败|errorCode is not defined/);
+  }
+});
+
+test("seller archive distinguishes a database failure from a healthy empty result", async () => {
+  const response = await render("/analysis?workspace=archive&profile=seller_alert&category=pressure_washers&date=2026-08-24", sellerIntelligenceEnvironment({ archiveUnavailable: true }));
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /卖家归档读取失败，请稍后重试。/);
+  assert.doesNotMatch(html, /暂无符合筛选条件的卖家归档|simulated private archive database failure|errorCode is not defined/);
 });
 
 test("renders live and archived seller evidence boundaries with five required elements", async () => {

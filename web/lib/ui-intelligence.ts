@@ -677,7 +677,7 @@ export function buildWorthStudyingProducts(rows: ProductIntelligenceRow[]) {
     .flatMap((row) => {
       if (row.reviews === null || row.reviews > WORTH_STUDY_MAX_REVIEWS || row.delta === null || row.delta < WORTH_STUDY_MIN_RANK_GAIN) return [];
       const enteredTop10 = row.rank <= 10 && row.previousRank !== null && row.previousRank > 10;
-      return [{ ...row, reason: enteredTop10 ? "低评论 · 快速进入 Top10" : "低评论 · 排名快速上升" }];
+      return [{ ...row, delta: row.delta, reason: enteredTop10 ? "低评论 · 快速进入 Top10" : "低评论 · 排名快速上升" }];
     })
     .toSorted((left, right) => right.delta - left.delta || left.rank - right.rank)
     .slice(0, 5);
