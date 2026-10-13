@@ -6,11 +6,24 @@
 
 ## macOS 使用说明
 
+本机项目已迁移到 `/Users/ASUS/Projects/亚马逊bestseller榜单监控`。原 `Documents` 路径通过符号链接访问同一目录，兼容仍使用旧地址的 Codex 项目记录。后续终端操作优先使用新地址。
+
+本机已有运行环境时，可加载本地环境配置并启动网页：
+
+```bash
+cd "/Users/ASUS/Projects/亚马逊bestseller榜单监控"
+. .local/activate.sh
+cd web
+npm run dev -- --port 5173
+```
+
+浏览器访问 `http://localhost:5173`。`.local/activate.sh` 属于本机配置，不提交到 Git；其他机器需按下方安装说明准备环境。本地网页使用独立的开发数据库，最新数据日期以 `/api/health` 为准，不等同于本地采集目录中的最新日期。
+
 支持 macOS 12 或更高版本（Apple Silicon 和 Intel）。先安装 Homebrew，然后安装运行时：
 
 ```bash
 brew install node powershell postgresql@16
-cd "/Users/你的用户名/Documents/亚马逊bestseller榜单监控"
+cd "/Users/你的用户名/Projects/亚马逊bestseller榜单监控"
 ./scripts/install-macos-runtime.sh
 cd web
 npm install
@@ -20,7 +33,7 @@ npm exec playwright install chromium
 回到项目根目录启动：
 
 ```bash
-cd "/Users/你的用户名/Documents/亚马逊bestseller榜单监控"
+cd "/Users/你的用户名/Projects/亚马逊bestseller榜单监控"
 chmod +x Start-Amazon-BS-macos.sh
 ./Start-Amazon-BS-macos.sh
 ```
@@ -59,7 +72,7 @@ launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.amazon-bs.dai
 
 ```bash
 brew install node powershell postgresql@16
-cd "/Users/你的用户名/Documents/亚马逊bestseller榜单监控"
+cd "/Users/你的用户名/Projects/亚马逊bestseller榜单监控"
 ./scripts/install-macos-runtime.sh
 cd web && npm install && npm exec playwright install chromium
 cd ..
