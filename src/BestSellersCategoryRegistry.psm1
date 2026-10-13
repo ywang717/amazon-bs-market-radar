@@ -203,6 +203,10 @@ function Import-BestSellersCategoryRegistry {
             SourceUrl = [string]$category.source_url
             TargetCount = [int]$category.target_count
             Enabled = [bool]$category.enabled
+            GroupKey = if ($null -ne $category.PSObject.Properties['group_key']) { [string]$category.group_key } else { $null }
+            ParentCategoryKey = if ($null -ne $category.PSObject.Properties['parent_category_key']) { $category.parent_category_key } else { $null }
+            TreeLevel = if ($null -ne $category.PSObject.Properties['tree_level']) { [int]$category.tree_level } else { $null }
+            TreeVerifiedAt = if ($null -ne $category.PSObject.Properties['tree_verified_at']) { [string]$category.tree_verified_at } else { $null }
             ReportFileToken = [string]$category.report_file_token
             ClassificationConfigPath = $classificationPath
             AttributeSchemaPath = $attributePath

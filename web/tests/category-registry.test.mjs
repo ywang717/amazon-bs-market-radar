@@ -22,7 +22,7 @@ function runGenerator(args) {
 
 test("generated production registry preserves category nodes", () => {
   assert.deepEqual(
-    Object.fromEntries(productionCategoryRegistry.categories.map((row) => [row.categoryKey, row.nodeId])),
+    Object.fromEntries(productionCategoryRegistry.categories.filter((row) => !row.groupKey).map((row) => [row.categoryKey, row.nodeId])),
     {
       pressure_washers: "552856",
       sump_pumps: "680335011",
@@ -33,7 +33,7 @@ test("generated production registry preserves category nodes", () => {
 
 test("Web catalog projects every enabled Category from the generated Registry", () => {
   assert.deepEqual(categories.map(({ key, label, nodeId, segments }) => ({ key, label, nodeId, segments })),
-    productionCategoryRegistry.categories.filter(({ enabled }) => enabled).map((category) => ({
+    productionCategoryRegistry.categories.filter(({ enabled, groupKey }) => enabled && !groupKey).map((category) => ({
       key: category.categoryKey,
       label: category.labelZh,
       nodeId: category.nodeId,

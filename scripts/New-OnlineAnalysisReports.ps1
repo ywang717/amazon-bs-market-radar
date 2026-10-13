@@ -38,6 +38,12 @@ if (-not [string]::IsNullOrWhiteSpace($PreviousSnapshotPath) -and (Test-Path -Li
 }
 
 Import-Module (Join-Path $projectRoot 'src\OnlineAnalysisReport.psm1') -Force
+Import-Module (Join-Path $projectRoot 'src/BestSellersDataSemantics.psm1') -Force
+Import-Module (Join-Path $projectRoot 'src/BestSellersCategoryRegistry.psm1') -Force
+$historyRegistry = Import-BestSellersCategoryRegistry -Path $RegistryPath
+$historyCategories = @($historyRegistry.Categories | Where-Object Enabled)
+$categoryCompleteMarketDays = @{}
+foreach ($category in $historyCategories) { $categoryCompleteMarketDays[$category.CategoryKey] = 0 }
 $completeMarketDays = 0
 $validDates = @{}
 if (-not [string]::IsNullOrWhiteSpace($CategoryKey)) { $validDates[$ReportDate] = $true }
@@ -46,16 +52,21 @@ foreach ($candidate in @(Get-ChildItem -LiteralPath $SnapshotsRoot -Directory -E
     $candidateReceipt = Join-Path $candidate.FullName 'best-sellers-capture-receipt.json'
     if (-not (Test-Path -LiteralPath $candidateSnapshot -PathType Leaf) -or -not (Test-Path -LiteralPath $candidateReceipt -PathType Leaf)) { continue }
     try {
-        $candidateValidation = & (Join-Path $projectRoot 'scripts\Test-BestSellersCaptureReceipt.ps1') -ReceiptPath $candidateReceipt -RegistryPath $RegistryPath | ConvertFrom-Json
-        if (-not $candidateValidation.valid) { continue }
-        if (-not [string]::IsNullOrWhiteSpace($CategoryKey)) {
-            $candidateAuthorized = Resolve-BestSellersAuthorizedSnapshot -SnapshotPath $candidateSnapshot -ReceiptPath $candidateReceipt -CategoryKey $CategoryKey -RegistryPath $RegistryPath
-            if ([string]$candidateAuthorized.market_date -le $ReportDate) { $validDates[[string]$candidateAuthorized.market_date] = $true }
-            continue
-        }
+        $candidateReceiptData = Get-Content -LiteralPath $candidateReceipt -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ([string]$candidateReceiptData.status -ne 'COMPLETE_VALIDATED' -or $candidateReceiptData.source_metadata_verified -ne $true -or [string]$candidateReceiptData.market_date -ne $candidate.Name) { continue }
+        if ((Get-FileHash -LiteralPath $candidateSnapshot -Algorithm SHA256).Hash.ToLowerInvariant() -ne [string]$candidateReceiptData.snapshot_sha256) { continue }
         $candidateData = Get-Content -LiteralPath $candidateSnapshot -Raw -Encoding UTF8 | ConvertFrom-Json
-        $probe = @(New-OnlineAnalysisReports -Snapshot $candidateData -ReceiptSha256 ([string]$candidateValidation.actual_snapshot_sha256) -ReportKind Daily -RegistryPath $RegistryPath)
-        if ($probe[0].evidence.complete) { $completeMarketDays++ }
+        if ([string]$candidateData.market_date -ne $candidate.Name) { continue }
+        $completeCategories = 0
+        foreach ($category in $historyCategories) {
+            $property = $candidateData.PSObject.Properties[$category.CategoryKey]
+            if ($null -ne $property -and (Test-BestSellersExactTop30 -Items @($property.Value) -TargetCount $category.TargetCount)) {
+                $categoryCompleteMarketDays[$category.CategoryKey]++
+                $completeCategories++
+                if ($category.CategoryKey -eq $CategoryKey) { $validDates[$candidate.Name] = $true }
+            }
+        }
+        if ($completeCategories -eq $historyCategories.Count) { $completeMarketDays++ }
     }
     catch { continue }
 }
@@ -67,6 +78,6 @@ if (-not [string]::IsNullOrWhiteSpace($CategoryKey)) {
         if ([string]$previousAuthorized.market_date -ge $ReportDate) { throw 'Previous market date must precede the current date.' }
     }
 }
-$reports = @(New-OnlineAnalysisReports -Snapshot $snapshot -ReceiptSha256 ([string]$receiptValidation.actual_snapshot_sha256) -ReportKind $ReportKind -PreviousSnapshot $previous -CompleteMarketDays $completeMarketDays -RegistryPath $RegistryPath -CategoryKey $CategoryKey)
+$reports = @(New-OnlineAnalysisReports -Snapshot $snapshot -ReceiptSha256 ([string]$receiptValidation.actual_snapshot_sha256) -ReportKind $ReportKind -PreviousSnapshot $previous -CompleteMarketDays $completeMarketDays -CategoryCompleteMarketDays $(if ($ReportKind -eq 'Weekly') { $categoryCompleteMarketDays } else { $null }) -RegistryPath $RegistryPath -CategoryKey $CategoryKey)
 $paths = @(Write-OnlineAnalysisReports -Reports $reports -OutputDirectory $OutputRoot)
 [pscustomobject]@{ Status='CREATED'; ReportKind=$ReportKind.ToLowerInvariant(); MarketDate=$ReportDate; CompleteMarketDays=$completeMarketDays; ReportPaths=$paths; ReportCount=$paths.Count } | ConvertTo-Json -Depth 8

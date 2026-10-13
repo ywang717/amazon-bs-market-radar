@@ -1,4 +1,4 @@
-import { categories, type CategoryKey } from "./catalog.ts";
+import { type CategoryKey } from "./catalog.ts";
 import { productionCategoryRegistry } from "./category-registry.ts";
 import type { SegmentKey } from "./generated/category-registry.ts";
 
@@ -29,7 +29,7 @@ const keyPattern = /^(daily|weekly)\/\d{4}-\d{2}-\d{2}\/([a-z0-9_]+)\.json$/;
 const sha256 = /^[a-f0-9]{64}$/i;
 const privateDetail = /(?:[A-Z]:\\|\/Users\/|smtp|password|secret|authorization|@)/i;
 const trendTerms = /趋势|关联|相关|因果|留存/;
-const categoryKeys = new Set<string>(categories.map(({ key }) => key));
+const categoryKeys = new Set<string>(productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>c.categoryKey));
 const segmentKeys = new Set<string>(productionCategoryRegistry.categories.flatMap(({ segments }) => segments.map(({ key }) => key)));
 
 export function validateAnalysisReport(input: unknown): { ok: true; report: AnalysisReport } | { ok: false; errors: string[] } {

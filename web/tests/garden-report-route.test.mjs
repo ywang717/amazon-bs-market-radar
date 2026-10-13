@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';import {register} from 'node:module';import test from 'node:test';
+const env=globalThis.__dashboardWorkerEnvironment??={};const root=new URL('../',import.meta.url).href;
+register(`data:text/javascript,const root=${JSON.stringify(root)};export async function resolve(s,c,n){if(s==='cloudflare:workers')return {url:'data:text/javascript,export const env=globalThis.__dashboardWorkerEnvironment',shortCircuit:true};if(s.startsWith('@/'))return {url:new URL(s.slice(2)+(/\\.[a-z]+$/i.test(s)?'':'.ts'),root).href,shortCircuit:true};return n(s,c);}`,import.meta.url);
+const {POST}=await import('../app/api/sync/v1/reports/route.ts');
+test('garden PDF reports accept registered scope and reject unknown scope',async()=>{const uploaded=[];env.SYNC_SECRET='local-secret';env.REPORTS={async put(key){uploaded.push(key);}};env.DB={prepare(){return {bind(){return this;},async run(){return {meta:{changes:1}};}};},async batch(){return [];}};
+function req(category){return new Request('http://localhost/api/sync/v1/reports',{method:'POST',headers:{authorization:'Bearer local-secret','content-type':'application/pdf','x-report-key':`weekly/2026-10-13/${category}.pdf`,'x-market-date':'2026-10-13','x-report-kind':'weekly','x-category-key':category,'x-segment-key':'all'},body:'%PDF-1.7\n'});}
+assert.equal((await POST(req('garden_gardening'))).status,201);assert.equal((await POST(req('fake_garden'))).status,400);assert.equal(uploaded.length,1);});

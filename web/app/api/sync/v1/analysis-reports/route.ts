@@ -7,11 +7,13 @@ import { storeCategoryReport, validateCategoryReportEnvelope } from "@/lib/scope
 type ReceiptAnalysisReport = AnalysisReport & { receiptSha256: string };
 type StoredAnalysisReport = { content_sha256: string; content_json: string };
 
-const reportScopes = ["overview", "pressure_washers", "sump_pumps", "pressure_washer_accessories"] as const;
+import { productionCategoryRegistry } from "@/lib/category-registry";
+const legacyReportScopes = ["overview", "pressure_washers", "sump_pumps", "pressure_washer_accessories"] as const;
 
 function validateDailyReportBundle(payload: unknown): ReceiptAnalysisReport[] | null {
   if (!payload || typeof payload !== "object") return null;
   const rawReports = (payload as { reports?: unknown }).reports;
+  const reportScopes = Array.isArray(rawReports) && rawReports.length === legacyReportScopes.length ? legacyReportScopes : ["overview", ...productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>c.categoryKey)];
   if (!Array.isArray(rawReports) || rawReports.length !== reportScopes.length) return null;
   const reports: ReceiptAnalysisReport[] = [];
   for (const rawReport of rawReports) {
@@ -39,8 +41,8 @@ async function storeDailyReportBundle(payload: unknown) {
   const marketDate = reports[0].marketDate;
   const receiptSha256 = reports[0].receiptSha256;
   const now = new Date().toISOString();
-  const incomingRows = reports.map((_, index) => `${index === 0 ? "SELECT" : "UNION ALL SELECT"} ? AS key, ? AS report_kind, ? AS market_date, ? AS category_key, ? AS segment_key, ? AS generated_at, ? AS generator_version, ? AS content_sha256, ? AS content_json, ? AS imported_at`).join(" ");
-  const placeholders = reportScopes.map(() => "?").join(", ");
+  const incomingRows = "SELECT json_extract(value, '$.key') AS key, json_extract(value, '$.report_kind') AS report_kind, json_extract(value, '$.market_date') AS market_date, json_extract(value, '$.category_key') AS category_key, json_extract(value, '$.segment_key') AS segment_key, json_extract(value, '$.generated_at') AS generated_at, json_extract(value, '$.generator_version') AS generator_version, json_extract(value, '$.content_sha256') AS content_sha256, json_extract(value, '$.content_json') AS content_json, json_extract(value, '$.imported_at') AS imported_at FROM json_each(?)";
+  const placeholders = reports.map(() => "?").join(", ");
   const guardedUpsert = `INSERT INTO analysis_reports (key, report_kind, market_date, category_key, segment_key, generated_at, generator_version, content_sha256, content_json, imported_at)
     WITH existing_cohort AS (
       SELECT key,
@@ -62,22 +64,21 @@ async function storeDailyReportBundle(payload: unknown) {
       AND (
         (SELECT COUNT(*) FROM existing_cohort) = 0
         OR (
-          (SELECT COUNT(*) FROM existing_cohort) = 4
-          AND (SELECT COUNT(*) FROM existing_cohort WHERE key IN (${placeholders})) = 4
+          (SELECT COUNT(*) FROM existing_cohort) IN (4, ${reports.length})
+          AND (SELECT COUNT(*) FROM existing_cohort WHERE key IN (${placeholders})) = (SELECT COUNT(*) FROM existing_cohort)
           AND (
             SELECT COUNT(*) FROM existing_cohort
             WHERE receipt_sha256 IS NOT NULL
               AND length(receipt_sha256) = 64
               AND receipt_sha256 NOT GLOB '*[^0-9a-f]*'
-          ) = 4
+          ) = (SELECT COUNT(*) FROM existing_cohort)
           AND (SELECT COUNT(DISTINCT receipt_sha256) FROM existing_cohort) = 1
           AND (SELECT MAX(receipt_sha256) FROM existing_cohort) <> ?
         )
       )
     ON CONFLICT(key) DO UPDATE SET report_kind=excluded.report_kind, market_date=excluded.market_date, category_key=excluded.category_key, segment_key=excluded.segment_key, generated_at=excluded.generated_at, generator_version=excluded.generator_version, content_sha256=excluded.content_sha256, content_json=excluded.content_json, imported_at=excluded.imported_at`;
-  const values = reports.flatMap((report) => [report.key, report.reportKind, report.marketDate, report.categoryKey, report.segmentKey ?? null, report.generatedAt, report.generatorVersion, report.contentSha256, JSON.stringify(report), now]);
-  values.unshift(marketDate);
-  values.push(marketDate, receiptSha256, ...reports.map((report) => report.key), receiptSha256);
+  const incoming = reports.map(report=>({key:report.key,report_kind:report.reportKind,market_date:report.marketDate,category_key:report.categoryKey,segment_key:report.segmentKey??null,generated_at:report.generatedAt,generator_version:report.generatorVersion,content_sha256:report.contentSha256,content_json:JSON.stringify(report),imported_at:now}));
+  const values = [marketDate,JSON.stringify(incoming),marketDate,receiptSha256,...reports.map(report=>report.key),receiptSha256];
   const writeResult = await db.prepare(guardedUpsert).bind(...values).run();
   const changes = Number(writeResult.meta.changes ?? 0);
   if (changes === reports.length) return Response.json({ status: "imported", marketDate, reportKind: "daily", reports: reports.length }, { status: 201 });

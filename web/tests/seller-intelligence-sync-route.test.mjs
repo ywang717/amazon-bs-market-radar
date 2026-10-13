@@ -89,7 +89,7 @@ function bundleEnvironment({ existing = new Map(), failImportBatch = false } = {
         return {
           sql,
           get values() { return values; },
-          bind(...bound) { values = bound; return this; },
+          bind(...bound) { assert.ok(bound.length <= 100, "D1 statement parameter limit exceeded"); values = bound; return this; },
           async first() {
             const stored = existing.get(values[0]);
             return stored ? { content_sha256: stored.contentSha256 } : null;
@@ -125,7 +125,7 @@ function sqliteBundleEnvironment({ snapshotReceipt, existingReports = [], before
     let values = [];
     return {
       sql,
-      bind(...bound) { values = bound; return this; },
+      bind(...bound) { assert.ok(bound.length <= 100, "D1 statement parameter limit exceeded"); values = bound; return this; },
       async first() { return sqlite.prepare(sql).get(...values) ?? null; },
       async all() { return { results: sqlite.prepare(sql).all(...values) }; },
       async run() {
@@ -419,4 +419,15 @@ test("does not replace daily seller reports when the snapshot receipt changes be
   assert.equal(response.status, 409);
   assert.deepEqual(await response.json(), { error: "snapshot_receipt_mismatch" });
   assert.equal(env.sqlite.prepare("SELECT COUNT(*) AS count FROM seller_intelligence_reports WHERE content_json LIKE '%receiptSha256%'").get().count, 0);
+});
+
+test('expanded daily seller cohort stays under D1 parameter limit',async()=>{
+ const {productionCategoryRegistry}=await import('../lib/category-registry.ts');
+ const scopes=['overview',...productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>c.categoryKey)];
+ const receiptSha256='b'.repeat(64);
+ const reports=scopes.map(scope=>report({key:`seller-alert/daily/2026-08-24/${scope}.json`,categoryKey:scope==='overview'?null:scope}));
+ const env=sqliteBundleEnvironment({snapshotReceipt:receiptSha256});
+ const response=await request({reports,receiptSha256},env);
+ assert.equal(response.status,201);
+ assert.equal(env.sqlite.prepare('SELECT COUNT(*) n FROM seller_intelligence_reports').get().n,scopes.length);
 });

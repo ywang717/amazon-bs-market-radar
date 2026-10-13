@@ -28,6 +28,118 @@
       "category_slug": "pressure-washer-accessories",
       "display_name": "Pressure Washer Parts & Accessories Best Sellers",
       "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pressure-Washer-Parts-Accessories/zgbs/lawn-garden/3023451"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "2972638011",
+      "category_key": "patio_lawn_garden",
+      "category_slug": "patio-lawn-garden",
+      "display_name": "Patio, Lawn & Garden Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden/zgbs/lawn-garden/2972638011"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "553632",
+      "category_key": "garden_backyard_birding",
+      "category_slug": "garden-backyard-birding",
+      "display_name": "Backyard Birding & Wildlife Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Backyard-Birding-Wildlife/zgbs/lawn-garden/553632"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "4619352011",
+      "category_key": "garden_farm_ranch",
+      "category_slug": "garden-farm-ranch",
+      "display_name": "Farm & Ranch Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Farm-Ranch/zgbs/lawn-garden/4619352011"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "3610851",
+      "category_key": "garden_gardening",
+      "category_slug": "garden-gardening",
+      "display_name": "Gardening Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Gardening-Lawn-Care/zgbs/lawn-garden/3610851"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "552808",
+      "category_key": "garden_generators",
+      "category_slug": "garden-generators",
+      "display_name": "Generators & Portable Power Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Generators-Portable-Power/zgbs/lawn-garden/552808"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "553760",
+      "category_key": "garden_outdoor_cooking",
+      "category_slug": "garden-outdoor-cooking",
+      "display_name": "Outdoor Cooking Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Cooking/zgbs/lawn-garden/553760"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "551242",
+      "category_key": "garden_power_tools",
+      "category_slug": "garden-power-tools",
+      "display_name": "Outdoor Power & Lawn Equipment Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Power-Lawn-Equipment/zgbs/lawn-garden/551242"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "553788",
+      "category_key": "garden_outdoor_decor",
+      "category_slug": "garden-outdoor-decor",
+      "display_name": "Outdoor Décor Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Dcor/zgbs/lawn-garden/553788"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "13638732011",
+      "category_key": "garden_outdoor_heating",
+      "category_slug": "garden-outdoor-heating",
+      "display_name": "Outdoor Heating Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Heating-Cooling/zgbs/lawn-garden/13638732011"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "13400641",
+      "category_key": "garden_outdoor_storage",
+      "category_slug": "garden-outdoor-storage",
+      "display_name": "Outdoor Storage Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Storage-Housing/zgbs/lawn-garden/13400641"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "553824",
+      "category_key": "garden_patio_furniture",
+      "category_slug": "garden-patio-furniture",
+      "display_name": "Patio Furniture & Accessories Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Patio-Furniture-Accessories/zgbs/lawn-garden/553824"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "553844",
+      "category_key": "garden_pest_control",
+      "category_slug": "garden-pest-control",
+      "display_name": "Pest Control Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pest-Control-Products/zgbs/lawn-garden/553844"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "1272941011",
+      "category_key": "garden_pools",
+      "category_slug": "garden-pools",
+      "display_name": "Pools, Hot Tubs & Supplies Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pools-Hot-Tubs-Supplies/zgbs/lawn-garden/1272941011"
+    },
+    {
+      "active": true,
+      "amazon_node_id": "3043471",
+      "category_key": "garden_snow_removal",
+      "category_slug": "garden-snow-removal",
+      "display_name": "Snow Removal Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Snow-Removal-Tools/zgbs/lawn-garden/3043471"
     }
   ],
   "target_count": 30

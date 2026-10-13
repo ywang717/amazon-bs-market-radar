@@ -1,0 +1,6 @@
+{
+  "schema_version": "product-classification-config-v1",
+  "rule_version": "garden-observation-v1",
+  "reviewed_asin_overrides": [],
+  "rules": []
+}

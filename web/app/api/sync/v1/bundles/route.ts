@@ -4,6 +4,8 @@ import { validateSyncBundle } from "@/lib/sync-contract";
 import { ensureSchema, getD1 } from "@/lib/d1";
 import { buildProductMetadataBrandConflictGuardStatement, buildProductMetadataUpsertStatement, isProductMetadataBrandConflictError } from "@/lib/product-metadata-upsert";
 
+import { productionCategoryRegistry } from "@/lib/category-registry";
+
 export async function POST(request: Request) {
   if (!authorizeSyncRequest(request, env.SYNC_SECRET as string | undefined)) return Response.json({ error: "unauthorized" }, { status: 401 });
   let payload: Record<string, unknown>;
@@ -50,10 +52,12 @@ export async function POST(request: Request) {
       .bind(marketDate, category.key, id, String(payload.observedAt)));
   }
   statements.push(db.prepare("DELETE FROM snapshots WHERE market_date = ?").bind(marketDate));
+  const expectedCategoryCount = productionCategoryRegistry.categories.filter(c=>c.enabled).length;
+  const completeCohort = `(COUNT(*) = ${expectedCategoryCount} OR (COUNT(*) = 3 AND SUM(CASE WHEN c.category_key IN ('pressure_washers','sump_pumps','pressure_washer_accessories') THEN 1 ELSE 0 END) = 3))`;
   statements.push(db.prepare(`INSERT INTO snapshots (market_date, observed_at, receipt_sha256, public_status, complete_category_count, imported_at)
     SELECT ?, MAX(r.observed_at),
-      CASE WHEN COUNT(DISTINCT r.receipt_sha256) = 1 AND COUNT(*) = 3 THEN MAX(r.receipt_sha256) ELSE 'mixed:' || ? END,
-      CASE WHEN SUM(c.complete) = 3 THEN '已更新' ELSE '数据不完整' END, SUM(c.complete), ?
+      CASE WHEN COUNT(DISTINCT r.receipt_sha256) = 1 AND ${completeCohort} THEN MAX(r.receipt_sha256) ELSE 'mixed:' || ? END,
+      CASE WHEN SUM(c.complete) = COUNT(*) AND ${completeCohort} THEN '已更新' ELSE '数据不完整' END, SUM(c.complete), ?
     FROM category_days c JOIN category_capture_receipts r ON r.market_date = c.market_date AND r.category_key = c.category_key
     WHERE c.market_date = ?`).bind(marketDate, marketDate, now, marketDate));
   for (const metadata of validated.productMetadata) {

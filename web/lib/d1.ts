@@ -12,6 +12,8 @@ export function getReportsBucket() {
 
 export async function ensureSchema(db: D1Database) {
   const statements = [
+    `CREATE TABLE IF NOT EXISTS garden_review_versions (marketplace TEXT NOT NULL, asin TEXT NOT NULL, category_key TEXT NOT NULL, revision INTEGER NOT NULL, published INTEGER NOT NULL, status TEXT NOT NULL, content_json TEXT NOT NULL, public_json TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(marketplace,asin,category_key,revision))`,
+    `CREATE INDEX IF NOT EXISTS idx_garden_review_lookup ON garden_review_versions(marketplace,asin,category_key,revision DESC)`,
     `CREATE TABLE IF NOT EXISTS snapshots (market_date TEXT PRIMARY KEY, observed_at TEXT NOT NULL, receipt_sha256 TEXT NOT NULL UNIQUE, public_status TEXT NOT NULL, complete_category_count INTEGER NOT NULL, imported_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS category_capture_receipts (market_date TEXT NOT NULL, category_key TEXT NOT NULL, receipt_sha256 TEXT NOT NULL, observed_at TEXT NOT NULL, PRIMARY KEY (market_date, category_key))`,
     `CREATE TABLE IF NOT EXISTS market_sync_guard (guard_key TEXT PRIMARY KEY, conflict INTEGER NOT NULL, CONSTRAINT market_sync_guard_check CHECK (conflict = 0))`,

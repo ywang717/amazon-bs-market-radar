@@ -156,7 +156,7 @@ export function createMarketContextResolver(registry: RuntimeCategoryRegistry) {
 }
 
 export type MarketContextResolver = ReturnType<typeof createMarketContextResolver>;
-export const productionMarketContextResolver = createMarketContextResolver(productionCategoryRegistry);
+export const productionMarketContextResolver = createMarketContextResolver({ ...productionCategoryRegistry, categories: productionCategoryRegistry.categories.filter(category => !category.groupKey) });
 
 export const MARKET_CONFIG = productionMarketContextResolver.MARKET_CONFIG as Record<CategoryKey, MarketDefinition>;
 export const PAGE_MARKET_DEFAULTS = productionMarketContextResolver.PAGE_MARKET_DEFAULTS as Record<PageMarket, Record<CategoryKey, SegmentKey>>;

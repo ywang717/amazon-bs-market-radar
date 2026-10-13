@@ -59,8 +59,9 @@ test("an injected Registry participates in every cache-key dimension", () => {
     resolver.marketContextCacheKey({ marketplace: "US", category: category.categoryKey, segment: segment.key }, { date: "2026-08-30", window: "30d" }),
   ]));
 
-  assert.equal(keys.length, 52);
-  assert.equal(new Set(keys).size, 52);
+  const expected = resolver.enabled.reduce((n, c) => n + c.segments.length * 4, 0);
+  assert.equal(keys.length, expected);
+  assert.equal(new Set(keys).size, expected);
   assert.ok(keys.includes("US:pressure_washers:machines:2026-08-29:7d"));
   assert.ok(keys.includes("US:test_category:all:2026-08-30:30d"));
 });

@@ -4,10 +4,12 @@ param(
     [string]$OutputDirectory,
     [string]$EmailRecipient = '746254487@qq.com',
     [switch]$SkipEmail,
-    [string]$RegistryPath
+    [string]$RegistryPath,
+    [string[]]$CategoryKeys
 )
 
 $ErrorActionPreference = 'Stop'
+$CategoryKeys = @($CategoryKeys | ForEach-Object { $_ -split ',' } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($RegistryPath)) { $RegistryPath = Join-Path $projectRoot 'config\category-registry.json' }
 $pacificTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('America/Los_Angeles')
@@ -22,7 +24,15 @@ $registry = Import-BestSellersCategoryRegistry -Path $RegistryPath
 $current = Read-BestSellersSnapshot -Path $CurrentPath -RegistryPath $RegistryPath
 $previous = if ([string]::IsNullOrWhiteSpace($PreviousPath)) { $null } else { Read-BestSellersSnapshot -Path $PreviousPath -RegistryPath $RegistryPath }
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = Join-Path (Join-Path $projectRoot 'var\reports') ([string]$current.market_date) }
-$categoryKeys = @(Get-BestSellersCategoryKeys -Registry $registry -EnabledOnly)
+$categoryKeys = if ($null -ne $CategoryKeys -and $CategoryKeys.Count -gt 0) {
+    @($CategoryKeys | Select-Object -Unique | ForEach-Object {
+        $selected = Get-BestSellersCategory -Registry $registry -CategoryKey $_
+        if (-not $selected.Enabled) { throw "Category is disabled: $_" }
+        $selected.CategoryKey
+    })
+} else {
+    @($registry.Categories | Where-Object { $_.Enabled -and [string]::IsNullOrWhiteSpace($_.GroupKey) } | ForEach-Object { $_.CategoryKey })
+}
 $results = @()
 foreach ($categoryKey in $categoryKeys) {
     $report = New-BestSellersDailyReport -CurrentSnapshot $current -PreviousSnapshot $previous -OutputDirectory $OutputDirectory -GeneratedAtBeijing $generatedAtBeijing -CategoryKeys $categoryKey -RegistryPath $RegistryPath

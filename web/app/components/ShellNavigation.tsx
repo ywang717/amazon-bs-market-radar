@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -14,6 +15,7 @@ const navigation = [
   { href: "/brands", label: "品牌" },
   { href: "/rankings", label: "榜单" },
   { href: "/reports", label: "报告" },
+  { href: "/garden", label: "庭院与花园" },
 ];
 
 type DrawerName = "activity" | "status" | null;
@@ -103,14 +105,15 @@ export function ShellNavigation() {
     <nav id="primary-navigation" className={menuOpen ? "primaryNav open" : "primaryNav"} aria-label="主导航">
       {navigation.map(({ href, label }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+        if (href === "/garden") return <Link href={href} aria-current={active ? "page" : undefined} key={href}>{label}</Link>;
         return <ContextLink href={href} target="_top" aria-current={active ? "page" : undefined} key={href}>{label}</ContextLink>;
       })}
     </nav>
-    <div className="shellActions">
+    {!pathname.startsWith("/garden") && <div className="shellActions">
       <button className="iconAction" type="button" aria-label="市场动态" onClick={() => openDrawer("activity")}><span aria-hidden="true">♢</span><span className="actionLabel">动态</span></button>
       <button className="statusAction" type="button" aria-label="数据状态" onClick={() => openDrawer("status")}><i aria-hidden="true" />数据状态</button>
       <ContextLink className="methodologyLink" href="/methodology" target="_top"><span aria-hidden="true">?</span>方法说明</ContextLink>
-    </div>
+    </div>}
     {drawer && typeof document !== "undefined" && createPortal(<div className="drawerLayer" role="presentation" onMouseDown={(event) => {
       if (event.currentTarget === event.target) setDrawer(null);
     }}>

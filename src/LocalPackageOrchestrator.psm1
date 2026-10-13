@@ -132,7 +132,8 @@ function ConvertTo-LocalPackageArgumentList {
         }
         if ($null -eq $value -or ($value -is [string] -and [string]::IsNullOrWhiteSpace($value))) { continue }
         [void]$list.Add("-$name")
-        [void]$list.Add([string]$value)
+        if ($name -eq 'CategoryKeys' -and $value -is [array]) { [void]$list.Add(($value -join ',')) }
+        else { [void]$list.Add([string]$value) }
     }
     return @($list)
 }
@@ -365,7 +366,7 @@ function Copy-LocalPackageImportedSnapshot {
             $sourceHash = (Get-FileHash -LiteralPath $sourceResolved -Algorithm SHA256).Hash
             Copy-Item -LiteralPath $sourceResolved -Destination $stagingPath
             if (-not (Test-Path -LiteralPath $stagingPath -PathType Leaf)) { throw 'Snapshot staging copy was not created.' }
-            $stagingInfo = Get-Item -LiteralPath $stagingPath
+            $stagingInfo = Get-Item -LiteralPath $stagingPath -Force
             $stagingHash = (Get-FileHash -LiteralPath $stagingPath -Algorithm SHA256).Hash
             if ($stagingInfo.Length -ne $sourceInfo.Length -or $stagingHash -ne $sourceHash) {
                 throw 'Snapshot staging copy did not match the source content.'
@@ -442,9 +443,11 @@ function Invoke-LocalPackageDailyGates {
     $run = Invoke-LocalPackageTrackedStep -Name 'DailyReports' -ScriptPath (Join-Path $scriptsRoot 'New-BestSellersDailyReport.ps1') -Arguments $reportArguments -StepRunner $StepRunner -Steps $Summary.steps
     Assert-LocalPackageStepSucceeded -Name 'DailyReports' -Run $run
     $reports = Get-LocalPackagePropertyValue -InputObject $run.Result -Name 'Reports'
-    if (@($reports).Count -ne 3) {
+    $reportRegistry = Get-Content -LiteralPath (Join-Path $ProjectRoot 'config/category-registry.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $expectedReportCount = @($reportRegistry.categories | Where-Object { $_.enabled -and [string]::IsNullOrWhiteSpace([string](Get-LocalPackagePropertyValue -InputObject $_ -Name 'group_key')) }).Count
+    if (@($reports).Count -ne $expectedReportCount) {
         Set-LocalPackageStepFailed -Steps $Summary.steps -Name 'DailyReports'
-        throw "Step 'DailyReports' did not confirm exactly three reports."
+        throw "Step 'DailyReports' did not confirm $expectedReportCount configured reports."
     }
     $delivery = Get-LocalPackagePropertyValue -InputObject $run.Result -Name 'EmailDelivery'
     $deliveryStatus = [string](Get-LocalPackagePropertyValue -InputObject $delivery -Name 'Status')
@@ -452,6 +455,14 @@ function Invoke-LocalPackageDailyGates {
     if ($deliveryStatus -ne $requiredDeliveryStatus) {
         Set-LocalPackageStepFailed -Steps $Summary.steps -Name 'DailyReports'
         throw "Step 'DailyReports' EmailDelivery.Status must be '$requiredDeliveryStatus', received '$deliveryStatus'."
+    }
+    $gardenCategoryKeys = @($reportRegistry.categories | Where-Object { $_.enabled -and [string](Get-LocalPackagePropertyValue -InputObject $_ -Name 'group_key') -eq 'patio_lawn_garden' } | ForEach-Object { [string]$_.category_key })
+    if ($gardenCategoryKeys.Count -gt 0) {
+        $gardenArguments = @{ CurrentPath = $SnapshotPath; OutputDirectory = $reportDirectory; SkipEmail = $true; CategoryKeys = $gardenCategoryKeys }
+        if (-not [string]::IsNullOrWhiteSpace($previousPath)) { $gardenArguments.PreviousPath = $previousPath }
+        $gardenRun = Invoke-LocalPackageTrackedStep -Name 'GardenDailyReports' -ScriptPath (Join-Path $scriptsRoot 'New-BestSellersDailyReport.ps1') -Arguments $gardenArguments -StepRunner $StepRunner -Steps $Summary.steps
+        Assert-LocalPackageStepSucceeded -Name 'GardenDailyReports' -Run $gardenRun
+        if (@(Get-LocalPackagePropertyValue -InputObject $gardenRun.Result -Name 'Reports').Count -ne $gardenCategoryKeys.Count) { throw 'GardenDailyReports did not confirm all enabled garden reports.' }
     }
 
     $run = Invoke-LocalPackageTrackedStep -Name 'Backup' -ScriptPath (Join-Path $scriptsRoot 'postgres\Backup-LocalPostgres.ps1') -Arguments @{} -StepRunner $StepRunner -Steps $Summary.steps
@@ -578,6 +589,15 @@ function Invoke-LocalPackageMode {
                 if (-not [string]::IsNullOrWhiteSpace($MarketDate)) { $weeklyArguments.ReportDate = $MarketDate }
                 $run = Invoke-LocalPackageTrackedStep -Name 'WeeklyReport' -ScriptPath (Join-Path $scriptsRoot 'New-BestSellersWeeklyReport.ps1') -Arguments $weeklyArguments -StepRunner $StepRunner -Steps $summary.steps
                 Assert-LocalPackageStepSucceeded -Name 'WeeklyReport' -Run $run
+                $weeklyRegistry = Get-Content -LiteralPath (Join-Path $ProjectRoot 'config/category-registry.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+                $gardenCategoryKeys = @($weeklyRegistry.categories | Where-Object { $_.enabled -and [string](Get-LocalPackagePropertyValue -InputObject $_ -Name 'group_key') -eq 'patio_lawn_garden' } | ForEach-Object { [string]$_.category_key })
+                if ($gardenCategoryKeys.Count -gt 0) {
+                    $gardenWeeklyArguments = @{ SkipEmail = $true; CategoryKeys = $gardenCategoryKeys }
+                    if (-not [string]::IsNullOrWhiteSpace($MarketDate)) { $gardenWeeklyArguments.ReportDate = $MarketDate }
+                    $gardenRun = Invoke-LocalPackageTrackedStep -Name 'GardenWeeklyReport' -ScriptPath (Join-Path $scriptsRoot 'New-BestSellersWeeklyReport.ps1') -Arguments $gardenWeeklyArguments -StepRunner $StepRunner -Steps $summary.steps
+                    Assert-LocalPackageStepSucceeded -Name 'GardenWeeklyReport' -Run $gardenRun
+                    if (@(Get-LocalPackagePropertyValue -InputObject $gardenRun.Result -Name 'Reports').Count -ne $gardenCategoryKeys.Count) { throw 'GardenWeeklyReport did not confirm all enabled garden reports.' }
+                }
             }
             'Health' {
                 $run = Invoke-LocalPackageTrackedStep -Name 'Health' -ScriptPath (Join-Path $scriptsRoot 'Test-BestSellersDailyOperationalHealth.ps1') -Arguments @{ MarketDate = $MarketDate } -StepRunner $StepRunner -Steps $summary.steps

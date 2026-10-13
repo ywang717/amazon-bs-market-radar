@@ -94,7 +94,7 @@ const privateDetail =
   /(?:[A-Z]:\\|\/Users\/|smtp|password|secret|authorization|api[_-]?key|bearer\s+[a-z0-9._-]+|@|\btask[-_\s]?\d+\b|\bdatabase\b|\bbackup\b|\binternal error\b|\bstack trace\b|\bexception\b|\bsqlstate\b)/i;
 const weeklyTrendTerms = /趋势|周度|策略|关联|相关|因果|份额/;
 const sellerBundleScopes: readonly (CategoryKey | "overview")[] = ["overview", ...categories.map(({ key }) => key)];
-const categoryKeys = new Set<string>(categories.map(({ key }) => key));
+const categoryKeys = new Set<string>(productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>c.categoryKey));
 const segmentKeys = new Set<string>(productionCategoryRegistry.categories.flatMap(({ segments }) => segments.map(({ key }) => key)));
 
 function isIntegerOrNull(value: unknown): value is number | null {
@@ -179,7 +179,7 @@ export function validateSellerIntelligenceReport(
   if (parsedKey && (parsedKey.profile !== report.profile || parsedKey.reportKind !== report.reportKind)) errors.push("报告键必须与画像和类型一致");
 
   if (!datePattern.test(String(report.marketDate ?? ""))) errors.push("市场日期无效");
-  if (report.categoryKey !== null && report.categoryKey !== undefined && !categories.some(({ key: categoryKey }) => categoryKey === report.categoryKey)) {
+  if (report.categoryKey !== null && report.categoryKey !== undefined && !categoryKeys.has(report.categoryKey)) {
     errors.push("榜单键无效");
   }
   if (parsedKey && parsedKey.marketDate !== report.marketDate) errors.push("报告键必须与市场日期一致");
@@ -290,8 +290,9 @@ export function validateSellerIntelligenceBundle(
   input: unknown,
 ): { ok: true; bundle: SellerIntelligenceBundle } | { ok: false; errors: string[] } {
   const reports = (input as { reports?: unknown })?.reports;
-  if (!Array.isArray(reports) || reports.length !== sellerBundleScopes.length) {
-    return { ok: false, errors: [`卖家情报批次必须恰好包含 ${sellerBundleScopes.length} 份报告`] };
+  const requiredScopes: readonly (CategoryKey | "overview")[] = Array.isArray(reports) && reports.length === sellerBundleScopes.length ? sellerBundleScopes : ["overview", ...productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>c.categoryKey as CategoryKey)];
+  if (!Array.isArray(reports) || reports.length !== requiredScopes.length) {
+    return { ok: false, errors: [`卖家情报批次必须恰好包含 ${requiredScopes.length} 份报告`] };
   }
 
   const validations = reports.map(validateSellerIntelligenceReport);
@@ -308,9 +309,9 @@ export function validateSellerIntelligenceBundle(
   const scopes = validReports.map((report) => parseSellerReportKey(report.key)?.scope ?? null);
   if (
     scopes.some((scope) => scope === null) ||
-    new Set(validReports.map((report) => report.key)).size !== sellerBundleScopes.length ||
-    new Set(scopes).size !== sellerBundleScopes.length ||
-    sellerBundleScopes.some((scope) => !scopes.includes(scope))
+    new Set(validReports.map((report) => report.key)).size !== requiredScopes.length ||
+    new Set(scopes).size !== requiredScopes.length ||
+    requiredScopes.some((scope) => !scopes.includes(scope))
   ) {
     return { ok: false, errors: ["卖家情报批次必须包含概览和全部启用榜单范围"] };
   }

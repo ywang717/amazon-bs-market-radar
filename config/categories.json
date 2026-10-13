@@ -85,8 +85,119 @@
       "parent": "pressure-washer-accessories",
       "accessory_type": "REPLACEMENT_PARTS",
       "active": true
+    },
+    {
+      "slug": "patio-lawn-garden",
+      "name": "Patio, Lawn & Garden",
+      "level": 1,
+      "parent": null,
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-backyard-birding",
+      "name": "Backyard Birding & Wildlife",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-farm-ranch",
+      "name": "Farm & Ranch",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-gardening",
+      "name": "Gardening",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-generators",
+      "name": "Generators & Portable Power",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-outdoor-cooking",
+      "name": "Grills & Outdoor Cooking",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-power-tools",
+      "name": "Mowers & Outdoor Power Tools",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-outdoor-decor",
+      "name": "Outdoor Décor",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-outdoor-heating",
+      "name": "Outdoor Heating",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-outdoor-storage",
+      "name": "Outdoor Storage",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-patio-furniture",
+      "name": "Patio Furniture & Accessories",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-pest-control",
+      "name": "Pest Control",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-pools",
+      "name": "Pools, Hot Tubs & Supplies",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
+      "slug": "garden-snow-removal",
+      "name": "Snow Removal",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
     }
   ],
   "sources": []
 }
-

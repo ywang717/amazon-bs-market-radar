@@ -426,8 +426,8 @@ try {
         $analysisResult = Invoke-DashboardAnalysisBundleUpload -SyncEndpoint $analysisEndpoint -DashboardUrl $DashboardUrl -Headers $headers -AnalysisBody $analysisBody
         if ([string]$analysisResult.status -notin @('imported','duplicate','replaced','equivalent_conflict')) { throw 'Unexpected daily analysis sync result.' }
 
-        $chinaTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('China Standard Time')
-        $beijingDate = [TimeZoneInfo]::ConvertTime([DateTimeOffset]::UtcNow, $chinaTimeZone).ToString('yyyy-MM-dd')
+        # Weekly archives use the same Pacific market date as daily snapshots.
+        $beijingDate = $MarketDate
         $weeklyDirectory = Join-Path (Join-Path (Join-Path $ProjectRoot 'var\reports') 'weekly') $beijingDate
         if ((Get-ChildItem -LiteralPath $weeklyDirectory -File -Filter 'Amazon_US_Weekly_Best_Sellers_Analysis_*.json' -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0) {
             Invoke-DashboardSellerIntelligenceBundle -Endpoint $sellerEndpoint -Headers $headers -SnapshotPath $snapshotPath -SnapshotsRoot $SnapshotsRoot -ReportKind Weekly -ReportDate $MarketDate
@@ -460,7 +460,8 @@ try {
                     'x-market-date' = $report.ReportDate
                     'x-report-kind' = $report.Kind
                     'x-category-key' = $report.Category
-                    'x-report-title' = $report.Title
+                    # HTTP header values must be ASCII; retain readable English by removing diacritics.
+                    'x-report-title' = ([string]$report.Title).Normalize([Text.NormalizationForm]::FormD) -replace '\p{Mn}', ''
                 }
                 Invoke-DashboardPublishRest -Uri $reportEndpoint -Method Post -Headers $reportHeaders -ContentType 'application/pdf' -InFile $report.File.FullName | Out-Null
                 $reportsUploaded++

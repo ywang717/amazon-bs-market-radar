@@ -484,7 +484,14 @@ function New-BestSellersProductMetadataRows {
         $rawBrand = Get-V2ObjectPropertyValue -Object $latest.item -Name 'raw_brand'
         $source = [string](Get-V2ObjectPropertyValue -Object $latest.item -Name 'brand_source')
         $brand = if (-not [string]::IsNullOrWhiteSpace([string]$rawBrand) -and $source -in @('verified_metadata', 'manual_review')) {
-            Get-BestSellersBrandNormalization -RawBrand ([string]$rawBrand) -Source $source -ConfigPath $BrandAliasConfigPath
+            try {
+                Get-BestSellersBrandNormalization -RawBrand ([string]$rawBrand) -Source $source -ConfigPath $BrandAliasConfigPath
+            }
+            catch {
+                if ($_.Exception.Message -ne 'Brand text is outside the portable normalization boundary.') { throw }
+                # Preserve the original captured brand in the immutable snapshot; do not fabricate a portable alias.
+                Get-BestSellersBrandNormalization -RawBrand $null -Source unknown -ConfigPath $BrandAliasConfigPath
+            }
         }
         else {
             Get-BestSellersBrandNormalization -RawBrand $null -Source unknown -ConfigPath $BrandAliasConfigPath

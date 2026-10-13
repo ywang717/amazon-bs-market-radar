@@ -4,6 +4,10 @@ export type RegistryPage = "overview" | "market" | "products" | "brands" | "rank
 export type RuntimeRegistrySegment = { key: string; labelZh: string; productTypes: readonly string[] };
 export type RuntimeRegistryCategory = {
   categoryKey: string;
+  groupKey?: string;
+  parentCategoryKey?: string | null;
+  treeLevel?: number;
+  treeVerifiedAt?: string;
   slug: string;
   labelZh: string;
   labelEn: string;

@@ -59,7 +59,7 @@ Describe 'Windows PowerShell compatibility' {
 `$ErrorActionPreference = 'Stop'
 Import-Module '$module' -Force
 `$registry = Import-BestSellersCategoryRegistry -Path '$registry'
-if (`$registry.Categories.Count -ne 3) { throw 'Unexpected production category count.' }
+if (`$registry.Categories.Count -ne 17) { throw 'Unexpected production category count.' }
 "@
         $output = @(& $windowsPowerShell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $script 2>&1)
         $LASTEXITCODE | Should Be 0
@@ -145,6 +145,7 @@ function New-TinyCategorySnapshot {
     foreach ($category in @($Registry.Categories | Where-Object Enabled)) {
         $snapshot.sources[$category.CategoryKey] = $category.SourceUrl
         $prefix = [string]$prefixes[$category.CategoryKey]
+        if ([string]::IsNullOrWhiteSpace($prefix)) { $prefix = ('G{0:D2}' -f [array]::IndexOf($Registry.Categories, $category)) }
         $snapshot[$category.CategoryKey] = @(1..$category.TargetCount | ForEach-Object {
             [pscustomobject]@{
                 rank=$_; asin=('{0}{1:D7}' -f $prefix,$_); title="$($category.LabelEn) Product $_"
@@ -176,7 +177,7 @@ Describe 'Category Registry contract' {
         (Get-BestSellersCategory -Registry $registry -CategoryKey 'pressure_washers').NodeId | Should Be '552856'
         (Get-BestSellersCategory -Registry $registry -CategoryKey 'sump_pumps').NodeId | Should Be '680335011'
         (Get-BestSellersCategory -Registry $registry -CategoryKey 'pressure_washer_accessories').NodeId | Should Be '3023451'
-        (@(Get-BestSellersCategoryKeys -Registry $registry -EnabledOnly) -join ',') | Should Be 'pressure_washers,sump_pumps,pressure_washer_accessories'
+        (@($registry.Categories | Where-Object { $_.Enabled -and -not $_.GroupKey } | ForEach-Object CategoryKey) -join ',') | Should Be 'pressure_washers,sump_pumps,pressure_washer_accessories'
     }
 
     It 'normalizes category fields, segments, defaults, and referenced paths' {
@@ -283,7 +284,7 @@ Describe 'Category Registry contract' {
         $disabledPath = New-CategoryRegistryFixture -Name 'disabled-category' -Mutate { param($raw) $raw.categories[1].enabled = $false }
         $registry = Import-BestSellersCategoryRegistry -Path $disabledPath
 
-        (@(Get-BestSellersCategoryKeys -Registry $registry -EnabledOnly) -join ',') | Should Be 'pressure_washers,pressure_washer_accessories'
+        (@($registry.Categories | Where-Object { $_.Enabled -and -not $_.GroupKey } | ForEach-Object CategoryKey) -join ',') | Should Be 'pressure_washers,pressure_washer_accessories'
         Test-RegistryOperationThrows -Operation { Get-BestSellersCategory -Registry $registry -CategoryKey 'sump_pumps' } -MessagePattern 'Unknown or disabled category key'
         (Get-BestSellersCategory -Registry $registry -CategoryKey 'sump_pumps' -AllowDisabled).CategoryKey | Should Be 'sump_pumps'
     }
@@ -439,7 +440,7 @@ Describe 'PowerShell consumers use the Category Registry' {
         (@($reports | ForEach-Object key | Select-Object -Unique)).Count | Should Be $reports.Count
         (@($reports | Where-Object categoryKey -eq 'test_category')).Count | Should Be 1
         (@($reports | Where-Object categoryKey -eq 'test_category')[0].key) | Should Be 'daily/2026-09-02/test_category.json'
-        (@(Get-BestSellersCategoryKeys -Registry $productionRegistry -EnabledOnly) -join ',') | Should Be 'pressure_washers,sump_pumps,pressure_washer_accessories'
+        (@($productionRegistry.Categories | Where-Object { $_.Enabled -and -not $_.GroupKey } | ForEach-Object CategoryKey) -join ',') | Should Be 'pressure_washers,sump_pumps,pressure_washer_accessories'
         (@($productionRegistry.Categories | Where-Object CategoryKey -eq 'test_category')).Count | Should Be 0
         (Get-FileHash -LiteralPath $registryPath -Algorithm SHA256).Hash | Should Be $productionHashBefore
     }

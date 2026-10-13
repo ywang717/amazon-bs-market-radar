@@ -8,6 +8,15 @@ from test_best_sellers_collector import PROJECT_ROOT, load_collector
 
 
 class CollectorRegistryTests(unittest.TestCase):
+    def test_garden_registry_covers_verified_root_and_all_immediate_children(self):
+        registry = json.loads((PROJECT_ROOT / "config/category-registry.json").read_text())
+        garden = [row for row in registry["categories"] if row.get("group_key") == "patio_lawn_garden"]
+        self.assertEqual(14, len(garden))
+        self.assertTrue(all(row["enabled"] and row["target_count"] == 30 for row in garden))
+        self.assertEqual({"553632", "4619352011", "3610851", "552808", "553760", "551242", "553788", "13638732011", "13400641", "553824", "553844", "1272941011", "3043471"},
+                         {row["amazon_node_id"] for row in garden if row.get("parent_category_key") == "patio_lawn_garden"})
+        self.assertEqual(17, len(registry["categories"]))
+
     def test_trust_follows_injected_registry_and_rejects_disabled_unknown_or_stale_urls(self):
         collector = load_collector()
         registry_path = PROJECT_ROOT / "config" / "category-registry.json"

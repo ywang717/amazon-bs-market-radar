@@ -3,15 +3,25 @@ param(
     [string]$ReportDate,
     [string]$EmailRecipient = '746254487@qq.com',
     [switch]$SkipEmail,
-    [string]$RegistryPath
+    [string]$RegistryPath,
+    [string[]]$CategoryKeys
 )
 
 $ErrorActionPreference = 'Stop'
+$CategoryKeys = @($CategoryKeys | ForEach-Object { $_ -split ',' } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($RegistryPath)) { $RegistryPath = Join-Path $projectRoot 'config\category-registry.json' }
 Import-Module (Join-Path $projectRoot 'src\BestSellersCategoryRegistry.psm1') -Force
 $registry = Import-BestSellersCategoryRegistry -Path $RegistryPath
-$registryCategories = @($registry.Categories | Where-Object Enabled)
+$registryCategories = if ($null -ne $CategoryKeys -and $CategoryKeys.Count -gt 0) {
+    @($CategoryKeys | Select-Object -Unique | ForEach-Object {
+        $selected = Get-BestSellersCategory -Registry $registry -CategoryKey $_
+        if (-not $selected.Enabled) { throw "Category is disabled: $_" }
+        $selected
+    })
+} else {
+    @($registry.Categories | Where-Object { $_.Enabled -and [string]::IsNullOrWhiteSpace($_.GroupKey) })
+}
 $chinaTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('America/Los_Angeles')
 $generatedAtBeijing = [TimeZoneInfo]::ConvertTime([DateTimeOffset]::UtcNow, $chinaTimeZone)
 if ([string]::IsNullOrWhiteSpace($ReportDate)) { $ReportDate = $generatedAtBeijing.ToString('yyyy-MM-dd') }

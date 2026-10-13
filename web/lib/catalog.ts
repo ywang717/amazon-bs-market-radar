@@ -12,7 +12,7 @@ export type CatalogCategory = {
 };
 
 export const categories = productionCategoryRegistry.categories
-  .filter(({ enabled }) => enabled)
+  .filter(({ enabled, groupKey }) => enabled && !groupKey)
   .map((category): CatalogCategory => ({
     key: category.categoryKey as CategoryKey,
     label: category.labelZh,

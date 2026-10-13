@@ -50,7 +50,7 @@ function environment({ snapshotReceipt = null, existingReports = {}, beforeAnaly
     return {
       sql,
       get values() { return values; },
-      bind(...bound) { values = bound; return this; },
+      bind(...bound) { assert.ok(bound.length <= 100, "D1 statement parameter limit exceeded"); values = bound; return this; },
       async first() { return sqlite.prepare(sql).get(...values) ?? null; },
       async all() { return { results: sqlite.prepare(sql).all(...values) }; },
       async run() {
@@ -270,4 +270,14 @@ test("rejects an incomplete analysis cohort without writing any report", async (
   assert.equal(response.status, 400);
   assert.deepEqual(await response.json(), { error: "invalid_analysis_report_bundle" });
   assert.equal(env.sqlite.prepare("SELECT COUNT(*) AS count FROM analysis_reports").get().count, 0);
+});
+
+test("accepts all expanded registry scopes without losing legacy bundles", async () => {
+ const { productionCategoryRegistry } = await import('../lib/category-registry.ts');
+ const expanded=['overview',...productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>c.categoryKey)];
+ const payload={reports:expanded.map(scope=>report(scope))};
+ const env=environment({snapshotReceipt:'b'.repeat(64)});
+ const response=await request(payload,env);
+ assert.equal(response.status,201);
+ assert.equal(env.sqlite.prepare('SELECT COUNT(*) n FROM analysis_reports').get().n,expanded.length);
 });

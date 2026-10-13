@@ -1,0 +1,2 @@
+import { ReviewEditor } from "./review-editor";
+export default function GardenReviewPage(){return <><h2>证据与经济性核验</h2><p>公开读取仅显示已发布核验。保存需要已有同步凭证，凭证只保存在当前页面内存中。</p><ReviewEditor/></>;}

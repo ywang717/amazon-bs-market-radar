@@ -21,7 +21,7 @@ $script:OnlineAnalysisText = @{
     weekly_summary = ConvertFrom-OnlineAnalysisUtf8Base64 '5ZGo5bqm5oql5ZGK5Z+65LqOIHswfSDkuKrlrozmlbTluILlnLrml6XjgII='
     weekly_trend = ConvertFrom-OnlineAnalysisUtf8Base64 '5ZGo5bqm6LaL5Yq/'
     weekly_trend_detail = ConvertFrom-OnlineAnalysisUtf8Base64 '6LaL5Yq/5LuF5o+P6L+w5Y+v6aqM6K+B5o6S5ZCN44CB55WZ5a2Y5ZKM5a2X5q616KaG55uW55qE5YWx5ZCM5Y+Y5YyW77yM5LiN5Luj6KGo5Zug5p6c5YWz57O744CC'
-    weekly_insufficient = ConvertFrom-OnlineAnalysisUtf8Base64 '5a6M5pW05biC5Zy65pel5LiN6LazIDUg5Liq77yM5pqC5LiN5LiL57uT6K6677yM5LiN5bGV56S65ZGo5bqm6LaL5Yq/5oiW5oyH5qCH5YWz6IGU44CC'
+    weekly_insufficient = ConvertFrom-OnlineAnalysisUtf8Base64 '5a6M5pW05biC5Zy65pel5LiN6LazIDUg5Liq77yM6K+B5o2u5LuN5Zyo56ev57Sv77yM5pqC5LiN5LiL57uT6K6644CC'
 }
 
 function Get-OnlineAnalysisCategories {
@@ -142,6 +142,7 @@ function New-OnlineAnalysisReports {
         $PreviousSnapshot,
         [ValidateRange(0,365)][int]$CompleteMarketDays = 1,
         [string]$CategoryKey,
+        [hashtable]$CategoryCompleteMarketDays,
         [string]$RegistryPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'config\category-registry.json')
     )
     $onlineCategories = @(Get-OnlineAnalysisCategories -RegistryPath $RegistryPath)
@@ -154,7 +155,10 @@ function New-OnlineAnalysisReports {
         return $report
     }
     $reports = @(New-OnlineAnalysisReport -Snapshot $Snapshot -ReceiptSha256 $ReceiptSha256 -ReportKind $ReportKind -PreviousSnapshot $PreviousSnapshot -CompleteMarketDays $CompleteMarketDays -RegistryPath $RegistryPath)
-    foreach ($category in $onlineCategories) { $reports += New-OnlineAnalysisReport -Snapshot $Snapshot -ReceiptSha256 $ReceiptSha256 -ReportKind $ReportKind -Category $category -PreviousSnapshot $PreviousSnapshot -CompleteMarketDays $CompleteMarketDays -RegistryPath $RegistryPath }
+    foreach ($category in $onlineCategories) {
+        $categoryDays = if ($null -ne $CategoryCompleteMarketDays -and $CategoryCompleteMarketDays.ContainsKey($category.Key)) { [int]$CategoryCompleteMarketDays[$category.Key] } else { $CompleteMarketDays }
+        $reports += New-OnlineAnalysisReport -Snapshot $Snapshot -ReceiptSha256 $ReceiptSha256 -ReportKind $ReportKind -Category $category -PreviousSnapshot $PreviousSnapshot -CompleteMarketDays $categoryDays -RegistryPath $RegistryPath
+    }
     return $reports
 }
 

@@ -22,11 +22,41 @@
       "classification_config_path": "config/v2-product-classification.json",
       "attribute_schema_path": "config/v2-product-attributes.json",
       "segments": [
-        { "key": "all", "label_zh": "全部榜单", "product_types": [] },
-        { "key": "machines", "label_zh": "整机", "product_types": ["electric_pressure_washer", "gas_pressure_washer", "cordless_pressure_washer"] },
-        { "key": "electric", "label_zh": "电动", "product_types": ["electric_pressure_washer"] },
-        { "key": "gas", "label_zh": "燃油", "product_types": ["gas_pressure_washer"] },
-        { "key": "cordless", "label_zh": "无线", "product_types": ["cordless_pressure_washer"] }
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        },
+        {
+          "key": "machines",
+          "label_zh": "整机",
+          "product_types": [
+            "electric_pressure_washer",
+            "gas_pressure_washer",
+            "cordless_pressure_washer"
+          ]
+        },
+        {
+          "key": "electric",
+          "label_zh": "电动",
+          "product_types": [
+            "electric_pressure_washer"
+          ]
+        },
+        {
+          "key": "gas",
+          "label_zh": "燃油",
+          "product_types": [
+            "gas_pressure_washer"
+          ]
+        },
+        {
+          "key": "cordless",
+          "label_zh": "无线",
+          "product_types": [
+            "cordless_pressure_washer"
+          ]
+        }
       ],
       "defaults": {
         "overview": "machines",
@@ -53,7 +83,11 @@
       "classification_config_path": "config/v2-product-classification.json",
       "attribute_schema_path": "config/v2-product-attributes.json",
       "segments": [
-        { "key": "all", "label_zh": "全部榜单", "product_types": [] }
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
       ],
       "defaults": {
         "overview": "all",
@@ -80,12 +114,52 @@
       "classification_config_path": "config/v2-product-classification.json",
       "attribute_schema_path": "config/v2-product-attributes.json",
       "segments": [
-        { "key": "all", "label_zh": "全部榜单", "product_types": [] },
-        { "key": "surface_cleaners", "label_zh": "表面清洁器", "product_types": ["surface_cleaner"] },
-        { "key": "guns", "label_zh": "喷枪", "product_types": ["pressure_washer_gun"] },
-        { "key": "hoses", "label_zh": "软管", "product_types": ["hose"] },
-        { "key": "nozzles", "label_zh": "喷嘴", "product_types": ["nozzle"] },
-        { "key": "other", "label_zh": "其他配件", "product_types": ["foam_cannon", "adapter_connector", "extension_wand", "sewer_jetter", "chemical_cleaner", "pump_protector", "other_accessory"] }
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        },
+        {
+          "key": "surface_cleaners",
+          "label_zh": "表面清洁器",
+          "product_types": [
+            "surface_cleaner"
+          ]
+        },
+        {
+          "key": "guns",
+          "label_zh": "喷枪",
+          "product_types": [
+            "pressure_washer_gun"
+          ]
+        },
+        {
+          "key": "hoses",
+          "label_zh": "软管",
+          "product_types": [
+            "hose"
+          ]
+        },
+        {
+          "key": "nozzles",
+          "label_zh": "喷嘴",
+          "product_types": [
+            "nozzle"
+          ]
+        },
+        {
+          "key": "other",
+          "label_zh": "其他配件",
+          "product_types": [
+            "foam_cannon",
+            "adapter_connector",
+            "extension_wand",
+            "sewer_jetter",
+            "chemical_cleaner",
+            "pump_protector",
+            "other_accessory"
+          ]
+        }
       ],
       "defaults": {
         "overview": "all",
@@ -98,6 +172,498 @@
         "data_status": "all",
         "product_detail": "all"
       }
+    },
+    {
+      "category_key": "patio_lawn_garden",
+      "slug": "patio-lawn-garden",
+      "label_zh": "庭院与花园",
+      "label_en": "Patio, Lawn & Garden",
+      "amazon_node_id": "2972638011",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden/zgbs/lawn-garden/2972638011",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "Patio_Lawn_Garden",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": null,
+      "tree_level": 0,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_backyard_birding",
+      "slug": "garden-backyard-birding",
+      "label_zh": "庭院观鸟与野生动物",
+      "label_en": "Backyard Birding & Wildlife",
+      "amazon_node_id": "553632",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Backyard-Birding-Wildlife/zgbs/lawn-garden/553632",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenBackyardBirding",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_farm_ranch",
+      "slug": "garden-farm-ranch",
+      "label_zh": "农场与牧场",
+      "label_en": "Farm & Ranch",
+      "amazon_node_id": "4619352011",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Farm-Ranch/zgbs/lawn-garden/4619352011",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenFarmRanch",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_gardening",
+      "slug": "garden-gardening",
+      "label_zh": "园艺",
+      "label_en": "Gardening",
+      "amazon_node_id": "3610851",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Gardening-Lawn-Care/zgbs/lawn-garden/3610851",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenGardening",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_generators",
+      "slug": "garden-generators",
+      "label_zh": "发电机与便携电源",
+      "label_en": "Generators & Portable Power",
+      "amazon_node_id": "552808",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Generators-Portable-Power/zgbs/lawn-garden/552808",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenGenerators",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_outdoor_cooking",
+      "slug": "garden-outdoor-cooking",
+      "label_zh": "烧烤与户外烹饪",
+      "label_en": "Grills & Outdoor Cooking",
+      "amazon_node_id": "553760",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Cooking/zgbs/lawn-garden/553760",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenOutdoorCooking",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00",
+      "collection_label_en": "Outdoor Cooking"
+    },
+    {
+      "category_key": "garden_power_tools",
+      "slug": "garden-power-tools",
+      "label_zh": "割草机与户外动力工具",
+      "label_en": "Mowers & Outdoor Power Tools",
+      "amazon_node_id": "551242",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Power-Lawn-Equipment/zgbs/lawn-garden/551242",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenPowerTools",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00",
+      "collection_label_en": "Outdoor Power & Lawn Equipment"
+    },
+    {
+      "category_key": "garden_outdoor_decor",
+      "slug": "garden-outdoor-decor",
+      "label_zh": "户外装饰",
+      "label_en": "Outdoor Décor",
+      "amazon_node_id": "553788",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Dcor/zgbs/lawn-garden/553788",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenOutdoorDecor",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_outdoor_heating",
+      "slug": "garden-outdoor-heating",
+      "label_zh": "户外取暖",
+      "label_en": "Outdoor Heating",
+      "amazon_node_id": "13638732011",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Heating-Cooling/zgbs/lawn-garden/13638732011",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenOutdoorHeating",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_outdoor_storage",
+      "slug": "garden-outdoor-storage",
+      "label_zh": "户外储物",
+      "label_en": "Outdoor Storage",
+      "amazon_node_id": "13400641",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Outdoor-Storage-Housing/zgbs/lawn-garden/13400641",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenOutdoorStorage",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_patio_furniture",
+      "slug": "garden-patio-furniture",
+      "label_zh": "庭院家具与配件",
+      "label_en": "Patio Furniture & Accessories",
+      "amazon_node_id": "553824",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Patio-Furniture-Accessories/zgbs/lawn-garden/553824",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenPatioFurniture",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_pest_control",
+      "slug": "garden-pest-control",
+      "label_zh": "虫害防治",
+      "label_en": "Pest Control",
+      "amazon_node_id": "553844",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pest-Control-Products/zgbs/lawn-garden/553844",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenPestControl",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_pools",
+      "slug": "garden-pools",
+      "label_zh": "泳池、热水浴缸与用品",
+      "label_en": "Pools, Hot Tubs & Supplies",
+      "amazon_node_id": "1272941011",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Pools-Hot-Tubs-Supplies/zgbs/lawn-garden/1272941011",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenPools",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
+    },
+    {
+      "category_key": "garden_snow_removal",
+      "slug": "garden-snow-removal",
+      "label_zh": "除雪",
+      "label_en": "Snow Removal",
+      "amazon_node_id": "3043471",
+      "source_url": "https://www.amazon.com/Best-Sellers-Patio-Lawn-Garden-Snow-Removal-Tools/zgbs/lawn-garden/3043471",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenSnowRemoval",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
     }
   ]
 }

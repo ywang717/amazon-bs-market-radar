@@ -442,3 +442,15 @@ test("preserves metadata quality while merging first and last seen dates", async
   assert.equal(row.last_seen_market_date, "2026-08-17");
   env.database.close();
 });
+
+test('expanded full capture keeps a coherent receipt for 17 categories',async()=>{
+ const {productionCategoryRegistry}=await import('../lib/category-registry.ts');
+ const bundle=completeBundle();const template=bundle.categories[0];
+ bundle.categories=productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>({...template,key:c.categoryKey,sourceUrl:c.sourceUrl}));
+ const env=sqliteEnvironment();const response=await request(bundle,env);
+ assert.equal(response.status,201);
+ const snapshot=env.database.prepare('SELECT receipt_sha256,complete_category_count,public_status FROM snapshots').get();
+ assert.equal(snapshot.receipt_sha256,bundle.receiptSha256);
+ assert.equal(snapshot.complete_category_count,bundle.categories.length);
+ assert.equal(snapshot.public_status,'已更新');
+});
