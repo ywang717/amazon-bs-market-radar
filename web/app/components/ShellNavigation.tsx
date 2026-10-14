@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -105,7 +104,7 @@ export function ShellNavigation() {
     <nav id="primary-navigation" className={menuOpen ? "primaryNav open" : "primaryNav"} aria-label="主导航">
       {navigation.map(({ href, label }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-        if (href === "/garden") return <Link href={href} aria-current={active ? "page" : undefined} key={href}>{label}</Link>;
+        if (href === "/garden") return <a href={href} target="_top" aria-current={active ? "page" : undefined} key={href}>{label}</a>;
         return <ContextLink href={href} target="_top" aria-current={active ? "page" : undefined} key={href}>{label}</ContextLink>;
       })}
     </nav>
