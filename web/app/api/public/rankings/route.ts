@@ -2,12 +2,15 @@ import type { CategoryKey } from "@/lib/catalog";
 import { ensureSchema, getD1 } from "@/lib/d1";
 import { createD1DashboardStore } from "@/lib/dashboard-store";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
-import { productionMarketContextResolver, resolvePublicMarketQuery } from "@/lib/market-context";
+import { createMarketContextResolver, productionMarketContextResolver, resolvePublicMarketQuery } from "@/lib/market-context";
 import { isValidMarketDate } from "@/lib/public-validation";
 import { compareRankings, validateCategory } from "@/lib/analytics";
 import { previousValidMarketDate, selectValidCategoryDays } from "@/lib/valid-market-days";
 
+import { productionCategoryRegistry } from "@/lib/category-registry";
+
 const json = (body: unknown, init: ResponseInit = {}) => Response.json(body, init);
+const rankingMarketContextResolver = createMarketContextResolver(productionCategoryRegistry);
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -16,13 +19,13 @@ export async function GET(request: Request) {
     category: url.searchParams.get("category"),
     segment: url.searchParams.get("segment"),
     page: "rankings",
-  }, productionMarketContextResolver);
+  }, rankingMarketContextResolver);
   if (!parsed.ok) return json({ error: parsed.error }, { status: 400 });
   const category = parsed.context.category as CategoryKey;
-  const date = url.searchParams.get("date");
+  let date = url.searchParams.get("date");
   if (date !== null && !isValidMarketDate(date)) return json({ error: "invalid_date" }, { status: 400 });
 
-  if (!date) {
+  if (!date && productionMarketContextResolver.enabled.some(({ categoryKey }) => categoryKey === category)) {
     const dashboard = await loadLiveDashboard({ preferLatestSnapshot: true });
     const row = dashboard.categoryRows.find(({ key }) => key === category)!;
     if (dashboard.source === "d1" && row.categoryDayPresent !== true) {
@@ -38,13 +41,18 @@ export async function GET(request: Request) {
     const db = getD1();
     await ensureSchema(db);
     const store = createD1DashboardStore(db);
-    const [snapshots, categoryDays, allObservations, observations] = await Promise.all([
+    const [snapshots, categoryDays, allObservations] = await Promise.all([
       store.listSnapshots(),
       store.listCategoryDays(),
       store.listObservations(),
-      store.listCategoryObservations(date, category as CategoryKey),
     ]);
+    if (!date) {
+      date = categoryDays.filter((day) => day.category_key === category && snapshots.some(({ market_date }) => market_date === day.market_date))
+        .map(({ market_date }) => market_date).toSorted().at(-1) ?? null;
+      if (!date) return json({ error: "unavailable" }, { status: 503 });
+    }
     if (!snapshots.some(({ market_date }) => market_date === date)) return json({ error: "not_found" }, { status: 404 });
+    const observations = await store.listCategoryObservations(date, category);
     const checked = validateCategory(observations);
     const persisted = categoryDays.find((day) => day.market_date === date && day.category_key === category);
     if (!persisted) return json({ error: "not_found" }, { status: 404 });

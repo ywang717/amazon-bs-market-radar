@@ -10,6 +10,7 @@ register(`data:text/javascript,export async function resolve(specifier, context,
 
 function dynamicD1Environment(marketDate, {
   strictRankingQuery = false,
+  extraCategoryKeys = [],
   dates: suppliedDates,
   incompleteCategoryDays = [],
   missingCategoryDays = [],
@@ -19,18 +20,19 @@ function dynamicD1Environment(marketDate, {
   throwOnReports = false,
 } = {}) {
   const dates = suppliedDates ?? ["2026-08-12", marketDate];
+  const fixtureCategories = [...categories, ...extraCategoryKeys.map((key) => ({ key, short: key }))];
   const snapshots = dates.map((market_date) => ({ market_date, observed_at: `${market_date}T09:00:00Z`, complete_category_count: 3 }));
   const incomplete = new Set(incompleteCategoryDays);
   const missing = new Set(missingCategoryDays);
   const observationCountFor = (date, category) => observationRowCounts[`${date}:${category}`] ?? 30;
-  const categoryDays = dates.flatMap((market_date) => categories.map((category) => ({
+  const categoryDays = dates.flatMap((market_date) => fixtureCategories.map((category) => ({
     market_date,
     category_key: category.key,
     observation_count: observationCountFor(market_date, category.key),
     complete: incomplete.has(`${market_date}:${category.key}`) ? 0 : 1,
     missing_ranks_json: "[]",
   }))).filter((day) => !missing.has(`${day.market_date}:${day.category_key}`));
-  const observations = dates.flatMap((market_date) => categories.flatMap((category) => Array.from({ length: observationCountFor(market_date, category.key) }, (_, index) => {
+  const observations = dates.flatMap((market_date) => fixtureCategories.flatMap((category) => Array.from({ length: observationCountFor(market_date, category.key) }, (_, index) => {
     const rank = index + 1;
     const asin = category.key === "pressure_washers" && rank === (market_date === marketDate ? 4 : 12)
       ? "B123456789"
@@ -431,4 +433,42 @@ test("product route rejects malformed ASINs without querying D1", async () => {
   assert.equal(response.status, 400);
   assert.deepEqual(await response.json(), { error: "invalid_asin" });
   assert.equal(env.DB.prepareCalls, 0);
+});
+
+test("raw rankings accept every registered garden category without changing main-page markets", async () => {
+  const gardenKeys = productionCategoryRegistry.categories.filter((category) => category.enabled && category.groupKey).map((category) => category.categoryKey);
+  assert.equal(gardenKeys.length, 14);
+  for (const category of gardenKeys) {
+    const response = await request(`/api/public/rankings?date=2026-10-15&category=${category}&segment=all`, dynamicD1Environment("2026-10-15", { extraCategoryKeys: gardenKeys, strictRankingQuery: true }));
+    assert.equal(response.status, 200, category);
+    const body = await response.json();
+    assert.equal(body.category, category);
+    assert.equal(body.marketDate, "2026-10-15");
+    assert.equal(body.observations.length, 30);
+    assert.equal(body.quality.complete, true);
+    assert.ok(body.observations.every((row) => row.category_key === category && row.market_date === "2026-10-15"));
+  }
+  assert.equal(categories.length, 3);
+});
+
+test("latest garden rankings use the category's own last recorded day and expose partial quality", async () => {
+  const category = "garden_gardening";
+  const response = await request(`/api/public/rankings?category=${category}&segment=all`, dynamicD1Environment("2026-10-15", {
+    dates: ["2026-10-14", "2026-10-15"], extraCategoryKeys: [category], strictRankingQuery: true,
+    missingCategoryDays: [`2026-10-15:${category}`],
+    incompleteCategoryDays: [`2026-10-14:${category}`], observationRowCounts: { [`2026-10-14:${category}`]: 29 },
+  }));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.marketDate, "2026-10-14");
+  assert.equal(body.observations.length, 29);
+  assert.equal(body.quality.complete, false);
+  assert.equal(body.comparison.ready, false);
+});
+
+test("garden rankings distinguish an uncollected date and category from an unknown scope", async () => {
+  const env = dynamicD1Environment("2026-10-15");
+  assert.equal((await request("/api/public/rankings?date=2026-10-15&category=garden_generators&segment=all", env)).status, 404);
+  assert.equal((await request("/api/public/rankings?category=garden_generators&segment=all", env)).status, 503);
+  assert.equal((await request("/api/public/rankings?date=2026-10-15&category=fake_garden&segment=all", env)).status, 400);
 });
