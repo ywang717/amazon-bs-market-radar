@@ -1,3 +1,4 @@
+. (Join-Path $PSScriptRoot 'helpers/LegacyRegistry.ps1')
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $scriptPath = Join-Path $projectRoot 'scripts\Invoke-BestSellersBrandBackfill.ps1'
 
@@ -15,11 +16,19 @@ function New-TestBrandArtifact {
 }
 
 Describe 'Historical Best Sellers brand backfill' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     It 'uses the default receipt-verified metadata path without relying on caller module scope' {
         $root = Join-Path $TestDrive 'default-metadata'
         $historyDay = Join-Path $root 'history\2026-08-28'
         New-Item -ItemType Directory -Path $historyDay -Force | Out-Null
-        $sourceConfigPath = Join-Path $projectRoot 'config\best-sellers-sources.json'
+        $sourceConfigPath = $script:legacyFixture.SourceConfigPath
         $sources = Get-Content -LiteralPath $sourceConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $items = @(1..30 | ForEach-Object { [pscustomobject]@{ rank=$_; asin=('B' + $_.ToString('000000000')); title='Receipt verified history item'; price=$null; rating=$null; reviews=$null } })
         $snapshotPath = Join-Path $historyDay 'amazon-bestsellers.json'

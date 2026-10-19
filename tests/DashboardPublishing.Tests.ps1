@@ -5,7 +5,7 @@ Describe 'Dashboard publishing bundle' {
         param([string]$Root)
 
         $paths = @()
-        foreach ($scope in @('overview','pressure_washers','sump_pumps','pressure_washer_accessories')) {
+        foreach ($scope in @('overview') + @((Get-Content (Join-Path $projectRoot 'config/category-registry.json') -Raw | ConvertFrom-Json).categories | Where-Object enabled | ForEach-Object category_key)) {
             $path = Join-Path $Root ($scope + '.json')
             [IO.File]::WriteAllText($path, (@{ scope = $scope } | ConvertTo-Json), [Text.Encoding]::UTF8)
             $paths += $path
@@ -20,7 +20,7 @@ Describe 'Dashboard publishing bundle' {
         $evidenceLevel = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('5YWF5YiG'))
         $sectionTitle = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('57uT6K665pGY6KaB'))
         $sectionStatement = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('5LiJ5Liq5qac5Y2V5Z2H5Li65a6M5pW0IFRvcCAzMOOAgg=='))
-        foreach ($scope in @('overview','pressure_washers','sump_pumps','pressure_washer_accessories')) {
+        foreach ($scope in @('overview') + @((Get-Content (Join-Path $projectRoot 'config/category-registry.json') -Raw | ConvertFrom-Json).categories | Where-Object enabled | ForEach-Object category_key)) {
             $categoryKey = if ($scope -eq 'overview') { $null } else { $scope }
             $path = Join-Path $Root ("analysis-$scope.json")
             $report = [ordered]@{
@@ -52,7 +52,7 @@ Describe 'Dashboard publishing bundle' {
         param([string]$Root)
 
         $paths = @()
-        foreach ($scope in @('overview','pressure_washers','sump_pumps','pressure_washer_accessories')) {
+        foreach ($scope in @('overview') + @((Get-Content (Join-Path $projectRoot 'config/category-registry.json') -Raw | ConvertFrom-Json).categories | Where-Object enabled | ForEach-Object category_key)) {
             $categoryKey = if ($scope -eq 'overview') { $null } else { $scope }
             $path = Join-Path $Root ("seller-$scope.json")
             $report = [ordered]@{
@@ -88,17 +88,18 @@ Describe 'Dashboard publishing bundle' {
             [string]$VerifiedSnapshotSha256 = ('a' * 64)
         )
 
+        $expectedScopedReportCount = 1 + @((Get-Content (Join-Path $projectRoot 'config/category-registry.json') -Raw | ConvertFrom-Json).categories | Where-Object enabled).Count
         $buildSyncBundle = { param($SnapshotPath) [pscustomobject]@{ BundlePath = $SnapshotPath; ReceiptSha256 = ('a' * 64) } }.GetNewClosure()
         $health = { param($MarketDate) [pscustomobject]@{ Status = $HealthStatus } }.GetNewClosure()
         $sellerReports = {
                 param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate)
                 [void]$Calls.Add([pscustomobject]@{ Name = 'SellerReports'; ReportKind = $ReportKind; ReportDate = $ReportDate })
-                [pscustomobject]@{ Status = 'CREATED'; ReportCount = 4; ReportPaths = $SellerPaths }
+                [pscustomobject]@{ Status = 'CREATED'; ReportCount = $expectedScopedReportCount; ReportPaths = $SellerPaths }
             }.GetNewClosure()
         $analysisReports = {
                 param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate)
                 [void]$Calls.Add([pscustomobject]@{ Name = 'AnalysisReports'; ReportKind = $ReportKind; ReportDate = $ReportDate })
-                [pscustomobject]@{ Status = 'CREATED'; ReportCount = 4; ReportPaths = $SellerPaths }
+                [pscustomobject]@{ Status = 'CREATED'; ReportCount = $expectedScopedReportCount; ReportPaths = $SellerPaths }
             }.GetNewClosure()
         $captureReceipt = { param($SnapshotPath) [pscustomobject]@{ valid = $true; actual_snapshot_sha256 = $VerifiedSnapshotSha256 } }.GetNewClosure()
         $rest = {
@@ -220,7 +221,7 @@ Describe 'Dashboard publishing bundle' {
         $analysisPaths = @(New-TestAnalysisReportFiles -Root $root)
         $calls = New-Object System.Collections.ArrayList
         $hooks = New-TestPublisherHooks -SellerPaths $sellerPaths -Calls $calls
-        $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=4; ReportPaths=$analysisPaths } }.GetNewClosure()
+        $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=$analysisPaths.Count; ReportPaths=$analysisPaths } }.GetNewClosure()
         $hooks.Rest = {
             param($Uri,$Method,$Headers,$ContentType,$InFile,$Body)
             [void]$calls.Add([pscustomobject]@{ Uri=[string]$Uri; Method=$Method; InFile=$InFile; Body=$Body })
@@ -233,8 +234,8 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $root -SnapshotsRoot $root -TestHooks $hooks | Out-Null
             $analysisCalls = @($calls | Where-Object { $_.Uri -match '/api/sync/v1/analysis-reports$' })
             $analysisCalls.Count | Should Be 1
-            @($analysisCalls[0].Body.reports).Count | Should Be 4
-            @($analysisCalls[0].Body.reports.key | Select-Object -Unique).Count | Should Be 4
+            @($analysisCalls[0].Body.reports).Count | Should Be 18
+            @($analysisCalls[0].Body.reports.key | Select-Object -Unique).Count | Should Be 18
             [string]::IsNullOrWhiteSpace([string]$analysisCalls[0].InFile) | Should Be $true
         }
         finally {
@@ -258,7 +259,7 @@ Describe 'Dashboard publishing bundle' {
         $remoteOverview.contentSha256 = ('c' * 64)
         $calls = New-Object System.Collections.ArrayList
         $hooks = New-TestPublisherHooks -SellerPaths $sellerPaths -Calls $calls
-        $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=4; ReportPaths=$analysisPaths } }.GetNewClosure()
+        $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=$analysisPaths.Count; ReportPaths=$analysisPaths } }.GetNewClosure()
         $hooks.Rest = {
             param($Uri,$Method,$Headers,$ContentType,$InFile,$Body)
             [void]$calls.Add([pscustomobject]@{ Name='Rest'; Uri=[string]$Uri; Method=$Method; InFile=$InFile })
@@ -281,7 +282,7 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $root -SnapshotsRoot $root -TestHooks $hooks | Out-Null
             Import-Module (Join-Path $projectRoot 'src\DashboardPublishState.psm1') -Force
             (Read-DashboardPublishState -Root $root -MarketDate '2026-08-24').Status | Should Be 'PUBLISHED'
-            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/analysis/' }).Count | Should Be 4
+            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/analysis/' }).Count | Should Be 18
         }
         finally {
             [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $null, 'Process')
@@ -300,7 +301,7 @@ Describe 'Dashboard publishing bundle' {
         $remoteOverview.contentSha256 = ('c' * 64)
         $calls = New-Object System.Collections.ArrayList
         $hooks = New-TestPublisherHooks -SellerPaths $sellerPaths -Calls $calls
-        $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=4; ReportPaths=$analysisPaths } }.GetNewClosure()
+        $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=$analysisPaths.Count; ReportPaths=$analysisPaths } }.GetNewClosure()
         $hooks.Rest = {
             param($Uri,$Method,$Headers,$ContentType,$InFile,$Body)
             if ([string]$Uri -match '/seller-intelligence$') { return [pscustomobject]@{ status='imported' } }
@@ -346,7 +347,7 @@ Describe 'Dashboard publishing bundle' {
             $remoteOverview = Get-Content -LiteralPath $analysisPaths[0] -Raw -Encoding UTF8 | ConvertFrom-Json
             $remoteOverview.evidence.fieldCoverage.price = $numericCases[$caseIndex][1]
             $hooks = New-TestPublisherHooks -SellerPaths $sellerPaths -Calls (New-Object System.Collections.ArrayList)
-            $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=4; ReportPaths=$analysisPaths } }.GetNewClosure()
+            $hooks.AnalysisReports = { param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate) [pscustomobject]@{ Status='CREATED'; ReportCount=$analysisPaths.Count; ReportPaths=$analysisPaths } }.GetNewClosure()
             $hooks.Rest = {
                 param($Uri,$Method,$Headers,$ContentType,$InFile,$Body)
                 if ([string]$Uri -match '/seller-intelligence$') { return [pscustomobject]@{ status='imported' } }
@@ -398,7 +399,7 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $TestDrive -SnapshotsRoot $TestDrive -TestHooks (New-TestPublisherHooks -SellerPaths $paths -Calls $calls) | Out-Null
             $sellerPosts = @($calls | Where-Object { $_.Name -eq 'Rest' -and $_.Uri -match '/seller-intelligence$' })
             $sellerPosts.Count | Should Be 1
-            @($sellerPosts[0].Body.reports).Count | Should Be 4
+            @($sellerPosts[0].Body.reports).Count | Should Be 18
             [string]$sellerPosts[0].Body.receiptSha256 | Should Be ('a' * 64)
 
             $invalidCalls = New-Object System.Collections.ArrayList
@@ -455,12 +456,11 @@ Describe 'Dashboard publishing bundle' {
         }
     }
 
-    It 'generates the weekly seller bundle only when the matching Beijing weekly JSON exists' {
+    It 'generates the weekly seller bundle only when the matching Pacific market-date weekly JSON exists' {
         $calls = New-Object System.Collections.ArrayList
         $snapshotPath = Join-Path $TestDrive 'amazon-bestsellers.json'
         [IO.File]::WriteAllText($snapshotPath, '{}', [Text.Encoding]::UTF8)
-        $chinaTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('China Standard Time')
-        $beijingDate = [TimeZoneInfo]::ConvertTime([DateTimeOffset]::UtcNow, $chinaTimeZone).ToString('yyyy-MM-dd')
+        $beijingDate = '2026-08-24'
         $weeklyDirectory = Join-Path (Join-Path (Join-Path $TestDrive 'var\reports') 'weekly') $beijingDate
         New-Item -ItemType Directory -Path $weeklyDirectory -Force | Out-Null
         [IO.File]::WriteAllText((Join-Path $weeklyDirectory 'Amazon_US_Weekly_Best_Sellers_Analysis_fixture.json'), '{}', [Text.Encoding]::UTF8)
@@ -479,7 +479,7 @@ Describe 'Dashboard publishing bundle' {
         }
     }
 
-    It 'does not generate or post a weekly seller bundle when the Beijing weekly directory is absent' {
+    It 'does not generate or post a weekly seller bundle when the Pacific market-date weekly directory is absent' {
         $sandboxRoot = Join-Path $TestDrive 'weekly-directory-absent'
         New-Item -ItemType Directory -Path $sandboxRoot -Force | Out-Null
         $calls = New-Object System.Collections.ArrayList
@@ -502,8 +502,7 @@ Describe 'Dashboard publishing bundle' {
         $calls = New-Object System.Collections.ArrayList
         $snapshotPath = Join-Path $sandboxRoot 'amazon-bestsellers.json'
         [IO.File]::WriteAllText($snapshotPath, '{}', [Text.Encoding]::UTF8)
-        $chinaTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('China Standard Time')
-        $beijingDate = [TimeZoneInfo]::ConvertTime([DateTimeOffset]::UtcNow, $chinaTimeZone).ToString('yyyy-MM-dd')
+        $beijingDate = '2026-08-24'
         $otherDate = ([DateTime]::ParseExact($beijingDate, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture).AddDays(-1)).ToString('yyyy-MM-dd')
         $otherDirectory = Join-Path (Join-Path (Join-Path $sandboxRoot 'var\reports') 'weekly') $otherDate
         $beijingDirectory = Join-Path (Join-Path (Join-Path $sandboxRoot 'var\reports') 'weekly') $beijingDate
@@ -550,7 +549,7 @@ Describe 'Dashboard publishing bundle' {
         $httpModule | Should Match "'--retry',\s*'3',\s*'--retry-all-errors'"
     }
 
-    It 'registers dashboard tasks that can wake and continue on battery power' {
+    It 'registers dashboard tasks that can wake and continue on battery power' -Skip:($env:OS -ne 'Windows_NT') {
         Mock -CommandName New-ScheduledTaskPrincipal -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskPrincipal' }
         Mock -CommandName New-ScheduledTaskSettingsSet -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskSettings' }
         Mock -CommandName New-ScheduledTaskAction -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskAction' }
@@ -601,7 +600,7 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $root -SnapshotsRoot $root -TestHooks $hooks | Out-Null
             Import-Module (Join-Path $projectRoot 'src\DashboardPublishState.psm1') -Force
             (Read-DashboardPublishState -Root $root -MarketDate '2026-08-24').Status | Should Be 'PUBLISHED'
-            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/seller-intelligence/' }).Count | Should Be 4
+            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/seller-intelligence/' }).Count | Should Be 18
         }
         finally {
             [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $null, 'Process')
@@ -642,7 +641,7 @@ Describe 'Dashboard publishing bundle' {
         }
     }
 
-    It 'injects a DPAPI-protected sync secret only for the scheduled publish operation' {
+    It 'injects a DPAPI-protected sync secret only for the scheduled publish operation' -Skip:($env:OS -ne 'Windows_NT') {
         Add-Type -AssemblyName System.Security
         $wrapper = Join-Path $projectRoot 'scripts\Invoke-ProtectedDashboardPublish.ps1'
         $protectedPath = Join-Path $TestDrive 'dashboard-sync-secret.dpapi'

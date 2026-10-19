@@ -98,7 +98,14 @@ Describe 'Best Sellers metadata-only PostgreSQL import' {
     It 'restores PostgreSQL environment variables when the database process fails' {
         $bin = Join-Path $TestDrive 'bin'
         New-Item -ItemType Directory -Path $bin -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $env:SystemRoot 'System32\where.exe') -Destination (Join-Path $bin 'psql.exe')
+        # Use a real native process with a nonzero exit; no PostgreSQL server is needed.
+        if ($env:OS -eq 'Windows_NT') {
+            Copy-Item -LiteralPath (Join-Path $env:SystemRoot 'System32\where.exe') -Destination (Join-Path $bin 'psql.exe')
+        }
+        else {
+            # Preserve the native executable at its signed system location on macOS.
+            New-Item -ItemType SymbolicLink -Path (Join-Path $bin 'psql.exe') -Target (Get-Command false -CommandType Application).Source | Out-Null
+        }
         $settings = [pscustomobject]@{ install_root=$TestDrive; host='new-host'; port=5433; username='new-user'; database='new-db'; password='new-password' }
         $original = [Environment]::GetEnvironmentVariable('PGHOST', 'Process')
         [Environment]::SetEnvironmentVariable('PGHOST', 'before-import', 'Process')

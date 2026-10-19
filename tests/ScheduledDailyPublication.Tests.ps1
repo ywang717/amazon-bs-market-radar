@@ -1,7 +1,23 @@
+$testPowerShell = (Get-Process -Id $PID).Path
+$windowsPublicationLauncherAvailable = $env:OS -eq 'Windows_NT'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Import-Module (Join-Path $projectRoot 'src\ScheduledDailyAutomation.psm1') -Force
 
 Describe 'Daily processing publication handoff' {
+    BeforeAll {
+        # Isolate the unavailable scheduler command in this module so only the handoff is exercised.
+        $script:addedPublicationSchedulerStub = -not (& (Get-Module ScheduledDailyAutomation) { [bool](Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue) })
+        if ($script:addedPublicationSchedulerStub) {
+            & (Get-Module ScheduledDailyAutomation) {
+                function script:Get-ScheduledTask { param($TaskName,$ErrorAction) throw 'Scheduler lookup must be mocked in this test.' }
+            }
+        }
+    }
+    AfterAll {
+        if ($script:addedPublicationSchedulerStub) {
+            & (Get-Module ScheduledDailyAutomation) { Remove-Item Function:script:Get-ScheduledTask }
+        }
+    }
     BeforeEach {
         $script:publishScript = Join-Path $TestDrive 'publish.ps1'
         $script:resultPath = Join-Path $TestDrive 'published-date.txt'
@@ -11,7 +27,7 @@ param([string]$MarketDate,[string]$ResultPath)
 exit 0
 '@)
         $global:dailyPublicationTestAction = [pscustomobject]@{
-            Execute = (Get-Command powershell.exe).Source
+            Execute = (Get-Process -Id $PID).Path
             Arguments = '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -ResultPath "{1}"' -f $script:publishScript,$script:resultPath
             WorkingDirectory = $TestDrive
         }
@@ -38,6 +54,7 @@ exit 0
     }
 }
 
+# The production launcher resolves Windows PowerShell and a Windows Python environment.
 Describe 'Daily launcher publication boundary' {
     BeforeEach {
         New-Item -ItemType Directory -Path (Join-Path $TestDrive 'scripts'),(Join-Path $TestDrive 'src'),(Join-Path $TestDrive '.venv\Scripts') -Force | Out-Null
@@ -62,7 +79,7 @@ exit ([int]$env:DAILY_HANDOFF_PUBLISH_EXIT)
 function Get-ScheduledTask {
     param($TaskName,$ErrorAction)
     [pscustomobject]@{ Actions = @([pscustomobject]@{
-        Execute = (Get-Command powershell.exe).Source
+        Execute = (Get-Process -Id $PID).Path
         Arguments = '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + (Join-Path (Split-Path -Parent $PSScriptRoot) 'scripts\publish.ps1') + '"'
         WorkingDirectory = Split-Path -Parent $PSScriptRoot
     }) }
@@ -76,25 +93,25 @@ function Get-ScheduledTask {
     AfterEach {
         Remove-Item Env:DAILY_HANDOFF_COLLECT_EXIT,Env:DAILY_HANDOFF_PUBLISH_EXIT -ErrorAction SilentlyContinue
     }
-    It 'publishes after success and on healthy recovery without another crawl' -TestCases @(@{Mode='Primary'},@{Mode='Recovery'}) {
+    It 'publishes after success and on healthy recovery without another crawl' -Skip:(-not $windowsPublicationLauncherAvailable) -TestCases @(@{Mode='Primary'},@{Mode='Recovery'}) {
         param($Mode)
-        & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $TestDrive 'scripts\Invoke-ScheduledDailyAuto.ps1') -Mode $Mode -MarketDate 2026-09-09 | Out-Null
+        & $testPowerShell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $TestDrive 'scripts\Invoke-ScheduledDailyAuto.ps1') -Mode $Mode -MarketDate 2026-09-09 | Out-Null
         $LASTEXITCODE | Should Be 0
         Test-Path (Join-Path $TestDrive 'published.txt') | Should Be $true
         $state = Get-Content (Join-Path $TestDrive 'var\scheduler\daily-auto\2026-09-09.json') -Raw | ConvertFrom-Json
         $state.PublicationStatus | Should Be 'SUCCEEDED'
     }
-    It 'propagates publication failure into the canonical daily state' {
+    It 'propagates publication failure into the canonical daily state' -Skip:(-not $windowsPublicationLauncherAvailable) {
         $env:DAILY_HANDOFF_PUBLISH_EXIT = '7'
-        & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $TestDrive 'scripts\Invoke-ScheduledDailyAuto.ps1') -Mode Primary -MarketDate 2026-09-09 | Out-Null
+        & $testPowerShell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $TestDrive 'scripts\Invoke-ScheduledDailyAuto.ps1') -Mode Primary -MarketDate 2026-09-09 | Out-Null
         $LASTEXITCODE | Should Be 7
         $state = Get-Content (Join-Path $TestDrive 'var\scheduler\daily-auto\2026-09-09.json') -Raw | ConvertFrom-Json
         $state.Status | Should Be 'FAILED'
         $state.PublicationStatus | Should Be 'FAILED'
     }
-    It 'does not publish after collection failure' {
+    It 'does not publish after collection failure' -Skip:(-not $windowsPublicationLauncherAvailable) {
         $env:DAILY_HANDOFF_COLLECT_EXIT = '9'
-        & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $TestDrive 'scripts\Invoke-ScheduledDailyAuto.ps1') -Mode Primary -MarketDate 2026-09-09 | Out-Null
+        & $testPowerShell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $TestDrive 'scripts\Invoke-ScheduledDailyAuto.ps1') -Mode Primary -MarketDate 2026-09-09 | Out-Null
         $LASTEXITCODE | Should Be 9
         Test-Path (Join-Path $TestDrive 'published.txt') | Should Be $false
         $state = Get-Content (Join-Path $TestDrive 'var\scheduler\daily-auto\2026-09-09.json') -Raw | ConvertFrom-Json

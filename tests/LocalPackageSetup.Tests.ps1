@@ -371,7 +371,7 @@ Describe 'Local package setup behavior' {
         $summary.components.postgresql.status | Should Be 'INSTALLED'
         Test-Path -LiteralPath (Join-Path $root '.local\postgresql\bin\initdb.exe') | Should Be $true
         $promotion = @($calls | Where-Object Operation -eq 'PromotePostgres')[0]
-        $promotion.Source | Should Match '\.local\\postgresql-stage-[^\\]+\\pgsql$'
+        $promotion.Source | Should Match '\.local[\\/]postgresql-stage-[^\\/]+[\\/]pgsql$'
         $promotion.Destination | Should Be (Join-Path $root '.local\postgresql')
     }
 

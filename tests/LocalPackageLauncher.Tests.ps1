@@ -1,3 +1,20 @@
+$testPowerShell = (Get-Process -Id $PID).Path
+$windowsBatLauncherAvailable = $env:OS -eq 'Windows_NT' -and -not [string]::IsNullOrWhiteSpace($env:ComSpec)
+
+# Provide only the categories needed by each isolated report protocol fixture.
+function Initialize-TestLauncherRegistry {
+    param([string]$Root, [switch]$IncludeGarden)
+    $configRoot = Join-Path $Root 'config'
+    New-Item -ItemType Directory -Path $configRoot -Force | Out-Null
+    $registry = @{ categories = @(
+        @{ category_key='pressure_washers'; enabled=$true },
+        @{ category_key='sump_pumps'; enabled=$true },
+        @{ category_key='pressure_washer_accessories'; enabled=$true }
+    ) }
+    if ($IncludeGarden) { $registry.categories += @{ category_key='garden_gardening'; enabled=$true; group_key='patio_lawn_garden' } }
+    [IO.File]::WriteAllText((Join-Path $configRoot 'category-registry.json'),($registry | ConvertTo-Json -Depth 5),(New-Object Text.UTF8Encoding($false)))
+}
+
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $modulePath = Join-Path $projectRoot 'src\LocalPackageOrchestrator.psm1'
 
@@ -84,6 +101,7 @@ Describe 'Local package daily orchestration' {
 
     It 'runs every daily gate in order, uses the latest prior snapshot, and propagates SkipEmail' {
         $sandboxRoot = Join-Path $TestDrive 'daily-project'
+        Initialize-TestLauncherRegistry -Root $sandboxRoot -IncludeGarden
         $snapshotRoot = Join-Path $sandboxRoot 'var\amazon-bestsellers'
         $currentPath = Join-Path $snapshotRoot '2026-08-11\amazon-bestsellers.json'
         $olderPath = Join-Path $snapshotRoot '2026-08-08\amazon-bestsellers.json'
@@ -101,6 +119,7 @@ Describe 'Local package daily orchestration' {
                 'VerifyReceipt' { [pscustomobject]@{ valid = $true } }
                 'ImportSnapshot' { [pscustomobject]@{ Status = 'IMPORTED_VERIFIED_SNAPSHOT' } }
                 'DailyReports' { [pscustomobject]@{ Reports = @('one','two','three'); EmailDelivery = [pscustomobject]@{ Status = 'SKIPPED_BY_REQUEST' } } }
+                'GardenDailyReports' { [pscustomobject]@{ Reports = @('garden-report') } }
                 'Backup' { [pscustomobject]@{ Status = 'BACKED_UP'; BackupPath = (Join-Path $sandboxRoot '.local\postgres-backups\test.dump') } }
                 'VerifyBackup' { [pscustomobject]@{ Status = 'VERIFIED' } }
                 'Health' { [pscustomobject]@{ Status = 'HEALTHY' } }
@@ -112,9 +131,11 @@ Describe 'Local package daily orchestration' {
         $summary = Invoke-LocalPackageMode -Mode DailyAuto -MarketDate '2026-08-11' -SkipEmail -ProjectRoot $sandboxRoot -StepRunner $runner
 
         $summary.status | Should Be 'SUCCESS'
-        @($calls | ForEach-Object Step) | Should Be @('Collect','RegisterReceipt','VerifyReceipt','ImportSnapshot','DailyReports','Backup','VerifyBackup','Health')
+        @($calls | ForEach-Object Step) | Should Be @('Collect','RegisterReceipt','VerifyReceipt','ImportSnapshot','DailyReports','GardenDailyReports','Backup','VerifyBackup','Health')
         ($calls | Where-Object Step -eq 'DailyReports').Arguments.PreviousPath | Should Be $latestPriorPath
         ($calls | Where-Object Step -eq 'DailyReports').Arguments.SkipEmail | Should Be $true
+        ($calls | Where-Object Step -eq 'GardenDailyReports').Arguments.SkipEmail | Should Be $true
+        @((($calls | Where-Object Step -eq 'GardenDailyReports').Arguments.CategoryKeys)) | Should Be @('garden_gardening')
         $summary.artifacts.snapshot_path | Should Be $currentPath
         $summary.artifacts.previous_snapshot_path | Should Be $latestPriorPath
     }
@@ -328,6 +349,7 @@ Describe 'Local package daily orchestration' {
     It 'stops before backup when overall daily email delivery is not SENT' {
         foreach ($deliveryStatus in @('PARTIAL_FAILURE','SKIPPED_MISSING_CREDENTIALS')) {
             $sandboxRoot = Join-Path $TestDrive ("delivery-$deliveryStatus")
+            Initialize-TestLauncherRegistry -Root $sandboxRoot
             $canonical = Join-Path $sandboxRoot 'var\amazon-bestsellers\2026-08-11\amazon-bestsellers.json'
             New-Item -ItemType Directory -Path (Split-Path -Parent $canonical) -Force | Out-Null
             [IO.File]::WriteAllText($canonical, '{"market_date":"2026-08-11"}', (New-Object Text.UTF8Encoding($false)))
@@ -373,6 +395,7 @@ Describe 'Local package daily orchestration' {
 
     It 'imports a readable snapshot by its market date before running daily gates' {
         $sandboxRoot = Join-Path $TestDrive 'import-project'
+        Initialize-TestLauncherRegistry -Root $sandboxRoot
         $sourcePath = Join-Path $TestDrive 'incoming snapshot.json'
         [IO.File]::WriteAllText($sourcePath, '{"market_date":"2026-08-09","pressure_washers":[{}],"sump_pumps":[],"pressure_washer_accessories":[]}', (New-Object Text.UTF8Encoding($false)))
         $calls = New-Object System.Collections.ArrayList
@@ -476,11 +499,13 @@ Describe 'Local package dispatch, locks, and machine output' {
 
     It 'forwards ReportDate and SkipEmail to the weekly report entry' {
         $sandboxRoot = Join-Path $TestDrive 'weekly-project'
+        Initialize-TestLauncherRegistry -Root $sandboxRoot -IncludeGarden
         $call = $null
         $runner = {
             param([string]$Step, [string]$ScriptPath, [hashtable]$Arguments)
-            $script:weeklyCall = [pscustomobject]@{ Step = $Step; ScriptPath = $ScriptPath; Arguments = $Arguments }
-            [pscustomobject]@{ ExitCode = 0; Result = [pscustomobject]@{ Status = 'OK' } }
+            $call = [pscustomobject]@{ Step = $Step; ScriptPath = $ScriptPath; Arguments = $Arguments }
+            if ($Step -eq 'GardenWeeklyReport') { $script:gardenWeeklyCall = $call } else { $script:weeklyCall = $call }
+            [pscustomobject]@{ ExitCode = 0; Result = [pscustomobject]@{ Status = 'OK'; Reports = @('garden-report') } }
         }
 
         $summary = Invoke-LocalPackageMode -Mode Weekly -MarketDate '2026-08-11' -SkipEmail -ProjectRoot $sandboxRoot -StepRunner $runner
@@ -490,10 +515,15 @@ Describe 'Local package dispatch, locks, and machine output' {
         $script:weeklyCall.ScriptPath | Should Be (Join-Path $sandboxRoot 'scripts\New-BestSellersWeeklyReport.ps1')
         $script:weeklyCall.Arguments.ReportDate | Should Be '2026-08-11'
         $script:weeklyCall.Arguments.SkipEmail | Should Be $true
+        $script:gardenWeeklyCall.Step | Should Be 'GardenWeeklyReport'
+        $script:gardenWeeklyCall.Arguments.SkipEmail | Should Be $true
+        $script:gardenWeeklyCall.Arguments.ReportDate | Should Be '2026-08-11'
+        @($script:gardenWeeklyCall.Arguments.CategoryKeys) | Should Be @('garden_gardening')
     }
 
     It 'loads the local recipient and forwards it to both daily and weekly reports' {
         $dailyRoot = Join-Path $TestDrive 'recipient-daily-project'
+        Initialize-TestLauncherRegistry -Root $dailyRoot
         $snapshot = Join-Path $dailyRoot 'var\amazon-bestsellers\2026-08-11\amazon-bestsellers.json'
         New-Item -ItemType Directory -Path (Split-Path -Parent $snapshot),(Join-Path $dailyRoot '.local') -Force | Out-Null
         [IO.File]::WriteAllText($snapshot, '{"market_date":"2026-08-11","pressure_washers":[{}],"sump_pumps":[],"pressure_washer_accessories":[]}')
@@ -527,6 +557,7 @@ Describe 'Local package dispatch, locks, and machine output' {
 
     It 'omits EmailRecipient only when no local recipient file exists' {
         $root = Join-Path $TestDrive 'recipient-fallback-project'
+        Initialize-TestLauncherRegistry -Root $root
         $script:fallbackArguments = $null
         $runner = {
             param([string]$Step, [string]$ScriptPath, [hashtable]$Arguments)
@@ -540,8 +571,9 @@ Describe 'Local package dispatch, locks, and machine output' {
         $script:fallbackArguments.ContainsKey('EmailRecipient') | Should Be $false
     }
 
-    It 'omits ReportDate when Weekly has no date so the weekly script keeps its Beijing default' {
+    It 'omits ReportDate when Weekly has no date so the weekly script keeps its default date' {
         $sandboxRoot = Join-Path $TestDrive 'weekly-default-project'
+        Initialize-TestLauncherRegistry -Root $sandboxRoot
         $script:weeklyDefaultCall = $null
         $runner = {
             param([string]$Step, [string]$ScriptPath, [hashtable]$Arguments)
@@ -585,7 +617,7 @@ exit 7
         $saved = [Environment]::GetEnvironmentVariable('DAILY_REPORT_SMTP_AUTH_CODE','Process')
         try {
             [Environment]::SetEnvironmentVariable('DAILY_REPORT_SMTP_AUTH_CODE','process-review-secret','Process')
-            $output = @(& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $sandboxRoot 'scripts\Start-LocalPackage.ps1') -Mode Setup)
+            $output = @(& $testPowerShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $sandboxRoot 'scripts\Start-LocalPackage.ps1') -Mode Setup)
             $exitCode = $LASTEXITCODE
         }
         finally { [Environment]::SetEnvironmentVariable('DAILY_REPORT_SMTP_AUTH_CODE',$saved,'Process') }
@@ -712,7 +744,7 @@ param([string]$MarketDate)
 
     It 'emits a machine-readable failure summary without invoking side effects for an invalid date' {
         $entry = Join-Path $projectRoot 'scripts\Start-LocalPackage.ps1'
-        $output = & powershell -NoProfile -ExecutionPolicy Bypass -File $entry -Mode Health -MarketDate '2026-02-30'
+        $output = & $testPowerShell -NoProfile -ExecutionPolicy Bypass -File $entry -Mode Health -MarketDate '2026-02-30'
         $exitCode = $LASTEXITCODE
         $summary = $output | ConvertFrom-Json
 
@@ -724,7 +756,7 @@ param([string]$MarketDate)
         $summary.error | Should Match 'YYYY-MM-DD'
     }
 
-    It 'preserves Unicode arguments and propagates the PowerShell exit code through the BAT launcher' {
+    It 'preserves Unicode arguments and propagates the PowerShell exit code through the BAT launcher' -Skip:(-not $windowsBatLauncherAvailable) {
         $unicodeDirectory = ([string][char]0x542F) + ([string][char]0x52A8) + ' ' + ([string][char]0x5305)
         $sandboxRoot = Join-Path $TestDrive $unicodeDirectory
         $scriptsRoot = Join-Path $sandboxRoot 'scripts'

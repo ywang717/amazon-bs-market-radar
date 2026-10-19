@@ -82,13 +82,28 @@ function New-BestSellersCaptureReceipt {
             is_complete = [bool]$qualityItem.is_complete
         }
     }
+    # Preserve the parsed timestamp type before formatting receipt metadata in Pacific time.
+    $observedValue = Get-BestSellersCapturePropertyValue -Object $snapshot -Name 'observed_at'
+    $observedDate = [DateTimeOffset]::MinValue
+    $hasObservedDate = if ($observedValue -is [DateTimeOffset]) {
+        $observedDate = $observedValue
+        $true
+    } elseif ($observedValue -is [DateTime]) {
+        $observedDate = [DateTimeOffset]$observedValue
+        $true
+    } else {
+        [DateTimeOffset]::TryParse([string]$observedValue, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$observedDate)
+    }
+    $observedAt = if ($hasObservedDate) {
+        [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($observedDate, 'Pacific Standard Time').ToString("yyyy-MM-dd'T'HH:mm:ss.fffzzz", [Globalization.CultureInfo]::InvariantCulture)
+    } else { [string]$observedValue }
     $complete = [bool]$quality.is_complete
     return [pscustomobject]@{
         schema_version = 'best-sellers-capture-receipt-v1'
         registered_at = $RegisteredAt.ToString('o')
         marketplace = [string]$context.Registry.Marketplace.StorageCode
         market_date = [string]$snapshot.market_date
-        observed_at = [string](Get-BestSellersCapturePropertyValue -Object $snapshot -Name 'observed_at')
+        observed_at = $observedAt
         snapshot_path = (Resolve-Path -LiteralPath $SnapshotPath).Path
         snapshot_sha256 = $fileHash.sha256
         snapshot_byte_count = $fileHash.byte_count

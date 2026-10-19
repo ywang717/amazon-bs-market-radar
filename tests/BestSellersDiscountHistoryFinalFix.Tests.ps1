@@ -1,3 +1,4 @@
+$windowsPowerShellAvailable = $env:OS -eq 'Windows_NT' -and $null -ne (Get-Command powershell.exe -ErrorAction SilentlyContinue)
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Import-Module (Join-Path $projectRoot 'src\BestSellersWeeklyAnalysis.psm1') -Force
 Import-Module (Join-Path $projectRoot 'src\BestSellersWeeklyReportContent.psm1') -Force
@@ -33,7 +34,7 @@ function New-FinalFixSnapshot {
 }
 
 Describe 'Final review discount-history regressions' {
-    It 'loads the weekly report module in Windows PowerShell' {
+    It 'loads the weekly report module in Windows PowerShell' -Skip:(-not $windowsPowerShellAvailable) {
         $modulePath = Join-Path $projectRoot 'src\BestSellersWeeklyReportContent.psm1'
         $escapedPath = $modulePath.Replace("'", "''")
         $result = @(& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Import-Module '$escapedPath' -Force -ErrorAction Stop; 'MODULE_LOADED'")

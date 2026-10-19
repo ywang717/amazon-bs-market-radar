@@ -1,3 +1,4 @@
+. (Join-Path $PSScriptRoot 'helpers/LegacyRegistry.ps1')
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Import-Module (Join-Path $projectRoot 'src\DashboardSyncBundle.psm1') -Force
 Import-Module (Join-Path $projectRoot 'src\BestSellersAnalysis.psm1') -Force
@@ -45,6 +46,14 @@ Describe 'Dashboard sync observation normalization' {
 }
 
 Describe 'Dashboard sync product metadata cohort' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     function New-DashboardMetadataRows {
         param(
             [Parameter(Mandatory=$true)][string]$AsinPrefix,
@@ -88,7 +97,8 @@ Describe 'Dashboard sync product metadata cohort' {
         param(
             [string]$Name,
             [bool]$Complete = $true,
-            [bool]$IncludeSourceMetadata = $true
+            [bool]$IncludeSourceMetadata = $true,
+            [string]$ObservedAt
         )
 
         $directory = Join-Path $TestDrive $Name
@@ -98,10 +108,11 @@ Describe 'Dashboard sync product metadata cohort' {
         if (-not $Complete) {
             foreach ($category in @('pressure_washers','sump_pumps','pressure_washer_accessories')) { $snapshot.$category = @($snapshot.$category | Select-Object -First 29) }
         }
+        if (-not [string]::IsNullOrWhiteSpace($ObservedAt)) { $snapshot.observed_at = $ObservedAt }
         if (-not $IncludeSourceMetadata) { $snapshot.PSObject.Properties.Remove('sources') }
         [IO.File]::WriteAllText($snapshotPath, ($snapshot | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding($false)))
         $receiptPath = Join-Path $directory 'best-sellers-capture-receipt.json'
-        $receipt = New-BestSellersCaptureReceipt -SnapshotPath $snapshotPath -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
+        $receipt = New-BestSellersCaptureReceipt -SnapshotPath $snapshotPath -SourceConfigPath $script:legacyFixture.SourceConfigPath
         Write-BestSellersCaptureReceipt -Receipt $receipt -Path $receiptPath | Out-Null
         return [pscustomobject]@{ snapshot_path=$snapshotPath; receipt_path=$receiptPath; receipt=$receipt }
     }
@@ -111,7 +122,7 @@ Describe 'Dashboard sync product metadata cohort' {
         $snapshot = Get-Content $fixture.snapshot_path -Raw -Encoding UTF8 | ConvertFrom-Json
         $snapshot.pressure_washers = @($snapshot.pressure_washers | Select-Object -First 29)
         [IO.File]::WriteAllText($fixture.snapshot_path,($snapshot | ConvertTo-Json -Depth 12),(New-Object Text.UTF8Encoding($false)))
-        $receipt = New-BestSellersCaptureReceipt -SnapshotPath $fixture.snapshot_path -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
+        $receipt = New-BestSellersCaptureReceipt -SnapshotPath $fixture.snapshot_path -SourceConfigPath $script:legacyFixture.SourceConfigPath
         Write-BestSellersCaptureReceipt -Receipt $receipt -Path $fixture.receipt_path | Out-Null
         $result = & (Join-Path $projectRoot 'scripts\New-DashboardSyncBundle.ps1') -SnapshotPath $fixture.snapshot_path -CategoryKey sump_pumps | ConvertFrom-Json
         $bundle = Get-Content $result.BundlePath -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -142,7 +153,7 @@ Describe 'Dashboard sync product metadata cohort' {
     It 'builds a v2 bundle with one metadata row per unique snapshot ASIN' {
         $snapshotPath = Join-Path $TestDrive 'amazon-bestsellers.json'
         Copy-Item -LiteralPath (Join-Path $projectRoot 'web\data\verified-snapshot-2026-08-12.json') -Destination $snapshotPath
-        & (Join-Path $projectRoot 'scripts\Register-BestSellersSnapshot.ps1') -SnapshotPath $snapshotPath | Out-Null
+        & (Join-Path $projectRoot 'scripts\Register-BestSellersSnapshot.ps1') -SnapshotPath $snapshotPath -SourceConfigPath $script:legacyFixture.SourceConfigPath | Out-Null
 
         $result = & (Join-Path $projectRoot 'scripts\New-DashboardSyncBundle.ps1') -SnapshotPath $snapshotPath | ConvertFrom-Json
         $bundleJson = Get-Content -LiteralPath $result.BundlePath -Raw
@@ -154,7 +165,7 @@ Describe 'Dashboard sync product metadata cohort' {
         $allObservations.Count | Should Be 90
         $expectedAsins.Count | Should Be 83
         $bundle.schemaVersion | Should Be 'amazon-bs-dashboard-bundle-v2'
-        $bundleJson | Should Match '"observedAt"\s*:\s*"2026-08-13T00:00:03\.307Z"'
+        ([DateTimeOffset]$bundle.observedAt).ToUniversalTime().ToString('o') | Should Be ([DateTimeOffset]$snapshot.observed_at).ToUniversalTime().ToString('o')
         $receipt = Get-Content -LiteralPath (Join-Path $TestDrive 'best-sellers-capture-receipt.json') -Raw | ConvertFrom-Json
         $bundle.receiptSha256 | Should Be $receipt.snapshot_sha256
         $result.ReceiptSha256 | Should Be $receipt.snapshot_sha256
@@ -165,6 +176,24 @@ Describe 'Dashboard sync product metadata cohort' {
             $null -eq $_.normalizedBrandKey -and $null -eq $_.brandAliasRuleId
         }).Count | Should Be $expectedAsins.Count
         $snapshot.PSObject.Properties['persisted_complete'] | Should Be $null
+    }
+
+    It 'preserves timestamp instants and milliseconds while formatting the bundle in Pacific time' -TestCases @(
+        @{Name='utc'; ObservedAt='2026-08-13T00:00:03.307Z'},
+        @{Name='pacific-offset'; ObservedAt='2026-08-12T17:00:03.307-07:00'}
+    ) {
+        param($Name,$ObservedAt)
+        $fixture = New-DashboardReceiptFixture -Name ('observed-at-' + $Name) -ObservedAt $ObservedAt
+
+        $result = & (Join-Path $projectRoot 'scripts/New-DashboardSyncBundle.ps1') -SnapshotPath $fixture.snapshot_path | ConvertFrom-Json
+        $bundleJson = Get-Content -LiteralPath $result.BundlePath -Raw -Encoding UTF8
+        # Read the emitted string directly because pwsh may deserialize ISO strings as DateTime.
+        $timestampMatch = [regex]::Match($bundleJson,'"observedAt"\s*:\s*"([^"]+)"')
+        $timestampMatch.Success | Should Be $true
+        $emittedTimestamp = $timestampMatch.Groups[1].Value
+
+        $emittedTimestamp | Should Be '2026-08-12T17:00:03.307-07:00'
+        ([DateTimeOffset]$emittedTimestamp).UtcTicks | Should Be ([DateTimeOffset]$ObservedAt).UtcTicks
     }
 
     It 'requires persisted complete exact Top 30 categories for the metadata cohort' {

@@ -11,12 +11,22 @@ function Get-ProjectRuntimeSettings {
     }
 
     $resolvedRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
+    $macRuntime = $PSVersionTable.ContainsKey("PSEdition") -and $PSVersionTable.PSEdition -eq "Core" -and $IsMacOS
+    $bootstrapPython = Join-Path $resolvedRoot '.local\python\python.exe'
+    $venvPython = Join-Path $resolvedRoot '.venv\Scripts\python.exe'
+    if ($macRuntime) {
+        $bootstrapPython = Join-Path $resolvedRoot '.local/python/bin/python3'
+        if (-not (Test-Path -LiteralPath $bootstrapPython -PathType Leaf)) {
+            $bootstrapPython = (Get-Command python3 -CommandType Application -ErrorAction Stop).Source
+        }
+        $venvPython = Join-Path $resolvedRoot '.venv/bin/python3'
+    }
     [pscustomobject]@{
         ProjectRoot = $resolvedRoot
         LocalRoot = Join-Path $resolvedRoot '.local'
-        BootstrapPythonPath = Join-Path $resolvedRoot '.local\python\python.exe'
+        BootstrapPythonPath = $bootstrapPython
         VenvRoot = Join-Path $resolvedRoot '.venv'
-        VenvPythonPath = if ($IsMacOS -and (Test-Path '/usr/bin/python3')) { '/usr/bin/python3' } else { Join-Path $resolvedRoot '.venv\Scripts\python.exe' }
+        VenvPythonPath = $venvPython
         PostgresSettingsPath = Join-Path $resolvedRoot '.local\postgres-settings.json'
         PostgresInstallRoot = Join-Path $resolvedRoot '.local\postgresql'
         PostgresDataRoot = Join-Path $resolvedRoot '.local\postgres-data'

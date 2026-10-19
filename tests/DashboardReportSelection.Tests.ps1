@@ -1,10 +1,12 @@
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $modulePath = Join-Path $projectRoot 'src\DashboardReportSelection.psm1'
+. (Join-Path $PSScriptRoot 'helpers/LegacyRegistry.ps1')
 
 Describe 'Dashboard report selection across Beijing and Amazon market dates' {
     BeforeEach {
         Remove-Module DashboardReportSelection -ErrorAction SilentlyContinue
         Import-Module $modulePath -Force
+        $legacyRegistry = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-report-registry')
         $testRoot = Join-Path $TestDrive 'desktop-reports'
         New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
         $names = @{
@@ -25,7 +27,7 @@ Describe 'Dashboard report selection across Beijing and Amazon market dates' {
     }
 
     It 'selects Sunday US daily reports and Monday Beijing weekly reports in the same publish run' {
-        $selected = @(Get-DashboardReportsToUpload -DesktopRoot $testRoot -MarketDate '2026-08-16' -BeijingDate '2026-08-17')
+        $selected = @(Get-DashboardReportsToUpload -DesktopRoot $testRoot -MarketDate '2026-08-16' -BeijingDate '2026-08-17' -RegistryPath $legacyRegistry.RegistryPath)
 
         @($selected | Where-Object Kind -eq 'daily').Count | Should Be 3
         @($selected | Where-Object Kind -eq 'weekly').Count | Should Be 3

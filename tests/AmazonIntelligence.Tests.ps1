@@ -1,3 +1,4 @@
+. (Join-Path $PSScriptRoot 'helpers/LegacyRegistry.ps1')
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Import-Module (Join-Path $projectRoot 'src\AmazonIntelligence.psm1') -Force
 Import-Module (Join-Path $projectRoot 'src\CreatorsApiAdapter.psm1') -Force
@@ -12,7 +13,7 @@ Import-Module (Join-Path $projectRoot 'src\BestSellersAnalysis.psm1') -Force
 Import-Module (Join-Path $projectRoot 'src\BestSellersDailyReport.psm1') -Force
 
 Describe 'Windows PowerShell report compatibility' {
-    It 'loads the daily report module without UTF-8 parser errors' {
+    It 'loads the daily report module without UTF-8 parser errors' -Skip:([Environment]::OSVersion.Platform -ne 'Win32NT') {
         $windowsPowerShell = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
         if (-not (Test-Path -LiteralPath $windowsPowerShell -PathType Leaf)) { return }
         $module = (Resolve-Path -LiteralPath (Join-Path $projectRoot 'src\BestSellersDailyReport.psm1')).Path
@@ -37,15 +38,15 @@ Describe 'Category-independent configuration' {
         Get-Command Compare-BestSellersSnapshots -ErrorAction SilentlyContinue | Should Not Be $null
     }
 
-    It 'contains three root categories and seven accessory categories' {
+    It 'contains the four registered root categories and seven accessory categories' {
         $config = Get-Content (Join-Path $projectRoot 'config\categories.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        @($config.categories | Where-Object { $_.level -eq 1 }).Count | Should Be 3
+        @($config.categories | Where-Object { $_.level -eq 1 }).Count | Should Be 4
         @($config.categories | Where-Object { $_.parent -eq 'pressure-washer-accessories' }).Count | Should Be 7
     }
 
-    It 'defines three verified Amazon Best Sellers nodes' {
+    It 'defines all seventeen verified Amazon Best Sellers nodes' {
         $config = Get-Content (Join-Path $projectRoot 'config\best-sellers-sources.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        @($config.sources | Where-Object { $_.active }).Count | Should Be 3
+        @($config.sources | Where-Object { $_.active }).Count | Should Be 17
         @($config.sources.amazon_node_id) -contains '552856' | Should Be $true
         @($config.sources.amazon_node_id) -contains '680335011' | Should Be $true
         @($config.sources.amazon_node_id) -contains '3023451' | Should Be $true
@@ -869,6 +870,14 @@ Describe 'Credential-free public intelligence mode' {
 }
 
 Describe 'Best Sellers Top 50 snapshot analysis' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     function New-TestBestSellerItem {
         param([int]$Rank, [string]$Asin, [string]$Title)
         return [pscustomobject]@{
@@ -953,6 +962,14 @@ Describe 'Best Sellers Top 50 snapshot analysis' {
 }
 
 Describe 'Best Sellers Chinese daily report' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     function New-DailyReportTestItems {
         $items = @()
         foreach ($rank in 1..50) {
@@ -1065,8 +1082,16 @@ Describe 'Best Sellers daily operational health' {
 }
 
 Describe 'Best Sellers capture receipt' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     It 'binds a complete snapshot to its configured source nodes and immutable content hash' {
-        $configPath = Join-Path $projectRoot 'config\best-sellers-sources.json'
+        $configPath = $script:legacyFixture.SourceConfigPath
         $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $items = @()
         foreach ($rank in 1..30) { $items += [pscustomobject]@{ asin=('B0C{0:D7}' -f $rank); rank=$rank; title="Receipt item $rank"; url="https://www.amazon.com/dp/B0C$('{0:D7}' -f $rank)"; price='$20.00'; rating=4.5; reviews=100 } }
@@ -1090,6 +1115,14 @@ Describe 'Best Sellers capture receipt' {
 }
 
 Describe 'Best Sellers PostgreSQL import' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     It 'preserves true false null and structured discounts in import payloads' {
         $artifactPath = Join-Path $TestDrive 'discount-states.json'
         $snapshot = [pscustomobject]@{
@@ -1103,7 +1136,7 @@ Describe 'Best Sellers PostgreSQL import' {
         }
         [System.IO.File]::WriteAllText($artifactPath, ($snapshot | ConvertTo-Json -Compress -Depth 8), (New-Object System.Text.UTF8Encoding($false)))
 
-        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
+        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath $script:legacyFixture.SourceConfigPath
 
         $sql | Should Match '"has_discount":true'
         $sql | Should Match '"has_discount":false'
@@ -1115,7 +1148,7 @@ Describe 'Best Sellers PostgreSQL import' {
         $artifactPath = Join-Path $TestDrive 'legacy-best-sellers.json'
         [System.IO.File]::WriteAllText($artifactPath, '{"market_date":"2026-08-04","observed_at":"2026-08-04T01:00:00Z","pressure_washers":[],"sump_pumps":[],"pressure_washer_accessories":[]}', (New-Object System.Text.UTF8Encoding($false)))
 
-        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
+        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath $script:legacyFixture.SourceConfigPath
 
         $sql | Should Not Match '"has_discount"'
         $sql | Should Not Match '"discounts"'
@@ -1126,7 +1159,7 @@ Describe 'Best Sellers PostgreSQL import' {
         $artifactPath = Join-Path $TestDrive 'metadata-best-sellers.json'
         [System.IO.File]::WriteAllText($artifactPath, '{"market_date":"2026-08-20","observed_at":"2026-08-20T01:00:00Z","pressure_washers":[],"sump_pumps":[],"pressure_washer_accessories":[]}', (New-Object System.Text.UTF8Encoding($false)))
 
-        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json') -MetadataRows @(
+        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath $script:legacyFixture.SourceConfigPath -MetadataRows @(
             [pscustomobject]@{ marketplace_code='AMAZON_US'; asin='B000000001'; product_type='unknown'; classification_confidence='low'; classification_rule_id=$null; classification_rule_version='product-rules-v1'; classification_evidence=@('NO_SAFE_RULE_MATCH'); raw_brand=$null; normalized_brand=$null; normalized_brand_key=$null; brand_alias_rule_id=$null; brand_source='unknown'; first_seen_market_date='2026-08-20'; last_seen_market_date='2026-08-20' }
         )
 
@@ -1139,7 +1172,7 @@ Describe 'Best Sellers PostgreSQL import' {
     It 'creates a transactional, schema-versioned and credential-free import statement' {
         $artifactPath = Join-Path $TestDrive 'best-sellers.json'
         [System.IO.File]::WriteAllText($artifactPath, '{"market_date":"2026-08-04","observed_at":"2026-08-04T01:00:00Z","pressure_washers":[],"sump_pumps":[],"pressure_washer_accessories":[]}', (New-Object System.Text.UTF8Encoding($false)))
-        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
+        $sql = New-BestSellersImportSql -ArtifactPath $artifactPath -SourceConfigPath $script:legacyFixture.SourceConfigPath
         $sql | Should Match 'BEGIN;'
         $sql | Should Match 'SELECT ingest_best_sellers_snapshot'
         $sql | Should Match 'amazon-best-sellers-snapshot-v1'
@@ -1157,7 +1190,7 @@ Describe 'Best Sellers PostgreSQL import' {
             [bool]$IncludeSourceMetadata = $true
         )
 
-        $sourceConfigPath = Join-Path $projectRoot 'config\best-sellers-sources.json'
+        $sourceConfigPath = $script:legacyFixture.SourceConfigPath
         $config = Get-Content -LiteralPath $sourceConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $items = @(1..$(if ($Complete) { 30 } else { 29 }) | ForEach-Object {
                 [pscustomobject]@{
@@ -1312,6 +1345,14 @@ Describe 'Best Sellers PostgreSQL import' {
 }
 
 Describe 'Best Sellers weekly analysis' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     function New-WeeklyTestItem {
         param([string]$Asin, [int]$Rank, [long]$Reviews, $HasDiscount = $false, $Discounts = @())
         [pscustomobject]@{ asin=$Asin; rank=$Rank; title="Item $Asin"; url="https://www.amazon.com/dp/$Asin"; price='$100.00'; rating=4.5; reviews=$Reviews; has_discount=$HasDiscount; discounts=@($Discounts) }
@@ -1395,6 +1436,14 @@ Describe 'Best Sellers weekly analysis' {
 }
 
 Describe 'Best Sellers weekly report content' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     BeforeAll {
         Import-Module (Join-Path $projectRoot 'src\BestSellersWeeklyReportContent.psm1') -Force -ErrorAction SilentlyContinue
         $script:weeklyReportAnalysis = [pscustomobject]@{
@@ -1481,21 +1530,21 @@ Describe 'Best Sellers weekly report content' {
 Describe 'PDF report tooling' {
     It 'keeps section headings with the content that follows them' {
         $rendererPath = Join-Path $projectRoot 'scripts\python\render_markdown_pdf.py'
-        $pythonPath = Join-Path $projectRoot '.venv\Scripts\python.exe'
+        $pythonPath = if ($PSVersionTable.PSEdition -eq 'Core' -and $IsMacOS) { '/usr/bin/python3' } else { Join-Path $projectRoot '.venv\Scripts\python.exe' }
         & $pythonPath -c "import importlib.util; spec=importlib.util.spec_from_file_location('renderer', r'$rendererPath'); module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module); styles=module.build_styles('Helvetica'); assert styles['h2'].keepWithNext == 0; assert styles['h2_keep'].keepWithNext == 1; assert styles['h3'].keepWithNext == 0; assert styles['h3_keep'].keepWithNext == 1"
         $LASTEXITCODE | Should Be 0
     }
 
     It 'does not place a spacer between a heading and its following content' {
         $rendererPath = Join-Path $projectRoot 'scripts\python\render_markdown_pdf.py'
-        $pythonPath = Join-Path $projectRoot '.venv\Scripts\python.exe'
+        $pythonPath = if ($PSVersionTable.PSEdition -eq 'Core' -and $IsMacOS) { '/usr/bin/python3' } else { Join-Path $projectRoot '.venv\Scripts\python.exe' }
         & $pythonPath -c "import importlib.util; spec=importlib.util.spec_from_file_location('renderer', r'$rendererPath'); module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module); assert module.should_add_blank_spacer(['## Heading', '', '- Detail'], 1) is False; assert module.should_add_blank_spacer(['Body', '', 'Body'], 1) is True"
         $LASTEXITCODE | Should Be 0
     }
 
     It 'allows long tables to split after their section heading' {
         $rendererPath = Join-Path $projectRoot 'scripts\python\render_markdown_pdf.py'
-        $pythonPath = Join-Path $projectRoot '.venv\Scripts\python.exe'
+        $pythonPath = if ($PSVersionTable.PSEdition -eq 'Core' -and $IsMacOS) { '/usr/bin/python3' } else { Join-Path $projectRoot '.venv\Scripts\python.exe' }
         & $pythonPath -c "import importlib.util; spec=importlib.util.spec_from_file_location('renderer', r'$rendererPath'); module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module); assert module.should_keep_heading_with_next(['## Heading', '', '| A |'], 0) is False; assert module.should_keep_heading_with_next(['## Heading', '', '- Detail'], 0) is True"
         $LASTEXITCODE | Should Be 0
     }
@@ -1534,6 +1583,14 @@ Describe 'PDF report tooling' {
 }
 
 Describe 'Best Sellers opportunity analysis' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     function New-OpportunityWeeklyAnalysis {
         param([int]$Days = 7)
         $product = [pscustomobject]@{
@@ -1590,6 +1647,14 @@ Describe 'Best Sellers opportunity analysis' {
 }
 
 Describe 'Best Sellers market structure analysis' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     function New-MarketStructureItem {
         param([string]$Asin, [int]$Rank, [string]$Price, [string]$Title)
         [pscustomobject]@{ asin=$Asin; rank=$Rank; price=$Price; title=$Title; rating=4.5; reviews=100; url="https://www.amazon.com/dp/$Asin" }
@@ -1649,6 +1714,14 @@ Describe 'Best Sellers market structure analysis' {
 }
 
 Describe 'Best Sellers rank influence analysis' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     It 'measures monotonic price, rating and review associations against rank strength' {
         $items = @()
         foreach ($rank in 1..6) {
@@ -1706,6 +1779,14 @@ Describe 'Best Sellers rank influence analysis' {
 }
 
 Describe 'Phase 5 analysis readiness gate' {
+    # These August fixtures exercise the historical three-category contract explicitly.
+    BeforeEach {
+        $script:legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'legacy-contract')
+        $script:registryDefaults = $global:PSDefaultParameterValues.Clone()
+        $global:PSDefaultParameterValues['*:RegistryPath'] = $script:legacyFixture.RegistryPath
+    }
+    AfterEach { $global:PSDefaultParameterValues = $script:registryDefaults }
+
     function New-ReadinessItems {
         $items = @()
         foreach ($rank in 1..30) {
@@ -1735,7 +1816,7 @@ Describe 'Phase 5 analysis readiness gate' {
     It 'requires more than seven complete market days for every active category' {
         $root = Join-Path $TestDrive 'snapshots-seven'
         foreach ($offset in 0..6) { Write-ReadinessSnapshot -Root $root -Date ('2026-08-{0:D2}' -f ($offset + 1)) }
-        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json') -AsOfDate '2026-08-07'
+        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath $script:legacyFixture.SourceConfigPath -AsOfDate '2026-08-07'
         $result.ready | Should Be $false
         $result.status | Should Be 'COLLECTING_BASELINE'
         @($result.categories | Where-Object { $_.missing_valid_days -ne 1 }).Count | Should Be 0
@@ -1744,7 +1825,7 @@ Describe 'Phase 5 analysis readiness gate' {
     It 'does not count incomplete Top 30 days toward the analysis threshold' {
         $root = Join-Path $TestDrive 'snapshots-eight'
         foreach ($offset in 0..7) { Write-ReadinessSnapshot -Root $root -Date ('2026-08-{0:D2}' -f ($offset + 1)) -IncompleteAccessories:($offset -eq 7) }
-        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json') -AsOfDate '2026-08-08'
+        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath $script:legacyFixture.SourceConfigPath -AsOfDate '2026-08-08'
         $result.ready | Should Be $false
         (@($result.categories | Where-Object { $_.category -eq 'pressure_washer_accessories' })[0]).valid_market_day_count | Should Be 7
         (@($result.categories | Where-Object { $_.category -eq 'pressure_washer_accessories' })[0]).status | Should Be 'INCOMPLETE_SNAPSHOTS_PRESENT'
@@ -1753,7 +1834,7 @@ Describe 'Phase 5 analysis readiness gate' {
     It 'opens the gate only after eight complete Top 30 days for all three categories' {
         $root = Join-Path $TestDrive 'snapshots-ready'
         foreach ($offset in 0..7) { Write-ReadinessSnapshot -Root $root -Date ('2026-08-{0:D2}' -f ($offset + 1)) }
-        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json') -AsOfDate '2026-08-08'
+        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath $script:legacyFixture.SourceConfigPath -AsOfDate '2026-08-08'
         $result.ready | Should Be $true
         $result.status | Should Be 'READY_FOR_FULL_PHASE_5_ANALYSIS'
     }
@@ -1761,18 +1842,18 @@ Describe 'Phase 5 analysis readiness gate' {
     It 'honors the configured first eligible analysis date even when data coverage is ready' {
         $root = Join-Path $TestDrive 'snapshots-date-gate'
         foreach ($offset in 0..7) { Write-ReadinessSnapshot -Root $root -Date ('2026-08-{0:D2}' -f ($offset + 1)) }
-        $before = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json') -AsOfDate '2026-08-09' -NotBeforeDate '2026-08-10'
+        $before = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath $script:legacyFixture.SourceConfigPath -AsOfDate '2026-08-09' -NotBeforeDate '2026-08-10'
         $before.coverage_ready | Should Be $true
         $before.date_ready | Should Be $false
         $before.ready | Should Be $false
-        $after = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json') -AsOfDate '2026-08-10' -NotBeforeDate '2026-08-10'
+        $after = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath $script:legacyFixture.SourceConfigPath -AsOfDate '2026-08-10' -NotBeforeDate '2026-08-10'
         $after.ready | Should Be $true
     }
 
     It 'allows the explicitly approved initial weekly analysis after its date with incomplete coverage' {
         $root = Join-Path $TestDrive 'snapshots-initial-weekly'
         foreach ($offset in 0..6) { Write-ReadinessSnapshot -Root $root -Date ('2026-08-{0:D2}' -f ($offset + 1)) }
-        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json') -AsOfDate '2026-08-10' -NotBeforeDate '2026-08-10' -AllowAnalysisBeforeCoverage
+        $result = Get-BestSellersAnalysisReadiness -SnapshotsRoot $root -SourceConfigPath $script:legacyFixture.SourceConfigPath -AsOfDate '2026-08-10' -NotBeforeDate '2026-08-10' -AllowAnalysisBeforeCoverage
         $result.coverage_ready | Should Be $false
         $result.analysis_due | Should Be $true
         $result.analysis_mode | Should Be 'LIMITED_WEEKLY'

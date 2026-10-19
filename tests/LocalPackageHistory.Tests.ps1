@@ -140,7 +140,7 @@ Describe 'Local package history export' {
     It 'retains staging and never archives when a staged export copy has a different hash' {
         $root=Join-Path $TestDrive 'export-stage-mismatch';$backup=Join-Path $root '.local\backups\fresh.dump';New-Item -ItemType Directory -Path (Split-Path -Parent $backup) -Force|Out-Null;[IO.File]::WriteAllText($backup,'dump')
         $fsCalls=New-Object Collections.ArrayList;$archiveCalls=New-Object Collections.ArrayList
-        $hash={param($path)if($path -match '\.local\\history-export-'){return 'f'*64};return 'a'*64}
+        $hash={param($path)if($path -match '\.local[\\/]history-export-'){return 'f'*64};return 'a'*64}
         $backupRunner={param($op,$args)if($op -eq 'Create'){[pscustomobject]@{Status='BACKED_UP';BackupPath=$backup}}else{[pscustomobject]@{Status='VERIFIED';HashMatches=$true}}}.GetNewClosure()
         $result=Invoke-LocalPackageHistoryExport -ProjectRoot $root -OutputPath (Join-Path $root 'history.zip') -FileSystemRunner (New-HistoryTestFileSystemRunner $fsCalls) -HashRunner $hash -BackupRunner $backupRunner -ArchiveRunner (New-HistoryTestArchiveRunner -FixtureRoot $root -Calls $archiveCalls)
         $result.status|Should Be 'FAILED';$result.error|Should Match 'hash mismatch';$archiveCalls.Count|Should Be 0;Test-Path -LiteralPath $result.staging_path -PathType Container|Should Be $true;Test-Path -LiteralPath $backup -PathType Leaf|Should Be $true;@($fsCalls|Where-Object Operation -eq 'RemoveTree').Count|Should Be 0

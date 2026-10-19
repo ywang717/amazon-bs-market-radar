@@ -1,10 +1,13 @@
+$testPowerShell = (Get-Process -Id $PID).Path
+$windowsScheduledTasksAvailable = $env:OS -eq 'Windows_NT'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $modulePath = Join-Path $projectRoot 'src\LocalPackageScheduledTasks.psm1'
 
+# These tests exercise Windows ScheduledTasks; do not invoke production launchd on macOS.
 Describe 'Local package scheduled task registration' {
     BeforeAll { Import-Module $modulePath -Force }
 
-    It 'refuses registration outside China Standard Time before calling the scheduler' {
+    It 'refuses registration outside China Standard Time before calling the scheduler' -Skip:(-not $windowsScheduledTasksAvailable) {
         $calls = New-Object System.Collections.ArrayList
         $result = Register-LocalPackageScheduledTasks -ProjectRoot $TestDrive -TimeZoneProvider { 'Pacific Standard Time' } -IdentityProvider { 'DOMAIN\user' } -SchedulerRunner { param($definition) [void]$calls.Add($definition) }
 
@@ -13,7 +16,7 @@ Describe 'Local package scheduled task registration' {
         $calls.Count | Should Be 0
     }
 
-    It 'registers primary and recovery daily tasks plus the weekly task with resilient runtime settings' {
+    It 'registers primary and recovery daily tasks plus the weekly task with resilient runtime settings' -Skip:(-not $windowsScheduledTasksAvailable) {
         $calls = New-Object System.Collections.ArrayList
         $legacy = @('AmazonIntelligence-PostgreSQLBackup-1030','Unrelated-Legacy-Task')
         $runner = {
@@ -56,7 +59,7 @@ Describe 'Local package scheduled task registration' {
         @($legacy) | Should Be @('AmazonIntelligence-PostgreSQLBackup-1030','Unrelated-Legacy-Task')
     }
 
-    It 'updates the same exact active names on repeat registration' {
+    It 'updates the same exact active names on repeat registration' -Skip:(-not $windowsScheduledTasksAvailable) {
         $calls = New-Object System.Collections.ArrayList
         $runner = { param($definition) [void]$calls.Add($definition.TaskName); [pscustomobject]@{TaskName=$definition.TaskName;Action=$definition.Arguments;NextRunTime='next';Status='READY'} }.GetNewClosure()
 
@@ -66,7 +69,7 @@ Describe 'Local package scheduled task registration' {
         @($calls) | Should Be @('Amazon-BS-Package-Daily-0800','Amazon-BS-Package-Daily-Recovery-0830','Amazon-BS-Package-Weekly-0600','Amazon-BS-Package-Daily-0800','Amazon-BS-Package-Daily-Recovery-0830','Amazon-BS-Package-Weekly-0600')
     }
 
-    It 'returns one redacted failure summary when registration fails' {
+    It 'returns one redacted failure summary when registration fails' -Skip:(-not $windowsScheduledTasksAvailable) {
         $provider = { param($name,$scope) if ($scope -eq 'Process') { 'smtp-process-secret' } else { 'postgres-user-secret' } }
         $result = Register-LocalPackageScheduledTasks -ProjectRoot $TestDrive -TimeZoneProvider { 'China Standard Time' } -IdentityProvider { 'DOMAIN\interactive' } -SchedulerRunner { throw 'registration failed smtp-process-secret postgres-user-secret' } -EnvironmentValueProvider $provider
         $json = $result | ConvertTo-Json -Depth 8 -Compress
@@ -76,7 +79,7 @@ Describe 'Local package scheduled task registration' {
         $json | Should Not Match 'smtp-process-secret|postgres-user-secret'
     }
 
-    It 'translates definitions into safe ScheduledTasks cmdlets and repeats only the exact package names' {
+    It 'translates definitions into safe ScheduledTasks cmdlets and repeats only the exact package names' -Skip:(-not $windowsScheduledTasksAvailable) {
         Mock -CommandName New-ScheduledTaskAction -ModuleName LocalPackageScheduledTasks -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskAction' }
         Mock -CommandName New-ScheduledTaskTrigger -ModuleName LocalPackageScheduledTasks -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskTrigger' }
         Mock -CommandName New-ScheduledTaskSettingsSet -ModuleName LocalPackageScheduledTasks -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskSettings' }
@@ -132,7 +135,7 @@ Describe 'Local package scheduled task registration' {
         Assert-MockCalled -CommandName Unregister-ScheduledTask -ModuleName LocalPackageScheduledTasks -Times 0 -Exactly -ParameterFilter { $TaskName -notin @('Amazon-BS-Package-Weekly-0900','AmazonIntelligence-Daily-0900') }
     }
 
-    It 'derives daily and weekly trigger values from each supplied definition' {
+    It 'derives daily and weekly trigger values from each supplied definition' -Skip:(-not $windowsScheduledTasksAvailable) {
         Mock -CommandName New-ScheduledTaskAction -ModuleName LocalPackageScheduledTasks -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskAction' }
         Mock -CommandName New-ScheduledTaskTrigger -ModuleName LocalPackageScheduledTasks -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskTrigger' }
         Mock -CommandName New-ScheduledTaskSettingsSet -ModuleName LocalPackageScheduledTasks -MockWith { New-CimInstance -ClientOnly -Namespace 'Root/Microsoft/Windows/TaskScheduler' -ClassName 'MSFT_TaskSettings' }
@@ -167,7 +170,7 @@ Export-ModuleMember -Function Register-LocalPackageScheduledTasks
         [IO.File]::WriteAllText($fakeModule,$source,(New-Object Text.UTF8Encoding($false)))
         $entry = Join-Path $projectRoot 'scripts\Register-LocalPackageScheduledTasks.ps1'
 
-        $output = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $entry -ModulePath $fakeModule 2>&1)
+        $output = @(& $testPowerShell -NoProfile -ExecutionPolicy Bypass -File $entry -ModulePath $fakeModule 2>&1)
         $exitCode = $LASTEXITCODE
 
         $exitCode | Should Be 0
@@ -192,7 +195,7 @@ Export-ModuleMember -Function Register-LocalPackageScheduledTasks
         try {
             $env:DAILY_REPORT_SMTP_AUTH_CODE = 'script-smtp-secret'
             $env:PGPASSWORD = 'script-postgres-secret'
-            $output = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $entry -ModulePath $fakeModule 2>&1)
+            $output = @(& $testPowerShell -NoProfile -ExecutionPolicy Bypass -File $entry -ModulePath $fakeModule 2>&1)
             $exitCode = $LASTEXITCODE
         }
         finally {

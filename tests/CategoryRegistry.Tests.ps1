@@ -25,10 +25,19 @@ function New-CategoryRegistryFixture {
     $fixtureRoot = Join-Path $TestDrive $Name
     $fixtureConfig = Join-Path $fixtureRoot 'config'
     New-Item -ItemType Directory -Path $fixtureConfig -Force | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\config\v2-product-classification.json') -Destination $fixtureConfig
-    Copy-Item -LiteralPath $attributeSchemaPath -Destination $fixtureConfig
-
     $raw = Get-Content -LiteralPath $registryPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    # Copy the valid production references before applying intentionally invalid mutations.
+    $references = @($raw.categories | ForEach-Object {
+        $_.classification_config_path
+        $_.attribute_schema_path
+    } | Select-Object -Unique)
+    $projectRoot = Split-Path -Parent (Split-Path -Parent $registryPath)
+    foreach ($reference in $references) {
+        $destination = Join-Path $fixtureRoot $reference
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $projectRoot $reference) -Destination $destination
+    }
+
     if ($null -ne $Mutate) { & $Mutate $raw $fixtureRoot }
     $fixturePath = Join-Path $fixtureConfig 'category-registry.json'
     [IO.File]::WriteAllText($fixturePath, ($raw | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding($false)))
@@ -49,7 +58,7 @@ function Test-RegistryOperationThrows {
 }
 
 Describe 'Windows PowerShell compatibility' {
-    It 'imports the production Registry when Test-Json is unavailable' {
+    It 'imports the production Registry when Test-Json is unavailable' -Skip:([string]::IsNullOrWhiteSpace($env:WINDIR)) {
         $windowsPowerShell = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
         if (-not (Test-Path -LiteralPath $windowsPowerShell -PathType Leaf)) { return }
 
@@ -187,7 +196,7 @@ Describe 'Category Registry contract' {
         (@($registry.PSObject.Properties.Name) -join ',') | Should Be 'SchemaVersion,Marketplace,PageLoading,Path,ProjectRoot,Categories'
         $registry.PageLoading.top_30_rule | Should Be 'collect_only_verified_global_ranks_1_through_30'
         $registry.PageLoading.pagination_rule | Should Match 'global ranks'
-        (@($category.PSObject.Properties.Name) -join ',') | Should Be 'CategoryKey,Slug,LabelZh,LabelEn,NodeId,SourceUrl,TargetCount,Enabled,ReportFileToken,ClassificationConfigPath,AttributeSchemaPath,Segments,Defaults'
+        (@($category.PSObject.Properties.Name) -join ',') | Should Be 'CategoryKey,Slug,LabelZh,LabelEn,NodeId,SourceUrl,TargetCount,Enabled,GroupKey,ParentCategoryKey,TreeLevel,TreeVerifiedAt,ReportFileToken,ClassificationConfigPath,AttributeSchemaPath,Segments,Defaults'
         $category.Slug | Should Be 'pressure-washer'
         $category.LabelZh | Should Be '高压清洗机'
         $category.LabelEn | Should Be 'Pressure Washers'
@@ -376,10 +385,10 @@ Describe 'PowerShell consumers use the Category Registry' {
         $sellerResult = & (Join-Path $PSScriptRoot '..\scripts\New-SellerIntelligenceReports.ps1') -SnapshotPath $snapshotPath -SnapshotsRoot (Split-Path -Parent $tinyRoot) -OutputRoot (Join-Path $tinyRoot 'seller') -RegistryPath $tinyRegistryPath | ConvertFrom-Json
 
         $verification.valid | Should Be $true
-        @($receipt.categories | Where-Object target_count -eq 2).Count | Should Be 4
-        $bundleResult.ObservationCount | Should Be 8
-        $onlineResult.ReportCount | Should Be 5
-        $sellerResult.ReportCount | Should Be 5
+        @($receipt.categories | Where-Object target_count -eq 2).Count | Should Be 18
+        $bundleResult.ObservationCount | Should Be 36
+        $onlineResult.ReportCount | Should Be 19
+        $sellerResult.ReportCount | Should Be 19
     }
 
     It 'uses each Registry TargetCount in online seller readiness brand and command analysis' {
@@ -407,7 +416,7 @@ Describe 'PowerShell consumers use the Category Registry' {
         @($readiness.categories | Where-Object target_count -ne 2).Count | Should Be 0
         $readiness.target_count | Should Be 2
         $readinessCommand.target_count | Should Be 2
-        $historyAsins.Count | Should Be 8
+        $historyAsins.Count | Should Be 36
         $command.QualityPassed | Should Be $true
     }
 

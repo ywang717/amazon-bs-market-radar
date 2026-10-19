@@ -22,13 +22,18 @@ npm run dev -- --port 5173
 支持 macOS 12 或更高版本（Apple Silicon 和 Intel）。先安装 Homebrew，然后安装运行时：
 
 ```bash
-brew install node powershell postgresql@16
+brew install node powershell postgresql@16 python@3.12
 cd "/Users/你的用户名/Projects/亚马逊bestseller榜单监控"
 ./scripts/install-macos-runtime.sh
+mkdir -p .local/python/bin
+ln -s "$(brew --prefix python@3.12)/bin/python3.12" .local/python/bin/python3
+pwsh -NoProfile -File scripts/Initialize-PythonEnvironment.ps1
+PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright" .venv/bin/python3 -m playwright install chromium
 cd web
 npm install
-npm exec playwright install chromium
 ```
+
+采集与 PDF 使用项目 `.venv/bin/python3`；依赖要求 Python 3.10 或更新版本，系统自带的旧 Python 可能无法安装。已有 `.local/python/bin/python3` 时保留原引导解释器，不重复创建链接；初始化脚本会复用现有虚拟环境，不需要重建。
 
 回到项目根目录启动：
 

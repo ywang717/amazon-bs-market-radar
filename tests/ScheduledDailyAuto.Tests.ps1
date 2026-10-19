@@ -1,3 +1,5 @@
+$windowsSchedulerAvailable = $env:OS -eq 'Windows_NT'
+# These cases exercise the Windows launcher and ScheduledTasks contract; macOS uses launchd.
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $entry = Join-Path $projectRoot 'scripts\Invoke-ScheduledDailyAuto.ps1'
 
@@ -54,7 +56,7 @@ exit ([int]$env:SCHEDULE_TEST_DAILY_EXIT)
         Remove-Item Env:SCHEDULE_TEST_INITIALIZER_MARKER -ErrorAction SilentlyContinue
     }
 
-    It 'persists a successful primary run and its transcript' {
+    It 'persists a successful primary run and its transcript' -Skip:(-not $windowsSchedulerAvailable) {
         & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $entry -Mode Primary -MarketDate '2026-08-31' -ProjectRoot $TestDrive -TargetScript $script:fakeTarget | Out-Null
         $exitCode = $LASTEXITCODE
 
@@ -68,7 +70,7 @@ exit ([int]$env:SCHEDULE_TEST_DAILY_EXIT)
         @(Get-Content -LiteralPath $script:callsPath) | Should Be @('DailyAuto')
     }
 
-    It 'persists a failed primary run and returns the child exit code' {
+    It 'persists a failed primary run and returns the child exit code' -Skip:(-not $windowsSchedulerAvailable) {
         $env:SCHEDULE_TEST_DAILY_EXIT = '7'
 
         & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $entry -Mode Primary -MarketDate '2026-08-31' -ProjectRoot $TestDrive -TargetScript $script:fakeTarget | Out-Null
@@ -82,7 +84,7 @@ exit ([int]$env:SCHEDULE_TEST_DAILY_EXIT)
         Test-Path -LiteralPath $state.LogPath -PathType Leaf | Should Be $true
     }
 
-    It 'repairs a missing project Python environment before the production daily target runs' {
+    It 'repairs a missing project Python environment before the production daily target runs' -Skip:(-not $windowsSchedulerAvailable) {
         $scriptsRoot = Join-Path $TestDrive 'scripts'
         $venvScripts = Join-Path $TestDrive '.venv\Scripts'
         $initializerMarker = Join-Path $TestDrive 'python-initializer-called.txt'
@@ -107,7 +109,7 @@ exit 0
         @(Get-Content -LiteralPath $script:callsPath) | Should Be @('DailyAuto')
     }
 
-    It 'skips recovery when the daily health gate is already healthy' {
+    It 'skips recovery when the daily health gate is already healthy' -Skip:(-not $windowsSchedulerAvailable) {
         & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $entry -Mode Recovery -MarketDate '2026-08-31' -ProjectRoot $TestDrive -TargetScript $script:fakeTarget | Out-Null
         $exitCode = $LASTEXITCODE
 
@@ -118,7 +120,7 @@ exit 0
         $state.Outcome | Should Be 'SKIPPED_HEALTHY'
     }
 
-    It 'runs DailyAuto once when recovery finds an unhealthy day' {
+    It 'runs DailyAuto once when recovery finds an unhealthy day' -Skip:(-not $windowsSchedulerAvailable) {
         $env:SCHEDULE_TEST_HEALTH_EXIT = '1'
 
         & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $entry -Mode Recovery -MarketDate '2026-08-31' -ProjectRoot $TestDrive -TargetScript $script:fakeTarget | Out-Null
@@ -132,7 +134,7 @@ exit 0
         $state.ExitCode | Should Be 0
     }
 
-    It 'waits for an in-flight primary run and rechecks health before recovery' {
+    It 'waits for an in-flight primary run and rechecks health before recovery' -Skip:(-not $windowsSchedulerAvailable) {
         $env:SCHEDULE_TEST_PRIMARY_STARTED = Join-Path $TestDrive 'transition-primary-started.txt'
         $env:SCHEDULE_TEST_PRIMARY_RELEASE = Join-Path $TestDrive 'transition-primary-release.txt'
         $env:SCHEDULE_TEST_HEALTHY_MARKER = Join-Path $TestDrive 'transition-healthy.txt'
@@ -163,7 +165,7 @@ exit 0
         $state.Outcome | Should Be 'SKIPPED_HEALTHY'
     }
 
-    It 'does not overwrite canonical state when recovery times out waiting for primary' {
+    It 'does not overwrite canonical state when recovery times out waiting for primary' -Skip:(-not $windowsSchedulerAvailable) {
         $env:SCHEDULE_TEST_PRIMARY_STARTED = Join-Path $TestDrive 'timeout-primary-started.txt'
         $env:SCHEDULE_TEST_PRIMARY_RELEASE = Join-Path $TestDrive 'timeout-primary-release.txt'
         $env:SCHEDULE_TEST_HEALTHY_MARKER = Join-Path $TestDrive 'timeout-healthy.txt'

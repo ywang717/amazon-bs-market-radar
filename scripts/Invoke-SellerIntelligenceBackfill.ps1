@@ -3,6 +3,7 @@ param(
     [string]$SnapshotsRoot,
     [string]$ProjectRoot,
     [ValidateSet('Daily','Weekly')][string]$ReportKind = 'Daily',
+    [string]$RegistryPath,
     [scriptblock]$PostOperation
 )
 
@@ -10,6 +11,10 @@ $ErrorActionPreference = 'Stop'
 $sourceRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = $sourceRoot }
 if ([string]::IsNullOrWhiteSpace($SnapshotsRoot)) { $SnapshotsRoot = Join-Path $ProjectRoot 'var\amazon-bestsellers' }
+if ([string]::IsNullOrWhiteSpace($RegistryPath)) { $RegistryPath = Join-Path $sourceRoot 'config\category-registry.json' }
+Import-Module (Join-Path $sourceRoot 'src\BestSellersCategoryRegistry.psm1') -Force
+$registry = Import-BestSellersCategoryRegistry -Path $RegistryPath
+$expectedReports = @($registry.Categories | Where-Object Enabled).Count + 1
 
 $secret = [Environment]::GetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', 'User')
 if ([string]::IsNullOrWhiteSpace($secret)) { $secret = [Environment]::GetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', 'Process') }
@@ -28,15 +33,15 @@ try {
         $receiptPath = Join-Path $directory.FullName 'best-sellers-capture-receipt.json'
         if (-not (Test-Path -LiteralPath $snapshotPath -PathType Leaf) -or -not (Test-Path -LiteralPath $receiptPath -PathType Leaf)) { continue }
 
-        $validation = & (Join-Path $sourceRoot 'scripts\Test-BestSellersCaptureReceipt.ps1') -ReceiptPath $receiptPath | ConvertFrom-Json
+        $validation = & (Join-Path $sourceRoot 'scripts\Test-BestSellersCaptureReceipt.ps1') -ReceiptPath $receiptPath -RegistryPath $RegistryPath | ConvertFrom-Json
         if (-not $validation.valid) { throw "Seller intelligence backfill requires a valid capture receipt for $($directory.Name)." }
 
         $runOutputRoot = Join-Path $tempRoot $directory.Name
-        $run = & (Join-Path $sourceRoot 'scripts\New-SellerIntelligenceReports.ps1') -SnapshotPath $snapshotPath -SnapshotsRoot $SnapshotsRoot -ReportKind $ReportKind -OutputRoot $runOutputRoot | ConvertFrom-Json
-        if ([string]$run.Status -ne 'CREATED' -or [int]$run.ReportCount -ne 4) { throw "Could not generate seller intelligence reports for $($directory.Name)." }
+        $run = & (Join-Path $sourceRoot 'scripts\New-SellerIntelligenceReports.ps1') -SnapshotPath $snapshotPath -SnapshotsRoot $SnapshotsRoot -ReportKind $ReportKind -OutputRoot $runOutputRoot -RegistryPath $RegistryPath | ConvertFrom-Json
+        if ([string]$run.Status -ne 'CREATED' -or [int]$run.ReportCount -ne $expectedReports) { throw "Could not generate seller intelligence reports for $($directory.Name)." }
 
         $reports = @($run.ReportPaths | ForEach-Object { Get-Content -LiteralPath $_ -Raw -Encoding UTF8 | ConvertFrom-Json })
-        if ($reports.Count -ne 4) { throw "Could not read four seller intelligence reports for $($directory.Name)." }
+        if ($reports.Count -ne $expectedReports) { throw "Could not read the expected seller intelligence reports for $($directory.Name)." }
         $bundleJson = [pscustomobject]@{ reports = $reports } | ConvertTo-Json -Depth 16 -Compress
         $result = if ($null -ne $PostOperation) {
             & $PostOperation $endpoint 'Post' $headers 'application/json' $bundleJson
@@ -45,10 +50,10 @@ try {
             Invoke-RestMethod -Uri $endpoint -Method Post -Headers $headers -ContentType 'application/json' -Body $bundleJson
         }
         if ([string]$result.status -eq 'imported') {
-            $uploaded += 4
+            $uploaded += $reports.Count
         }
         elseif ([string]$result.status -eq 'duplicate') {
-            $duplicates += 4
+            $duplicates += $reports.Count
         }
         else {
             throw "Unexpected seller intelligence bundle sync result for $($directory.Name)."

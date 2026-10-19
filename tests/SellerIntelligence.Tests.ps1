@@ -4,19 +4,62 @@ $semanticsModulePath = Join-Path $projectRoot 'src\BestSellersDataSemantics.psm1
 $receiptModulePath = Join-Path $projectRoot 'src\BestSellersCaptureReceipt.psm1'
 $newReportsScript = Join-Path $projectRoot 'scripts\New-SellerIntelligenceReports.ps1'
 $backfillScript = Join-Path $projectRoot 'scripts\Invoke-SellerIntelligenceBackfill.ps1'
-$projectParent = Split-Path -Parent $projectRoot
-$repoRoot = if ((Split-Path -Leaf $projectParent) -eq '.worktrees') {
-    Split-Path -Parent $projectParent
-}
-else {
-    $projectRoot
-}
-$sharedSnapshotsRoot = Join-Path $repoRoot 'var\amazon-bestsellers'
+. (Join-Path $PSScriptRoot 'helpers/LegacyRegistry.ps1')
 
 Describe 'Seller intelligence rules' {
     BeforeAll {
         Import-Module $semanticsModulePath -Force -Global
         Import-Module $modulePath -Force
+        $script:sellerLegacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'seller-legacy-registry')
+    }
+
+    function New-SellerReceiptFixture {
+        param(
+            [Parameter(Mandatory=$true)][string]$SnapshotsRoot,
+            [Parameter(Mandatory=$true)][string]$MarketDate,
+            [string]$SnapshotName = 'amazon-bestsellers.json',
+            [bool]$Complete = $true,
+            [bool]$IncludeSourceMetadata = $true,
+            [bool]$SwapPressureRanks = $false,
+            [string]$RegistryPath = $script:sellerLegacyFixture.RegistryPath
+        )
+
+        $directory = Join-Path $SnapshotsRoot $MarketDate
+        New-Item -ItemType Directory -Path $directory -Force | Out-Null
+        $snapshotPath = Join-Path $directory $SnapshotName
+        $snapshot = Get-Content -LiteralPath (Join-Path $projectRoot 'web\data\verified-snapshot-2026-08-12.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+        $snapshot.market_date = $MarketDate
+        $snapshot.observed_at = "$MarketDate`T12:00:00-07:00"
+        $registry = Get-Content -LiteralPath $RegistryPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $sources = [ordered]@{}
+        $categoryIndex = 0
+        foreach ($category in @($registry.categories | Where-Object enabled)) {
+            $categoryIndex++
+            $key = [string]$category.category_key
+            $sources[$key] = [string]$category.source_url
+            if ($null -eq $snapshot.PSObject.Properties[$key]) {
+                $rows = @(1..$category.target_count | ForEach-Object {
+                    [pscustomobject]@{ rank=$_; asin=('G{0:D2}{1:D7}' -f $categoryIndex,$_); title="$($category.label_en) Product $_"; price=20; rating=4.5; reviews=100; has_discount=$false; discounts=@() }
+                })
+                $snapshot | Add-Member -NotePropertyName $key -NotePropertyValue $rows
+            }
+        }
+        $snapshot.sources = [pscustomobject]$sources
+        if (-not $Complete) {
+            foreach ($category in @($registry.categories | Where-Object enabled | ForEach-Object category_key)) { $snapshot.$category = @($snapshot.$category | Select-Object -First 29) }
+        }
+        if (-not $IncludeSourceMetadata) { $snapshot.PSObject.Properties.Remove('sources') }
+        if ($SwapPressureRanks) {
+            $firstAsin = $snapshot.pressure_washers[0].asin
+            $snapshot.pressure_washers[0].asin = $snapshot.pressure_washers[20].asin
+            $snapshot.pressure_washers[20].asin = $firstAsin
+        }
+        [IO.File]::WriteAllText($snapshotPath, ($snapshot | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding($false)))
+        $receiptPath = Join-Path $directory 'best-sellers-capture-receipt.json'
+        $sourceConfigPath = if ($RegistryPath -eq $script:sellerLegacyFixture.RegistryPath) { $script:sellerLegacyFixture.SourceConfigPath } else { Join-Path $projectRoot 'config\best-sellers-sources.json' }
+        $receipt = New-BestSellersCaptureReceipt -SnapshotPath $snapshotPath -SourceConfigPath $sourceConfigPath -RegistryPath $RegistryPath
+        Write-BestSellersCaptureReceipt -Receipt $receipt -Path $receiptPath | Out-Null
+        return [pscustomobject]@{ snapshot_path=$snapshotPath; receipt_path=$receiptPath; receipt=$receipt }
     }
 
     It 'accepts only an exact Top 30 list' {
@@ -270,9 +313,12 @@ Describe 'Seller intelligence rules' {
         $fixtureRoot = Join-Path $TestDrive 'target-fifty-registry'
         $fixtureConfig = Join-Path $fixtureRoot 'config'
         New-Item -ItemType Directory -Path $fixtureConfig -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'config\v2-product-classification.json') -Destination $fixtureConfig
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'config\v2-product-attributes.json') -Destination $fixtureConfig
         $registry = Get-Content -LiteralPath (Join-Path $projectRoot 'config\category-registry.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+        foreach ($reference in @($registry.categories | ForEach-Object { $_.classification_config_path; $_.attribute_schema_path } | Select-Object -Unique)) {
+            $destination = Join-Path $fixtureRoot $reference
+            New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+            Copy-Item -LiteralPath (Join-Path $projectRoot $reference) -Destination $destination
+        }
         ($registry.categories | Where-Object category_key -eq 'pressure_washers').target_count = 50
         $registryPath = Join-Path $fixtureConfig 'category-registry.json'
         [IO.File]::WriteAllText($registryPath,($registry | ConvertTo-Json -Depth 20),(New-Object Text.UTF8Encoding($false)))
@@ -367,7 +413,7 @@ Describe 'Seller intelligence rules' {
             }
         )
 
-        $reports = @(New-SellerIntelligenceReports -Snapshot $snapshot -ReceiptSha256 ('a' * 64) -Profile competition_strategy -HistorySnapshots $history -CompleteMarketDays 5)
+        $reports = @(New-SellerIntelligenceReports -Snapshot $snapshot -ReceiptSha256 ('a' * 64) -Profile competition_strategy -HistorySnapshots $history -CompleteMarketDays 5 -RegistryPath $script:sellerLegacyFixture.RegistryPath)
         $paths = @(Write-SellerIntelligenceReports -Reports $reports -OutputDirectory $TestDrive)
         $overview = Get-Content -Raw $paths[0] | ConvertFrom-Json
         $washer = @($reports | Where-Object { $_.categoryKey -eq 'pressure_washers' })[0]
@@ -419,48 +465,20 @@ Describe 'Seller intelligence rules' {
         $null -eq $sump.strategy.priceBands | Should Be $true
     }
 
-    It 'writes four seller alert JSON files with distinct keys' {
-        $fixtureSnapshot = Join-Path $sharedSnapshotsRoot '2026-08-24\amazon-bestsellers.json'
+    It 'writes seller alert JSON files for all seventeen categories and overview with distinct keys' {
+        Import-Module $receiptModulePath -Force
+        $snapshotRoot = Join-Path $TestDrive 'current-category-reports'
+        $fixture = New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-24' -RegistryPath (Join-Path $projectRoot 'config/category-registry.json')
 
-        $result = & $newReportsScript -SnapshotPath $fixtureSnapshot -SnapshotsRoot $sharedSnapshotsRoot -OutputRoot $TestDrive | ConvertFrom-Json
+        $result = & $newReportsScript -SnapshotPath $fixture.snapshot_path -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | ConvertFrom-Json
         $keys = @($result.ReportPaths | ForEach-Object { (Get-Content -LiteralPath $_ -Raw -Encoding UTF8 | ConvertFrom-Json).key })
 
         $result.Status | Should Be 'CREATED'
         $result.ReportKind | Should Be 'daily'
-        $result.ReportCount | Should Be 4
-        @($keys | Select-Object -Unique).Count | Should Be 4
-        @($keys | Where-Object { $_ -match '^seller-alert/daily/2026-08-24/.+\.json$' }).Count | Should Be 4
-    }
-
-    function New-SellerReceiptFixture {
-        param(
-            [Parameter(Mandatory=$true)][string]$SnapshotsRoot,
-            [Parameter(Mandatory=$true)][string]$MarketDate,
-            [string]$SnapshotName = 'amazon-bestsellers.json',
-            [bool]$Complete = $true,
-            [bool]$IncludeSourceMetadata = $true,
-            [bool]$SwapPressureRanks = $false
-        )
-
-        $directory = Join-Path $SnapshotsRoot $MarketDate
-        New-Item -ItemType Directory -Path $directory -Force | Out-Null
-        $snapshotPath = Join-Path $directory $SnapshotName
-        $snapshot = Get-Content -LiteralPath (Join-Path $projectRoot 'web\data\verified-snapshot-2026-08-12.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        $snapshot.market_date = $MarketDate
-        if (-not $Complete) {
-            foreach ($category in @('pressure_washers','sump_pumps','pressure_washer_accessories')) { $snapshot.$category = @($snapshot.$category | Select-Object -First 29) }
-        }
-        if (-not $IncludeSourceMetadata) { $snapshot.PSObject.Properties.Remove('sources') }
-        if ($SwapPressureRanks) {
-            $firstAsin = $snapshot.pressure_washers[0].asin
-            $snapshot.pressure_washers[0].asin = $snapshot.pressure_washers[20].asin
-            $snapshot.pressure_washers[20].asin = $firstAsin
-        }
-        [IO.File]::WriteAllText($snapshotPath, ($snapshot | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding($false)))
-        $receiptPath = Join-Path $directory 'best-sellers-capture-receipt.json'
-        $receipt = New-BestSellersCaptureReceipt -SnapshotPath $snapshotPath -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
-        Write-BestSellersCaptureReceipt -Receipt $receipt -Path $receiptPath | Out-Null
-        return [pscustomobject]@{ snapshot_path=$snapshotPath; receipt_path=$receiptPath; receipt=$receipt }
+        $result.ReportCount | Should Be 18
+        @($keys | Select-Object -Unique).Count | Should Be 18
+        @($keys | Where-Object { $_ -match '^seller-alert/daily/2026-08-24/.+\.json$' }).Count | Should Be 18
+        ($keys -contains 'seller-alert/daily/2026-08-24/patio_lawn_garden.json') | Should Be $true
     }
 
     It 'rejects a current snapshot that differs from its sibling receipt' {
@@ -470,7 +488,7 @@ Describe 'Seller intelligence rules' {
         $requested = Join-Path (Split-Path -Parent $authorized.snapshot_path) 'amazon-bestsellers.json'
         Copy-Item -LiteralPath $authorized.snapshot_path -Destination $requested
 
-        { & $newReportsScript -SnapshotPath $requested -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | Out-Null } |
+        { & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $requested -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | Out-Null } |
             Should Throw 'does not match the receipt snapshot'
     }
 
@@ -480,7 +498,7 @@ Describe 'Seller intelligence rules' {
         $fixture = New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-20' -Complete $false
         $fixture.receipt.status | Should Be 'PARTIAL_NOT_ANALYSIS_ELIGIBLE'
 
-        { & $newReportsScript -SnapshotPath $fixture.snapshot_path -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | Out-Null } |
+        { & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $fixture.snapshot_path -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | Out-Null } |
             Should Throw 'COMPLETE_VALIDATED'
     }
 
@@ -492,7 +510,7 @@ Describe 'Seller intelligence rules' {
         Copy-Item -LiteralPath $authorized.snapshot_path -Destination (Join-Path (Split-Path -Parent $authorized.snapshot_path) 'amazon-bestsellers.json')
         $current = New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-20' -SwapPressureRanks $true
 
-        $result = & $newReportsScript -SnapshotPath $current.snapshot_path -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | ConvertFrom-Json
+        $result = & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $current.snapshot_path -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | ConvertFrom-Json
         $overview = Get-Content -LiteralPath (@($result.ReportPaths | Where-Object { [IO.Path]::GetFileName($_) -eq 'overview.json' })[0]) -Raw | ConvertFrom-Json
 
         $result.CompleteMarketDays | Should Be 2
@@ -508,7 +526,7 @@ Describe 'Seller intelligence rules' {
         Copy-Item -LiteralPath $authorized.snapshot_path -Destination $requestedPrevious
         $current = New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-20'
 
-        { & $newReportsScript -SnapshotPath $current.snapshot_path -PreviousSnapshotPath $requestedPrevious -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | Out-Null } |
+        { & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $current.snapshot_path -PreviousSnapshotPath $requestedPrevious -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | Out-Null } |
             Should Throw 'Previous seller intelligence snapshot requires an authorized COMPLETE_VALIDATED capture receipt.'
     }
 
@@ -517,30 +535,15 @@ Describe 'Seller intelligence rules' {
         $snapshotRoot = Join-Path $TestDrive 'report-date-mismatch'
         $current = New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-20'
 
-        { & $newReportsScript -SnapshotPath $current.snapshot_path -SnapshotsRoot $snapshotRoot -ReportDate '2026-08-21' -OutputRoot $TestDrive | Out-Null } |
+        { & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $current.snapshot_path -SnapshotsRoot $snapshotRoot -ReportDate '2026-08-21' -OutputRoot $TestDrive | Out-Null } |
             Should Throw 'ReportDate must match the verified snapshot market_date.'
     }
 
     It 'skips an invalid receipt between adjacent valid report days' {
         $snapshotRoot = Join-Path $TestDrive 'valid-day-snapshots'
-        $sourceConfig = Join-Path $projectRoot 'config\best-sellers-sources.json'
         Import-Module $receiptModulePath -Force
         foreach ($marketDate in @('2026-08-18', '2026-08-19', '2026-08-20')) {
-            $sourceDay = Join-Path $sharedSnapshotsRoot '2026-08-18'
-            $targetDay = Join-Path $snapshotRoot $marketDate
-            New-Item -ItemType Directory -Path $targetDay -Force | Out-Null
-            $targetSnapshot = Join-Path $targetDay 'amazon-bestsellers.json'
-            Copy-Item -LiteralPath (Join-Path $sourceDay 'amazon-bestsellers.json') -Destination $targetSnapshot
-            $snapshotData = Get-Content -LiteralPath $targetSnapshot -Raw -Encoding UTF8 | ConvertFrom-Json
-            $snapshotData.market_date = $marketDate
-            if ($marketDate -eq '2026-08-20') {
-                $firstAsin = $snapshotData.pressure_washers[0].asin
-                $snapshotData.pressure_washers[0].asin = $snapshotData.pressure_washers[20].asin
-                $snapshotData.pressure_washers[20].asin = $firstAsin
-            }
-            $snapshotData | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $targetSnapshot -Encoding UTF8
-            $receipt = New-BestSellersCaptureReceipt -SnapshotPath $targetSnapshot -SourceConfigPath $sourceConfig
-            Write-BestSellersCaptureReceipt -Receipt $receipt -Path (Join-Path $targetDay 'best-sellers-capture-receipt.json') | Out-Null
+            New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate $marketDate -SwapPressureRanks ($marketDate -eq '2026-08-20') | Out-Null
         }
         $day19Receipt = Join-Path $snapshotRoot '2026-08-19\best-sellers-capture-receipt.json'
         $corruptReceipt = Get-Content -LiteralPath $day19Receipt -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -548,7 +551,7 @@ Describe 'Seller intelligence rules' {
         $corruptReceipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $day19Receipt -Encoding UTF8
         $day20Snapshot = Join-Path $snapshotRoot '2026-08-20\amazon-bestsellers.json'
 
-        $result = & $newReportsScript -SnapshotPath $day20Snapshot -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | ConvertFrom-Json
+        $result = & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $day20Snapshot -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | ConvertFrom-Json
         $overview = Get-Content -LiteralPath (@($result.ReportPaths | Where-Object { [IO.Path]::GetFileName($_) -eq 'overview.json' })[0]) -Raw | ConvertFrom-Json
 
         @($overview.signals | Where-Object { $_.baselineDate -eq '2026-08-19' }).Count | Should Be 0
@@ -557,19 +560,9 @@ Describe 'Seller intelligence rules' {
 
     It 'rejects an explicit previous snapshot without a valid sibling receipt' {
         $snapshotRoot = Join-Path $TestDrive 'explicit-previous-snapshots'
-        $sourceConfig = Join-Path $projectRoot 'config\best-sellers-sources.json'
         Import-Module $receiptModulePath -Force
         foreach ($marketDate in @('2026-08-19', '2026-08-20')) {
-            $sourceDay = Join-Path $sharedSnapshotsRoot '2026-08-18'
-            $targetDay = Join-Path $snapshotRoot $marketDate
-            New-Item -ItemType Directory -Path $targetDay -Force | Out-Null
-            $targetSnapshot = Join-Path $targetDay 'amazon-bestsellers.json'
-            Copy-Item -LiteralPath (Join-Path $sourceDay 'amazon-bestsellers.json') -Destination $targetSnapshot
-            $snapshotData = Get-Content -LiteralPath $targetSnapshot -Raw -Encoding UTF8 | ConvertFrom-Json
-            $snapshotData.market_date = $marketDate
-            $snapshotData | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $targetSnapshot -Encoding UTF8
-            $receipt = New-BestSellersCaptureReceipt -SnapshotPath $targetSnapshot -SourceConfigPath $sourceConfig
-            Write-BestSellersCaptureReceipt -Receipt $receipt -Path (Join-Path $targetDay 'best-sellers-capture-receipt.json') | Out-Null
+            New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate $marketDate -SwapPressureRanks ($marketDate -eq '2026-08-20') | Out-Null
         }
         $day19Receipt = Join-Path $snapshotRoot '2026-08-19\best-sellers-capture-receipt.json'
         $corruptReceipt = Get-Content -LiteralPath $day19Receipt -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -578,17 +571,20 @@ Describe 'Seller intelligence rules' {
         $day20Snapshot = Join-Path $snapshotRoot '2026-08-20\amazon-bestsellers.json'
         $day19Snapshot = Join-Path $snapshotRoot '2026-08-19\amazon-bestsellers.json'
 
-        { & $newReportsScript -SnapshotPath $day20Snapshot -PreviousSnapshotPath $day19Snapshot -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive } |
+        { & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $day20Snapshot -PreviousSnapshotPath $day19Snapshot -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive } |
             Should Throw 'Previous seller intelligence snapshot requires an authorized COMPLETE_VALIDATED capture receipt.'
     }
 
     It 'generates a comparable daily overview when a valid previous snapshot exists' {
-        $fixtureSnapshot = Join-Path $sharedSnapshotsRoot '2026-08-24\amazon-bestsellers.json'
+        Import-Module $receiptModulePath -Force
+        $snapshotRoot = Join-Path $TestDrive 'comparable-history'
+        New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-23' | Out-Null
+        $fixture = New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-24' -SwapPressureRanks $true
         $qualityTitle = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('5pWw5o2u6LSo6YeP'))
         $dailyTitle = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('57uP6JCl6aKE6K2m'))
         $summaryTitle = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('6KeC5a+f5pGY6KaB'))
 
-        $result = & $newReportsScript -SnapshotPath $fixtureSnapshot -SnapshotsRoot $sharedSnapshotsRoot -OutputRoot $TestDrive | ConvertFrom-Json
+        $result = & $newReportsScript -RegistryPath $script:sellerLegacyFixture.RegistryPath -SnapshotPath $fixture.snapshot_path -SnapshotsRoot $snapshotRoot -OutputRoot $TestDrive | ConvertFrom-Json
         $overviewPath = @($result.ReportPaths | Where-Object { [IO.Path]::GetFileName($_) -eq 'overview.json' }) | Select-Object -First 1
         $overview = Get-Content -LiteralPath $overviewPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
@@ -625,17 +621,16 @@ Describe 'Seller intelligence rules' {
         @($report.sections | Where-Object { $_.title -in @($weeklyTitle, $poolTitle) }).Count | Should Be 0
     }
 
-    It 'uploads only imported or duplicate seller-intelligence backfill responses without printing the secret' {
+    It 'handles <SyncStatus> seller-intelligence backfill responses without printing the secret' -TestCases @(
+        @{ SyncStatus='imported'; ExpectedUploaded=18; ExpectedDuplicates=0 },
+        @{ SyncStatus='duplicate'; ExpectedUploaded=0; ExpectedDuplicates=18 }
+    ) {
+        param($SyncStatus, $ExpectedUploaded, $ExpectedDuplicates)
         $global:backfillCalls = New-Object System.Collections.ArrayList
         $processSecret = 'seller-backfill-secret'
         $snapshotRoot = Join-Path $TestDrive 'snapshots'
-        $sourceRoot = Join-Path $sharedSnapshotsRoot '2026-08-24'
-        $targetRoot = Join-Path $snapshotRoot '2026-08-24'
-        New-Item -ItemType Directory -Path $targetRoot -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $sourceRoot 'amazon-bestsellers.json') -Destination (Join-Path $targetRoot 'amazon-bestsellers.json')
         Import-Module $receiptModulePath -Force
-        $receipt = New-BestSellersCaptureReceipt -SnapshotPath (Join-Path $targetRoot 'amazon-bestsellers.json') -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
-        Write-BestSellersCaptureReceipt -Receipt $receipt -Path (Join-Path $targetRoot 'best-sellers-capture-receipt.json') | Out-Null
+        New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-24' -RegistryPath (Join-Path $projectRoot 'config/category-registry.json') | Out-Null
 
         $postImportedBundle = {
             param($Uri, $Method, $Headers, $ContentType, $Body)
@@ -647,9 +642,11 @@ Describe 'Seller intelligence rules' {
                     InFile = ''
                     Body = $Body
                 })
-            return [pscustomobject]@{ status = 'imported' }
+            return [pscustomobject]@{ status = $SyncStatus }
         }
 
+        $previousUserSecret = [Environment]::GetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', 'User')
+        $previousProcessSecret = [Environment]::GetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', 'Process')
         [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $null, 'User')
         [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $processSecret, 'Process')
         try {
@@ -657,30 +654,26 @@ Describe 'Seller intelligence rules' {
             $result = $json | ConvertFrom-Json
 
             $result.Status | Should Be 'COMPLETED'
-            $result.Uploaded | Should Be 4
-            $result.Duplicates | Should Be 0
+            $result.Uploaded | Should Be $ExpectedUploaded
+            $result.Duplicates | Should Be $ExpectedDuplicates
             @($global:backfillCalls).Count | Should Be 1
             @($global:backfillCalls | Where-Object { $_.Uri -ne 'https://example.test/api/sync/v1/seller-intelligence' }).Count | Should Be 0
             @($global:backfillCalls | Where-Object { $_.Authorization -ne "Bearer $processSecret" }).Count | Should Be 0
-            @((([string]$global:backfillCalls[0].Body | ConvertFrom-Json).reports)).Count | Should Be 4
+            @((([string]$global:backfillCalls[0].Body | ConvertFrom-Json).reports)).Count | Should Be 18
             $global:backfillCalls[0].InFile | Should Be ''
-            $json | Should Not Match [regex]::Escape($processSecret)
+            $json | Should Not Match ([regex]::Escape($processSecret))
         }
         finally {
             Remove-Variable -Name backfillCalls -Scope Global -ErrorAction SilentlyContinue
-            [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $null, 'Process')
+            [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $previousUserSecret, 'User')
+            [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $previousProcessSecret, 'Process')
         }
     }
 
     It 'throws for any seller-intelligence backfill response other than imported or duplicate' {
         $snapshotRoot = Join-Path $TestDrive 'snapshots-error'
-        $sourceRoot = Join-Path $sharedSnapshotsRoot '2026-08-24'
-        $targetRoot = Join-Path $snapshotRoot '2026-08-24'
-        New-Item -ItemType Directory -Path $targetRoot -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $sourceRoot 'amazon-bestsellers.json') -Destination (Join-Path $targetRoot 'amazon-bestsellers.json')
         Import-Module $receiptModulePath -Force
-        $receipt = New-BestSellersCaptureReceipt -SnapshotPath (Join-Path $targetRoot 'amazon-bestsellers.json') -SourceConfigPath (Join-Path $projectRoot 'config\best-sellers-sources.json')
-        Write-BestSellersCaptureReceipt -Receipt $receipt -Path (Join-Path $targetRoot 'best-sellers-capture-receipt.json') | Out-Null
+        New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-24' -RegistryPath (Join-Path $projectRoot 'config/category-registry.json') | Out-Null
 
         $postRejectedBundle = {
             param($Uri, $Method, $Headers, $ContentType, $Body)
@@ -688,12 +681,13 @@ Describe 'Seller intelligence rules' {
             return [pscustomobject]@{ status = 'rejected' }
         }
 
+        $previousProcessSecret = [Environment]::GetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', 'Process')
         [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', 'seller-backfill-secret', 'Process')
         try {
             { & $backfillScript -DashboardUrl 'https://example.test/' -SnapshotsRoot $snapshotRoot -PostOperation $postRejectedBundle | Out-Null } | Should Throw 'Unexpected seller intelligence bundle sync result for 2026-08-24.'
         }
         finally {
-            [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $null, 'Process')
+            [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $previousProcessSecret, 'Process')
         }
     }
 }

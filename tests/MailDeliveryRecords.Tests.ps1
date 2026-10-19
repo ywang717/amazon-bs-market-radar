@@ -1,5 +1,6 @@
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Import-Module (Join-Path $projectRoot 'src\MailDelivery.psm1') -Force
+. (Join-Path $PSScriptRoot 'helpers/LegacyRegistry.ps1')
 
 function Write-TestJsonFile {
     param(
@@ -64,6 +65,7 @@ function New-DailyReportScriptSandbox {
     New-Item -ItemType Directory -Path $scriptsRoot -Force | Out-Null
     New-Item -ItemType Directory -Path $srcRoot -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $projectRoot 'config') -Destination (Join-Path $sandboxRoot 'config') -Recurse -Force
+    New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root $sandboxRoot | Out-Null
 
     foreach ($relativePath in @(
         'scripts\New-BestSellersDailyReport.ps1',
@@ -154,6 +156,7 @@ function New-OperationalHealthTestSandbox {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts\Test-BestSellersDailyOperationalHealth.ps1') -Destination (Join-Path $scriptsRoot 'Test-BestSellersDailyOperationalHealth.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $projectRoot 'src\BestSellersCategoryRegistry.psm1') -Destination (Join-Path $srcRoot 'BestSellersCategoryRegistry.psm1') -Force
     Copy-Item -LiteralPath (Join-Path $projectRoot 'config') -Destination $sandboxRoot -Recurse -Force
+    New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root $sandboxRoot | Out-Null
 
     [System.IO.File]::WriteAllText((Join-Path $scriptsRoot 'Test-BestSellersCaptureReceipt.ps1'), "[pscustomobject]@{ valid = `$true; expected_snapshot_sha256 = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' } | ConvertTo-Json", (New-Object System.Text.UTF8Encoding($false)))
     [System.IO.File]::WriteAllText((Join-Path $postgresScriptsRoot 'Start-LocalPostgres.ps1'), 'param([string]$SettingsPath)', (New-Object System.Text.UTF8Encoding($false)))
@@ -265,7 +268,7 @@ Describe 'Immutable mail delivery records' {
         Write-TestJsonFile -Path $previousPath -Value (New-DailyReportTestSnapshot -Date '2026-08-04')
         Write-TestJsonFile -Path $currentPath -Value (New-DailyReportTestSnapshot -Date '2026-08-05' -SwapLargeMove)
 
-        $result = & $dailyScript -CurrentPath $currentPath -PreviousPath $previousPath -OutputDirectory $outputDirectory -SkipEmail | ConvertFrom-Json
+        $result = & $dailyScript -RegistryPath (Join-Path $sandboxRoot 'config/category-registry.json') -CurrentPath $currentPath -PreviousPath $previousPath -OutputDirectory $outputDirectory -SkipEmail | ConvertFrom-Json
 
         (@($result.PSObject.Properties.Name) -contains 'EmailDeliveryRecordPaths') | Should Be $true
         (@($result.PSObject.Properties.Name) -contains 'EmailDeliveryManifestPath') | Should Be $true
@@ -275,7 +278,8 @@ Describe 'Immutable mail delivery records' {
         Test-Path (Join-Path $sandboxRoot 'var\reports\2026-08-05\email-delivery-summary.json') | Should Be $false
     }
 
-    It 'ignores a weekly latest pointer when auditing daily email status' {
+    # This sandbox compiles its psql stub with the Windows .NET Framework C# compiler.
+    It 'ignores a weekly latest pointer when auditing daily email status' -Skip:([string]::IsNullOrWhiteSpace($env:SystemRoot)) {
         $sandbox = New-OperationalHealthTestSandbox
         $marketDate = '2026-08-05'
         $snapshotsRoot = Join-Path $sandbox.Root 'snapshots'
@@ -293,7 +297,7 @@ Describe 'Immutable mail delivery records' {
         Write-TestJsonFile -Path (Join-Path $reportDirectory 'delivery\weekly\latest.json') -Value ([pscustomobject]@{ overall_status = 'SKIPPED_BY_REQUEST' })
         Write-TestJsonFile -Path (Join-Path $sandbox.Root 'postgres-settings.json') -Value ([pscustomobject]@{ install_root = $sandbox.InstallRoot; host = 'localhost'; port = 5432; username = 'test'; password = 'test'; database = 'test' })
 
-        $health = & $sandbox.HealthScript -MarketDate $marketDate -SnapshotsRoot $snapshotsRoot -ReportsRoot $reportsRoot -PostgresSettingsPath (Join-Path $sandbox.Root 'postgres-settings.json') -BackupRoot $backupRoot | ConvertFrom-Json
+        $health = & $sandbox.HealthScript -RegistryPath (Join-Path $sandbox.Root 'config/category-registry.json') -MarketDate $marketDate -SnapshotsRoot $snapshotsRoot -ReportsRoot $reportsRoot -PostgresSettingsPath (Join-Path $sandbox.Root 'postgres-settings.json') -BackupRoot $backupRoot | ConvertFrom-Json
 
         $health.EmailDeliveryStatus | Should Be 'SENT'
     }

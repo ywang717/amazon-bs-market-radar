@@ -1,3 +1,4 @@
+. (Join-Path $PSScriptRoot 'helpers/LegacyRegistry.ps1')
 $modulePath = Join-Path $PSScriptRoot '..\src\BestSellersBrandEnrichment.psm1'
 Import-Module $modulePath -Force
 Import-Module (Join-Path $PSScriptRoot '..\src\BestSellersCaptureReceipt.psm1') -Force
@@ -240,7 +241,8 @@ Describe 'Best Sellers verified historical ASIN selection' {
         $historyRoot = Join-Path $TestDrive 'history'
         $day = Join-Path $historyRoot '2026-08-28'
         New-Item -ItemType Directory -Path $day -Force | Out-Null
-        $sourceConfigPath = Join-Path $PSScriptRoot '..\config\best-sellers-sources.json'
+        $legacyFixture = New-LegacyCategoryRegistryFixture -ProjectRoot (Split-Path -Parent $PSScriptRoot) -Root (Join-Path $TestDrive 'legacy-contract')
+        $sourceConfigPath = $legacyFixture.SourceConfigPath
         $sources = Get-Content -LiteralPath $sourceConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $items = @(1..30 | ForEach-Object { [pscustomobject]@{ rank=$_; asin=('B' + $_.ToString('000000000')); title='Verified history item'; price=$null; rating=$null; reviews=$null } })
         $snapshot = [pscustomobject]@{
@@ -250,10 +252,10 @@ Describe 'Best Sellers verified historical ASIN selection' {
         }
         $snapshotPath = Join-Path $day 'amazon-bestsellers.json'
         Write-Utf8Json -Path $snapshotPath -Value $snapshot
-        $captureReceipt = New-BestSellersCaptureReceipt -SnapshotPath $snapshotPath -SourceConfigPath $sourceConfigPath
+        $captureReceipt = New-BestSellersCaptureReceipt -SnapshotPath $snapshotPath -SourceConfigPath $sourceConfigPath -RegistryPath $legacyFixture.RegistryPath
         Write-BestSellersCaptureReceipt -Receipt $captureReceipt -Path (Join-Path $day 'best-sellers-capture-receipt.json') | Out-Null
 
-        $asins = @(Get-BestSellersVerifiedHistoryAsins -SnapshotsRoot $historyRoot)
+        $asins = @(Get-BestSellersVerifiedHistoryAsins -SnapshotsRoot $historyRoot -RegistryPath $legacyFixture.RegistryPath)
         $asins.Count | Should Be 30
         $asins[0] | Should Be 'B000000001'
         $asins[-1] | Should Be 'B000000030'

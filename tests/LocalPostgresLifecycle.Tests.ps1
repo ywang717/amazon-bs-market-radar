@@ -31,8 +31,9 @@ Describe 'Local PostgreSQL log path' {
     }
 
     It 'places the server log beside the PostgreSQL data instead of under the project path' {
-        $logPath = Get-LocalPostgresLogPath -DataRoot 'C:\Users\ASUS\AppData\Local\amazon-bs-postgres-data'
+        $dataRoot = Join-Path $TestDrive 'amazon-bs-postgres-data'
+        $logPath = Get-LocalPostgresLogPath -DataRoot $dataRoot
 
-        $logPath | Should Be 'C:\Users\ASUS\AppData\Local\amazon-bs-postgres-data\postgres-server.log'
+        $logPath | Should Be (Join-Path $dataRoot 'postgres-server.log')
     }
 }

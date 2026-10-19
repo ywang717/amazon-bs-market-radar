@@ -11,7 +11,14 @@ param(
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) { $ProjectRoot = Split-Path -Parent $PSScriptRoot }
-$pythonPath = if ($IsMacOS -and (Test-Path '/usr/bin/python3')) { '/usr/bin/python3' } else { Join-Path $ProjectRoot '.venv\Scripts\python.exe' }
+$macRuntime = $PSVersionTable.ContainsKey('PSEdition') -and $PSVersionTable.PSEdition -eq 'Core' -and $IsMacOS
+$pythonPath = Join-Path $ProjectRoot '.venv\Scripts\python.exe'
+if ($macRuntime) {
+    $pythonPath = Join-Path $ProjectRoot '.venv/bin/python3'
+    if (-not (Test-Path -LiteralPath $pythonPath -PathType Leaf) -and (Test-Path '/usr/bin/python3')) {
+        $pythonPath = '/usr/bin/python3'
+    }
+}
 $collectorPath = Join-Path $ProjectRoot 'scripts\python\collect_best_sellers.py'
 
 if (-not (Test-Path -LiteralPath $pythonPath -PathType Leaf)) {
@@ -23,7 +30,7 @@ if (-not (Test-Path -LiteralPath $collectorPath -PathType Leaf)) {
     exit 4
 }
 
-$env:PLAYWRIGHT_BROWSERS_PATH = if ($IsMacOS) { Join-Path $HOME 'Library/Caches/ms-playwright' } else { Join-Path $ProjectRoot '.local\playwright' }
+$env:PLAYWRIGHT_BROWSERS_PATH = if ($macRuntime) { Join-Path $HOME 'Library/Caches/ms-playwright' } else { Join-Path $ProjectRoot '.local\playwright' }
 $arguments = @($collectorPath, '--project-root', $ProjectRoot)
 if (-not [string]::IsNullOrWhiteSpace($ConfigPath)) { $arguments += @('--config', $ConfigPath) }
 if (-not [string]::IsNullOrWhiteSpace($OutputRoot)) { $arguments += @('--output-root', $OutputRoot) }

@@ -1,21 +1,52 @@
 $projectRoot = Split-Path -Parent $PSScriptRoot
 
+# Model the portable Windows path contract without changing the host runtime or executing Python.
+function Set-TestPortablePythonRuntime {
+    param([string]$ModulePath)
+    $source = @'
+function Get-ProjectRuntimeSettings {
+    param([string]$ProjectRoot)
+    [pscustomobject]@{
+        BootstrapPythonPath = Join-Path $ProjectRoot '.local/python/python.exe'
+        VenvRoot = Join-Path $ProjectRoot '.venv'
+        VenvPythonPath = Join-Path $ProjectRoot '.venv/Scripts/python.exe'
+    }
+}
+Export-ModuleMember -Function Get-ProjectRuntimeSettings
+'@
+    [IO.File]::WriteAllText($ModulePath,$source,(New-Object Text.UTF8Encoding($false)))
+}
+
 Describe 'Portable project runtime settings' {
     BeforeAll {
         Import-Module (Join-Path $projectRoot 'src\ProjectRuntime.psm1') -Force
     }
 
-    It 'resolves Python and PostgreSQL paths beneath the supplied project root' {
+    It 'resolves the platform Python runtime and project PostgreSQL paths' {
         $sandboxRoot = Join-Path $TestDrive 'portable-project'
         New-Item -ItemType Directory -Path $sandboxRoot -Force | Out-Null
         $settings = Get-ProjectRuntimeSettings -ProjectRoot $sandboxRoot
 
         $settings.ProjectRoot | Should Be $sandboxRoot
-        $settings.BootstrapPythonPath | Should Be (Join-Path $sandboxRoot '.local\python\python.exe')
-        $settings.VenvPythonPath | Should Be (Join-Path $sandboxRoot '.venv\Scripts\python.exe')
+        $expectedBootstrap = if ($IsMacOS) { (Get-Command python3 -CommandType Application).Source } else { Join-Path $sandboxRoot '.local\python\python.exe' }
+        $settings.BootstrapPythonPath | Should Be $expectedBootstrap
+        $expectedPython = if ($IsMacOS) { Join-Path $sandboxRoot '.venv/bin/python3' } else { Join-Path $sandboxRoot '.venv\Scripts\python.exe' }
+        $settings.VenvPythonPath | Should Be $expectedPython
         $settings.PostgresSettingsPath | Should Be (Join-Path $sandboxRoot '.local\postgres-settings.json')
         $settings.PostgresInstallRoot | Should Be (Join-Path $sandboxRoot '.local\postgresql')
         $settings.PostgresDataRoot | Should Be (Join-Path $sandboxRoot '.local\postgres-data')
+    }
+
+    It 'prefers a project bootstrap and keeps macOS packages inside the project virtual environment' -Skip:(-not $IsMacOS) {
+        $sandboxRoot = Join-Path $TestDrive 'mac-runtime'
+        $bootstrap = Join-Path $sandboxRoot '.local/python/bin/python3'
+        New-Item -ItemType Directory -Path (Split-Path -Parent $bootstrap) -Force | Out-Null
+        New-Item -ItemType File -Path $bootstrap -Force | Out-Null
+
+        $settings = Get-ProjectRuntimeSettings -ProjectRoot $sandboxRoot
+
+        $settings.BootstrapPythonPath | Should Be $bootstrap
+        $settings.VenvPythonPath | Should Be (Join-Path $sandboxRoot '.venv/bin/python3')
     }
 
     It 'rejects a project root that does not exist' {
@@ -36,7 +67,7 @@ Describe 'Portable Python environment initialization' {
         $bootstrapRoot = Join-Path $sandboxRoot '.local\python'
         New-Item -ItemType Directory -Path $scriptsRoot, $srcRoot, $bootstrapRoot -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts\Initialize-PythonEnvironment.ps1') -Destination (Join-Path $scriptsRoot 'Initialize-PythonEnvironment.ps1')
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'src\ProjectRuntime.psm1') -Destination (Join-Path $srcRoot 'ProjectRuntime.psm1')
+        Set-TestPortablePythonRuntime -ModulePath (Join-Path $srcRoot 'ProjectRuntime.psm1')
         $bootstrapPython = Join-Path $bootstrapRoot 'python.exe'
         New-Item -ItemType File -Path $bootstrapPython -Force | Out-Null
         $venvPython = Join-Path $sandboxRoot '.venv\Scripts\python.exe'
@@ -64,10 +95,43 @@ Describe 'Portable Python environment initialization' {
         (Test-Path -LiteralPath $venvPython) | Should Be $true
         $calls.Count | Should Be 2
         $calls[0].PythonPath | Should Be $bootstrapPython
-        ($calls[0].Arguments -join ' ') | Should Be "-m venv $($sandboxRoot)\.venv"
+        ($calls[0].Arguments -join ' ') | Should Be ("-m venv " + (Join-Path $sandboxRoot '.venv'))
         $calls[1].PythonPath | Should Be $venvPython
         @($calls | Where-Object { $_.PythonPath -notin @($bootstrapPython, $venvPython) }).Count | Should Be 0
         @($calls | Where-Object { $_.Arguments -contains 'pip' }).Count | Should Be 0
+    }
+
+    It 'creates and probes the macOS project virtual environment using the selected bootstrap' -Skip:(-not $IsMacOS) {
+        $sandboxRoot = Join-Path $TestDrive 'mac-init'
+        $scriptsRoot = Join-Path $sandboxRoot 'scripts'
+        $srcRoot = Join-Path $sandboxRoot 'src'
+        $bootstrap = Join-Path $sandboxRoot '.local/python/bin/python3'
+        $venvPython = Join-Path $sandboxRoot '.venv/bin/python3'
+        New-Item -ItemType Directory -Path $scriptsRoot,$srcRoot,(Split-Path -Parent $bootstrap) -Force | Out-Null
+        New-Item -ItemType File -Path $bootstrap -Force | Out-Null
+        Copy-Item (Join-Path $projectRoot 'scripts/Initialize-PythonEnvironment.ps1') (Join-Path $scriptsRoot 'Initialize-PythonEnvironment.ps1')
+        Copy-Item (Join-Path $projectRoot 'src/ProjectRuntime.psm1') (Join-Path $srcRoot 'ProjectRuntime.psm1')
+        $calls = New-Object Collections.ArrayList
+        $fakePython = {
+            param([string]$PythonPath,[Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
+            [void]$calls.Add([pscustomobject]@{ PythonPath=$PythonPath; Arguments=@($Arguments) })
+            if ($Arguments[0] -eq '-m' -and $Arguments[1] -eq 'venv') {
+                New-Item -ItemType Directory -Path (Split-Path -Parent $venvPython) -Force | Out-Null
+                New-Item -ItemType File -Path $venvPython -Force | Out-Null
+            }
+            if ($Arguments[0] -eq '-c') {
+                '{"python":"3.12.0","reportlab":"4.4.9","pdfplumber":"0.11.9","pypdf":"6.10.0","pypdfium2":"5.12.1","playwright":"1.62.0"}'
+            }
+        }.GetNewClosure()
+
+        $result = & (Join-Path $scriptsRoot 'Initialize-PythonEnvironment.ps1') -SkipDependencyInstall -PythonInvoker $fakePython | ConvertFrom-Json
+
+        $result.Status | Should Be 'READY'
+        $result.PythonPath | Should Be $venvPython
+        $calls.Count | Should Be 2
+        $calls[0].PythonPath | Should Be $bootstrap
+        @($calls[0].Arguments) | Should Be @('-m','venv',(Join-Path $sandboxRoot '.venv'))
+        $calls[1].PythonPath | Should Be $venvPython
     }
 
     It 'rejects a Playwright runtime too old for the supported system browser contract' {
@@ -78,7 +142,7 @@ Describe 'Portable Python environment initialization' {
         $venvRoot = Join-Path $sandboxRoot '.venv\Scripts'
         New-Item -ItemType Directory -Path $scriptsRoot, $srcRoot, $bootstrapRoot, $venvRoot -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts\Initialize-PythonEnvironment.ps1') -Destination (Join-Path $scriptsRoot 'Initialize-PythonEnvironment.ps1')
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'src\ProjectRuntime.psm1') -Destination (Join-Path $srcRoot 'ProjectRuntime.psm1')
+        Set-TestPortablePythonRuntime -ModulePath (Join-Path $srcRoot 'ProjectRuntime.psm1')
         New-Item -ItemType File -Path (Join-Path $bootstrapRoot 'python.exe'), (Join-Path $venvRoot 'python.exe') -Force | Out-Null
         $fakePython = {
             param(
@@ -158,7 +222,7 @@ Describe 'PDF report verification contract' {
 }
 
 Describe 'Portable PDF runtime behavior' {
-    It 'requires the project virtual environment instead of falling back to a machine runtime' {
+    It 'rejects a missing configured Python runtime before starting the PDF renderer' {
         $sandboxRoot = Join-Path $TestDrive 'pdf-project'
         $scriptsRoot = Join-Path $sandboxRoot 'scripts'
         $pythonRoot = Join-Path $scriptsRoot 'python'
@@ -167,7 +231,7 @@ Describe 'Portable PDF runtime behavior' {
         New-Item -ItemType Directory -Path $srcRoot -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts\New-ReportPdf.ps1') -Destination (Join-Path $scriptsRoot 'New-ReportPdf.ps1')
         Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts\python\render_markdown_pdf.py') -Destination (Join-Path $pythonRoot 'render_markdown_pdf.py')
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'src\ProjectRuntime.psm1') -Destination (Join-Path $srcRoot 'ProjectRuntime.psm1')
+        Set-TestPortablePythonRuntime -ModulePath (Join-Path $srcRoot 'ProjectRuntime.psm1')
         $markdownPath = Join-Path $sandboxRoot 'report.md'
         $pdfPath = Join-Path $sandboxRoot 'report.pdf'
         [IO.File]::WriteAllText($markdownPath, "# 测试`n`n中文内容", (New-Object Text.UTF8Encoding($false)))

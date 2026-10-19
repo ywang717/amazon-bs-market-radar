@@ -32,9 +32,20 @@ if (-not [string]::IsNullOrWhiteSpace($CategoryKey)) {
     $productMetadata = @($productMetadata | Where-Object { $selectedAsins -ccontains [string]$_.asin })
 }
 $observedDate = [DateTimeOffset]::MinValue
-$observedAt = if ([DateTimeOffset]::TryParse([string]$snapshot.observed_at, [ref]$observedDate)) {
+# pwsh can deserialize ISO timestamps as DateTime; string conversion loses their kind and fractions.
+$observedValue = $snapshot.observed_at
+$hasObservedDate = if ($observedValue -is [DateTimeOffset]) {
+    $observedDate = $observedValue
+    $true
+} elseif ($observedValue -is [DateTime]) {
+    $observedDate = [DateTimeOffset]$observedValue
+    $true
+} else {
+    [DateTimeOffset]::TryParse([string]$observedValue, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$observedDate)
+}
+$observedAt = if ($hasObservedDate) {
     [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($observedDate, 'Pacific Standard Time').ToString("yyyy-MM-dd'T'HH:mm:ss.fffzzz", [Globalization.CultureInfo]::InvariantCulture)
-} else { [string]$snapshot.observed_at }
+} else { [string]$observedValue }
 $bundle = [ordered]@{
     schemaVersion = 'amazon-bs-dashboard-bundle-v2'
     marketDate = [string]$snapshot.market_date
