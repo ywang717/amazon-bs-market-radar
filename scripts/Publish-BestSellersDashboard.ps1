@@ -46,7 +46,7 @@ function Invoke-DashboardPublishRest {
     if (Test-DashboardPublishHook -Name 'Rest') {
         return Invoke-DashboardPublishHook -Name 'Rest' -Arguments @($Uri,$Method,$Headers,$ContentType,$InFile,$Body)
     }
-    if ($null -ne (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
+    if ($null -ne (Get-DashboardPublishCurlExecutable)) {
         return Invoke-DashboardPublishCurlRest -Uri $Uri -Method $Method -Headers $Headers -ContentType $ContentType -InFile $InFile -Body $Body -BodyProvided:$PSBoundParameters.ContainsKey('Body')
     }
     $requestParameters = New-DashboardPublishRestParameters -Uri $Uri -Method $Method -Headers $Headers -ContentType $ContentType -InFile $InFile -Body $Body -BodyProvided:$PSBoundParameters.ContainsKey('Body')

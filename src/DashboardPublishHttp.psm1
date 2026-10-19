@@ -1,5 +1,13 @@
 Set-StrictMode -Version Latest
 
+function Get-DashboardPublishCurlExecutable {
+    foreach ($name in @('curl.exe', 'curl')) {
+        $command = Get-Command -Name $name -CommandType Application -ErrorAction SilentlyContinue
+        if ($null -ne $command) { return $command.Source }
+    }
+    return $null
+}
+
 function New-DashboardPublishRestParameters {
     [CmdletBinding()]
     param(
@@ -83,9 +91,17 @@ function Invoke-DashboardPublishCurlRest {
             '--request', $Method.ToUpperInvariant(), '--output', $responsePath,
             '--write-out', '%{http_code}'
         )
+        $curlExecutable = Get-DashboardPublishCurlExecutable
+        if ([string]::IsNullOrWhiteSpace($curlExecutable)) { throw 'No curl application is available.' }
+        # Keep authorization out of process arguments; curl reads header config on stdin.
+        $headerConfig = @()
         foreach ($name in @($Headers.Keys | Sort-Object)) {
-            $arguments += @('--header', ('{0}: {1}' -f $name, [string]$Headers[$name]))
+            $headerValue = '{0}: {1}' -f $name, [string]$Headers[$name]
+            if ($headerValue -match '[\r\n]') { throw 'Invalid HTTP header.' }
+            $escapedHeader = $headerValue.Replace('\', '\\').Replace('"', '\"')
+            $headerConfig += 'header = "' + $escapedHeader + '"'
         }
+        $arguments += @('--config', '-')
         if (-not [string]::IsNullOrWhiteSpace($ContentType)) {
             $arguments += @('--header', ('Content-Type: {0}' -f $ContentType))
         }
@@ -103,7 +119,7 @@ function Invoke-DashboardPublishCurlRest {
         $previousErrorActionPreference = $ErrorActionPreference
         try {
             $ErrorActionPreference = 'Continue'
-            $statusOutput = @(& curl.exe @arguments 2>&1)
+            $statusOutput = @($headerConfig | & $curlExecutable @arguments 2>&1)
             $curlExitCode = $LASTEXITCODE
         }
         finally {
@@ -130,6 +146,7 @@ function Invoke-DashboardPublishCurlRest {
 }
 
 Export-ModuleMember -Function @(
+    'Get-DashboardPublishCurlExecutable',
     'New-DashboardPublishRestParameters',
     'ConvertFrom-DashboardUtf8JsonResponse',
     'Invoke-DashboardPublishCurlRest'
