@@ -54,6 +54,7 @@ function hrefFor(next: {
   archiveProfile?: SellerProfile;
   categoryKey?: CategoryKey | null;
   date?: string;
+  archiveDate?: string;
   report?: string | null;
   alertFilter?: AlertFilter;
 }, context: MarketContext) {
@@ -62,6 +63,7 @@ function hrefFor(next: {
   const archiveProfile = next.archiveProfile ?? "seller_alert";
   if ((next.workspace ?? "seller_alert") === "archive") {
     params.set("profile", archiveProfile);
+    params.set("archiveDate", next.archiveDate ?? "");
   }
   if (next.categoryKey) params.set("category", next.categoryKey);
   if (next.date) params.set("date", next.date);
@@ -299,6 +301,7 @@ function ArchiveWorkspace({
   categoryKey,
   date,
   reports,
+  marketDate,
   selected,
   errorCode,
 }: {
@@ -307,6 +310,7 @@ function ArchiveWorkspace({
   categoryKey: CategoryKey | null;
   date: string;
   reports: ArchivedReportRow[];
+  marketDate: string;
   selected: SellerIntelligenceReport | null;
   errorCode?: SellerIntelligenceErrorCode | null;
 }) {
@@ -333,7 +337,7 @@ function ArchiveWorkspace({
               prefetch={false}
               className="downloadButton"
               aria-current={selected?.key === report.key ? "page" : undefined}
-              href={hrefFor({ workspace: "archive", archiveProfile: profile, categoryKey, date, report: report.key }, context)}
+              href={hrefFor({ workspace: "archive", archiveProfile: profile, categoryKey, date: marketDate, archiveDate: date, report: report.key }, context)}
             >
               在线阅读
             </Link>
@@ -404,13 +408,13 @@ export async function SellerIntelligenceCenter({
         <nav className="tabs" aria-label="卖家情报工作区">
           <Link target="_top" prefetch={false} aria-current={workspace === "seller_alert" ? "page" : undefined} className={workspace === "seller_alert" ? "active" : ""} href={hrefFor({ workspace: "seller_alert", categoryKey: liveCategory ?? categories[0].key, date: marketDate }, context)}>经营预警</Link>
           <Link target="_top" prefetch={false} aria-current={workspace === "competition_strategy" ? "page" : undefined} className={workspace === "competition_strategy" ? "active" : ""} href={hrefFor({ workspace: "competition_strategy", categoryKey, date: marketDate }, context)}>竞争观察</Link>
-          <Link target="_top" prefetch={false} aria-current={workspace === "archive" ? "page" : undefined} className={workspace === "archive" ? "active" : ""} href={hrefFor({ workspace: "archive", archiveProfile, categoryKey, date }, context)}>历史归档</Link>
+          <Link target="_top" prefetch={false} aria-current={workspace === "archive" ? "page" : undefined} className={workspace === "archive" ? "active" : ""} href={hrefFor({ workspace: "archive", archiveProfile, categoryKey, date: marketDate, archiveDate: date }, context)}>历史归档</Link>
         </nav>
         <form className="sellerFilterGrid" action="/analysis">
           <input type="hidden" name="workspace" value={workspace} />
           <input type="hidden" name="category" value={context.category} />
           <input type="hidden" name="segment" value={context.segment} />
-          {workspace !== "archive" && <input type="hidden" name="date" value={marketDate} />}
+          <input type="hidden" name="date" value={marketDate} />
           <span className="analysisMarketLabel">{marketContextLabels(context).category} · {marketContextLabels(context).segment}</span>
           {workspace === "archive" && (
             <>
@@ -422,8 +426,8 @@ export async function SellerIntelligenceCenter({
                 </select>
               </label>
               <label>
-                市场日
-                <input type="date" name="date" defaultValue={date} />
+                归档日期（独立于市场日期）
+                <input type="date" name="archiveDate" defaultValue={date} />
               </label>
             </>
           )}
@@ -437,6 +441,7 @@ export async function SellerIntelligenceCenter({
           context={context}
           categoryKey={categoryKey}
           date={date}
+          marketDate={marketDate}
           reports={archivedReports}
           selected={selectedArchivedReport}
           errorCode={archiveErrorCode}
@@ -464,7 +469,7 @@ export function parseAnalysisSearchParams(searchParams: Record<string, string | 
   const workspace = parseWorkspace(readParam(searchParams.workspace));
   const archiveProfile = parseArchiveProfile(readParam(searchParams.profile));
   const categoryKey = parseCategoryKey(readParam(searchParams.category));
-  const date = parseDate(readParam(searchParams.date));
+  const date = parseDate(readParam(searchParams.archiveDate ?? searchParams.date));
   const reportCandidate = readParam(searchParams.report);
   const alertCandidate = readParam(searchParams.alert);
   return {

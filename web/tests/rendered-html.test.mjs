@@ -954,3 +954,12 @@ test('worth-studying entries disclose comparison evidence and restore their sour
  assert.match(html,/不代表成交概率或销量预测/);
  assert.match(html,/指标比较区间/);assert.match(html,/证据缺口/);assert.match(html,/returnTo=/);
 });
+
+test('seller archive date stays independent from the top market date',async()=>{
+ const env=sellerIntelligenceEnvironment();
+ const response=await render('/analysis?workspace=archive&profile=competition_strategy&category=pressure_washers&segment=all&date=2026-08-24&archiveDate=2000-01-01',env);
+ assert.equal(response.status,200);const html=await response.text();
+ assert.match(html,/暂无符合筛选条件的卖家归档/);
+ assert.match(html,/name="archiveDate"[^>]*value="2000-01-01"/);
+ assert.match(html,/type="hidden" name="date" value="2026-08-24"/);
+});
