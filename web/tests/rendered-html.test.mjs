@@ -831,6 +831,7 @@ test("seller archive distinguishes a database failure from a healthy empty resul
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /卖家归档读取失败，请稍后重试。/);
+  assert.match(html, />重试读取数据<\/button>/);
   assert.doesNotMatch(html, /暂无符合筛选条件的卖家归档|simulated private archive database failure|errorCode is not defined/);
 });
 
@@ -963,3 +964,5 @@ test('seller archive date stays independent from the top market date',async()=>{
  assert.match(html,/name="archiveDate"[^>]*value="2000-01-01"/);
  assert.match(html,/type="hidden" name="date" value="2026-08-24"/);
 });
+
+test('fallback data notice offers a retry without discarding URL filters',async()=>{const response=await render('/products?category=pressure_washers&segment=all&q=probe');const html=await response.text();assert.match(html,/实时数据暂不可用/);assert.match(html,/>重试读取数据<\/button>/);});

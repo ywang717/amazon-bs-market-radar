@@ -1,3 +1,4 @@
+import { RetryPage } from "../components/RetryPage";
 import Link from "next/link";
 import { evidenceLevel } from "@/lib/analytics";
 import { categories, categoryByKey, type CategoryKey } from "@/lib/catalog";
@@ -344,6 +345,7 @@ function ArchiveWorkspace({
           </article>
         )) : <p className="emptyReports">{errorCode ? "卖家归档读取失败，请稍后重试。" : "暂无符合筛选条件的卖家归档。"}</p>}
       </section>
+      {errorCode && <RetryPage/>}
       {selected && <EvidenceSummary report={selected} />}
       {selected?.profile === "seller_alert" && <AlertSignals report={selected} context={context} marketDate={selected.marketDate} />}
       {selected?.profile === "competition_strategy" && <StrategyWorkspace report={selected} />}
