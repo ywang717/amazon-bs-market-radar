@@ -85,6 +85,7 @@ function New-BestSellersDailyReport {
     if ($HighPriorityThreshold -lt $SwingThreshold) { throw 'HighPriorityThreshold must be greater than or equal to SwingThreshold.' }
     if (-not (Test-Path -LiteralPath $OutputDirectory)) { New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null }
     $t = Get-BestSellersDailyText
+    $t.title_prefix = $t.title_prefix.Replace([string]([char]0x5317) + [char]0x4EAC + [char]0x65F6 + [char]0x95F4, "Pacific Time")
     # Keep the existing base64-encoded UTF-8 text table and change only its scope.
     foreach ($textKey in @('scope', 'complete', 'no_comparison', 'no_change_suffix', 'entry', 'exit', 'html_no_comparison', 'html_no_change_suffix')) {
         $t[$textKey] = ([string]$t[$textKey]).Replace('Top 50', 'Top 30')
@@ -106,7 +107,9 @@ function New-BestSellersDailyReport {
     if ($null -ne $previousQuality) { foreach ($category in $categories) { if ($currentMap[$category].is_complete -and $previousMap[$category].is_complete) { $comparableCategories += $category } } }
     $comparison = Compare-BestSellersSnapshots -CurrentSnapshot $CurrentSnapshot -PreviousSnapshot $PreviousSnapshot -SwingThreshold $SwingThreshold -HighPriorityThreshold $HighPriorityThreshold -RegistryPath $RegistryPath
     $noteworthy = @($comparison.noteworthy | Where-Object { $comparableCategories -contains $_.category })
-    $timestamp = $GeneratedAtBeijing.ToString('yyyy-MM-dd HH:mm'); $fileToken = $GeneratedAtBeijing.ToString('yyyy-MM-dd_HHmm') + '_BJT'
+    # Retain the legacy parameter and file token for callers and archive compatibility.
+    $generatedAtPacific = [TimeZoneInfo]::ConvertTime($GeneratedAtBeijing, [TimeZoneInfo]::FindSystemTimeZoneById('America/Los_Angeles'))
+    $timestamp = $generatedAtPacific.ToString('yyyy-MM-dd HH:mm'); $fileToken = $generatedAtPacific.ToString('yyyy-MM-dd_HHmm') + '_BJT'
     $chartFileToken = if ($selectedCategories.Count -eq 1) { [string]$selectedCategories[0].ReportFileToken } else { 'All_Charts' }
     $reportTitle = if ($categories.Count -eq 1) { "$($t.title_prefix)$($t[$categories[0]]) - $timestamp" } else { "$($t.title_prefix)$timestamp" }
     $markdownPath = Join-Path $OutputDirectory ("Amazon_US_Best_Sellers_{0}_{1}_{2}.md" -f $chartFileToken, $marketDate, $fileToken)
