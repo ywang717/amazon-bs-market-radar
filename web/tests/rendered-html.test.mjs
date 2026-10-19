@@ -927,3 +927,16 @@ test("binds mixed hose and cord lengths to their own objects", async () => {
   assert.match(html, /<dt>软管长度<\/dt><dd>25 FT<\/dd>/);
   assert.doesNotMatch(html, /<dt>软管长度<\/dt><dd>50 FT<\/dd>/);
 });
+
+// Sites embeds the dashboard: these controls must bypass the failing Link client transition.
+test("seller navigation uses top-level document links for workspaces, filters and archive reading", async () => {
+  for (const suffix of ["workspace=seller_alert", "workspace=competition_strategy", "workspace=archive&profile=seller_alert&report=seller-alert/daily/2026-08-24/pressure_washers.json"]) {
+    const response = await render(`/analysis?category=pressure_washers&segment=all&date=2026-08-24&${suffix}`, sellerIntelligenceEnvironment());
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    const links = [...html.matchAll(/<a\b[^>]*href="\/(?:analysis[?]|products\/)[^"]*"[^>]*>/g)].map(([tag]) => tag);
+    assert.ok(links.length >= 7, suffix);
+    for (const link of links) assert.match(link, /target="_top"/, link);
+    if (suffix.startsWith("workspace=archive")) assert.match(html, />在线阅读<\/a>/);
+  }
+});

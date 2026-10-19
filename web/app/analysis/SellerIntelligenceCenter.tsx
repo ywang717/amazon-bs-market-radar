@@ -208,7 +208,7 @@ function AlertSignals({ report, context, marketDate, filter = "alerts" }: { repo
           <dl className="sellerMetricList">
             <div>
               <dt>ASIN</dt>
-              <dd>{signal.asin && isValidAsin(signal.asin) ? <Link prefetch={false} href={`/products/${signal.asin}?${serializeMarketContext(context, { date: marketDate })}`}>{signal.asin}</Link> : signal.brand ?? "—"}</dd>
+              <dd>{signal.asin && isValidAsin(signal.asin) ? <Link target="_top" prefetch={false} href={`/products/${signal.asin}?${serializeMarketContext(context, { date: marketDate })}`}>{signal.asin}</Link> : signal.brand ?? "—"}</dd>
             </div>
             <div>
               <dt>当前排名</dt>
@@ -329,6 +329,7 @@ function ArchiveWorkspace({
               <p>生成于 {new Date(report.generated_at).toLocaleString("zh-CN", { hour12: false })}</p>
             </div>
             <Link
+              target="_top"
               prefetch={false}
               className="downloadButton"
               aria-current={selected?.key === report.key ? "page" : undefined}
@@ -401,9 +402,9 @@ export async function SellerIntelligenceCenter({
     <>
       <section className="analysisControls panel sellerWorkspaceControls" aria-label="卖家工作区">
         <nav className="tabs" aria-label="卖家情报工作区">
-          <Link prefetch={false} aria-current={workspace === "seller_alert" ? "page" : undefined} className={workspace === "seller_alert" ? "active" : ""} href={hrefFor({ workspace: "seller_alert", categoryKey: liveCategory ?? categories[0].key, date: marketDate }, context)}>经营预警</Link>
-          <Link prefetch={false} aria-current={workspace === "competition_strategy" ? "page" : undefined} className={workspace === "competition_strategy" ? "active" : ""} href={hrefFor({ workspace: "competition_strategy", categoryKey, date: marketDate }, context)}>竞争观察</Link>
-          <Link prefetch={false} aria-current={workspace === "archive" ? "page" : undefined} className={workspace === "archive" ? "active" : ""} href={hrefFor({ workspace: "archive", archiveProfile, categoryKey, date }, context)}>历史归档</Link>
+          <Link target="_top" prefetch={false} aria-current={workspace === "seller_alert" ? "page" : undefined} className={workspace === "seller_alert" ? "active" : ""} href={hrefFor({ workspace: "seller_alert", categoryKey: liveCategory ?? categories[0].key, date: marketDate }, context)}>经营预警</Link>
+          <Link target="_top" prefetch={false} aria-current={workspace === "competition_strategy" ? "page" : undefined} className={workspace === "competition_strategy" ? "active" : ""} href={hrefFor({ workspace: "competition_strategy", categoryKey, date: marketDate }, context)}>竞争观察</Link>
+          <Link target="_top" prefetch={false} aria-current={workspace === "archive" ? "page" : undefined} className={workspace === "archive" ? "active" : ""} href={hrefFor({ workspace: "archive", archiveProfile, categoryKey, date }, context)}>历史归档</Link>
         </nav>
         <form className="sellerFilterGrid" action="/analysis">
           <input type="hidden" name="workspace" value={workspace} />
@@ -444,7 +445,7 @@ export async function SellerIntelligenceCenter({
         <>
           <EvidenceSummary report={liveReport} />
           {workspace === "seller_alert" && <nav className="alertFilterTabs" aria-label="预警优先级筛选">
-            {(["alerts", "high", "watch", "activity"] as const).map((filter) => <Link prefetch={false} aria-current={alertFilter === filter ? "page" : undefined} className={alertFilter === filter ? "active" : ""} href={hrefFor({ workspace: "seller_alert", categoryKey: liveCategory, date: marketDate, alertFilter: filter }, context)} key={filter}>{filter === "alerts" ? "High + Watch" : filter === "high" ? "High" : filter === "watch" ? "Watch" : "市场动态"}</Link>)}
+            {(["alerts", "high", "watch", "activity"] as const).map((filter) => <Link target="_top" prefetch={false} aria-current={alertFilter === filter ? "page" : undefined} className={alertFilter === filter ? "active" : ""} href={hrefFor({ workspace: "seller_alert", categoryKey: liveCategory, date: marketDate, alertFilter: filter }, context)} key={filter}>{filter === "alerts" ? "High + Watch" : filter === "high" ? "High" : filter === "watch" ? "Watch" : "市场动态"}</Link>)}
           </nav>}
           {workspace === "seller_alert" ? <AlertSignals report={liveReport} context={context} marketDate={marketDate} filter={alertFilter} /> : <StrategyWorkspace report={liveReport} />}
           <ReportNarrative report={liveReport} />
