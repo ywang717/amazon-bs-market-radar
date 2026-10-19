@@ -133,7 +133,7 @@ test("market brands and product identity expose finalized manager-facing semanti
   const brands = read("../app/brands/page.tsx");
   const identity = read("../app/components/ProductIdentity.tsx");
   assert.match(market, /Top30 商品结构/);
-  assert.match(market, /值得研究/);
+  assert.match(market, /<WorthStudying/);
   assert.match(market, /Top10 评论中位数/);
   assert.match(brands, /<th>1D<\/th><th>7D<\/th>/);
   assert.match(identity, /foam_cannon: "泡沫壶"/);

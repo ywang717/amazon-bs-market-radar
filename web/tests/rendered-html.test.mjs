@@ -550,8 +550,15 @@ test("renders dense market intelligence routes with shared product and rank sema
 
   const weeklyReports = await render("/reports?category=pressure_washers&segment=machines&kind=weekly", env);
   const weeklyReportHtml = await weeklyReports.text();
-  assert.match(weeklyReportHtml, /href="\?date=2026-08-13&amp;kind=daily&amp;category=pressure_washers&amp;segment=machines"/);
-  assert.match(weeklyReportHtml, /aria-current="page"[^>]*href="\?date=2026-08-13&amp;kind=weekly&amp;category=pressure_washers&amp;segment=machines"/);
+  const filterNav = weeklyReportHtml.match(/<nav class="archiveFilters"[^>]*>([\s\S]*?)<\/nav>/)[1];
+  const filterLinks = [...filterNav.matchAll(/<a([^>]*)href="([^"]+)"[^>]*>([^<]+)<\/a>/g)];
+  for (const [label, kind] of [["日报", "daily"], ["周报", "weekly"], ["全部报告⌄", "all"]]) {
+    const link = filterLinks.find(([, , , text]) => text === label);
+    assert.ok(link, label);
+    const params = new URL(link[2].replaceAll("&amp;", "&"), "https://example.test/reports").searchParams;
+    assert.deepEqual(Object.fromEntries(params), { category: "pressure_washers", segment: "machines", date: "2026-08-13", kind });
+    if (kind === "weekly") assert.match(link[1], /aria-current="page"/);
+  }
   assert.match(weeklyReportHtml, /全部报告⌄/);
 });
 
@@ -939,4 +946,11 @@ test("seller navigation uses top-level document links for workspaces, filters an
     for (const link of links) assert.match(link, /target="_top"/, link);
     if (suffix.startsWith("workspace=archive")) assert.match(html, />在线阅读<\/a>/);
   }
+});
+
+test('worth-studying entries disclose comparison evidence and restore their source page',async()=>{
+ const response=await render('/reports?date=2026-08-13&category=pressure_washers&segment=all',dynamicD1Environment('2026-08-13',{strongSignal:true}));
+ assert.equal(response.status,200);const html=await response.text();
+ assert.match(html,/不代表成交概率或销量预测/);
+ assert.match(html,/指标比较区间/);assert.match(html,/证据缺口/);assert.match(html,/returnTo=/);
 });

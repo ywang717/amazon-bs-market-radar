@@ -45,3 +45,16 @@ test("resolves report archive loading, empty, ready, and error states", () => {
   assert.equal(reportsView.resolveReportArchiveState(true, 0, true), "error");
   assert.equal(reportsView.resolveReportArchiveState(true, 2, true), "error");
 });
+
+test('archive date is independent of market date and empty dates keep all history', () => {
+ const records=[{market_date:'2026-10-12',kind:'daily'},{market_date:'2026-10-18',kind:'daily'},{market_date:'2026-10-12',kind:'weekly'}];
+ assert.deepEqual(filterReportRecords(records,'daily','2026-10-12'),[records[0]]);
+ assert.deepEqual(filterReportRecords(records,'all','2026-10-17'),[]);
+ assert.equal(filterReportRecords(records,'all',''),records);
+});
+
+test('malformed report payloads fail instead of becoming a healthy empty list',()=>{
+ assert.equal(typeof reportsView.readReportPayload,'function');
+ for(const bad of [{},null,{reports:{}},{reports:[{key:'bad'}]}])assert.throws(()=>reportsView.readReportPayload(bad));
+ assert.deepEqual(reportsView.readReportPayload({reports:[]}),[]);
+});

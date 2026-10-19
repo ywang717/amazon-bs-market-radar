@@ -472,3 +472,12 @@ test("garden rankings distinguish an uncollected date and category from an unkno
   assert.equal((await request("/api/public/rankings?category=garden_generators&segment=all", env)).status, 503);
   assert.equal((await request("/api/public/rankings?date=2026-10-15&category=fake_garden&segment=all", env)).status, 400);
 });
+
+test('report archive date validates independently and filters only the requested report day',async()=>{
+ const rows=[{key:'daily/2026-10-12/pressure_washers.pdf',market_date:'2026-10-12',category_key:'pressure_washers',kind:'daily',title:'A',byte_count:100},{key:'daily/2026-10-18/pressure_washers.pdf',market_date:'2026-10-18',category_key:'pressure_washers',kind:'daily',title:'B',byte_count:100}];
+ const env=dynamicD1Environment('2026-10-18',{reportRows:rows});
+ for(const invalid of ['not-a-date','2026-02-30'])assert.equal((await request(`/api/public/reports?category=pressure_washers&segment=all&archiveDate=${invalid}`,env)).status,400);
+ const filtered=await request('/api/public/reports?category=pressure_washers&segment=all&date=2026-10-18&archiveDate=2026-10-12',env);
+ assert.equal(filtered.status,200);assert.deepEqual((await filtered.json()).reports,[rows[0]]);
+ const empty=await request('/api/public/reports?category=pressure_washers&segment=all&archiveDate=2026-10-11',env);assert.deepEqual((await empty.json()).reports,[]);
+});

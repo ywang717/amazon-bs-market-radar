@@ -21,12 +21,21 @@ export type ReportView = ReportRecord & {
 export type ReportArchiveState = "loading" | "empty" | "ready" | "error";
 export type ReportKindFilter = "all" | "daily" | "weekly";
 
+export function readReportPayload(value: unknown): ReportRecord[] {
+  const rows = value && typeof value === "object" && "reports" in value ? value.reports : null;
+  if (!Array.isArray(rows) || rows.some(row => !row || typeof row !== "object" ||
+    !["key", "market_date", "kind", "title"].every(key => typeof row[key] === "string") ||
+    typeof row.byte_count !== "number" || !Number.isFinite(row.byte_count) || row.byte_count < 0 ||
+    (row.category_key !== null && typeof row.category_key !== "string"))) throw new Error("报告数据格式异常");
+  return rows as ReportRecord[];
+}
+
 export function parseReportKindFilter(value: string | null | undefined): ReportKindFilter {
   return value === "daily" || value === "weekly" ? value : "all";
 }
 
-export function filterReportRecords(records: ReportRecord[], kind: ReportKindFilter): ReportRecord[] {
-  return kind === "all" ? records : records.filter((record) => record.kind === kind);
+export function filterReportRecords(records: ReportRecord[], kind: ReportKindFilter, archiveDate = ""): ReportRecord[] {
+  return kind === "all" && !archiveDate ? records : records.filter((record) => (kind === "all" || record.kind === kind) && (!archiveDate || record.market_date === archiveDate));
 }
 
 export function resolveReportArchiveState(loaded: boolean, reportCount: number, failed = false): ReportArchiveState {

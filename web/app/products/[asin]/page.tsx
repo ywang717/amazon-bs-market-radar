@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { loadLiveDashboard, loadLiveProduct } from "@/lib/live-dashboard-data";
 import { readExplicitSpecificationsForProduct } from "@/lib/product-specs";
 import type { ProductMetadata } from "@/lib/product-metadata";
+import { safeListReturn } from "@/lib/view-state";
 import { isValidAsin } from "@/lib/public-validation";
 import { buildAnalyticalCategory, buildProductRankTimeline, formatCompactNumber, formatDeal, formatExactNumber, formatPrice, formatRating, resolveProductTimelineStatus } from "@/lib/ui-intelligence";
 import { filterAnalyticalMarket, resolvePageMarketContext, serializeMarketContext } from "@/lib/market-context";
@@ -82,6 +83,6 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
       <dl className="sellerEvidenceList"><div><dt>数据范围</dt><dd>{productEvidenceRange(history)}</dd></div><div><dt>样本量</dt><dd>{history.length} 条可验证历史观测</dd></div><div><dt>完整度</dt><dd>未单独判定（单商品页仅统计该 ASIN 的可验证历史观测）</dd></div><div><dt>证据充分度</dt><dd>{evidence}</dd></div><div><dt>非因果提示</dt><dd>仅描述可验证公开事实，不代表因果关系。</dd></div></dl>
       <dl className="sellerSpecList">{explicitSpecs.map((spec) => <div key={`${spec.label}-${spec.value}`}><dt>{spec.label}</dt><dd>{spec.value}</dd></div>)}</dl>
     </section>}
-    <Link prefetch={false} href={`/products?${serializeMarketContext(context, { date: marketDate })}`} className="backLink">← 返回产品列表</Link>
+    <Link target="_top" prefetch={false} href={safeListReturn(query.returnTo, `/products?${serializeMarketContext(context, { date: marketDate })}`)} className="backLink">{safeListReturn(query.returnTo, "/products").startsWith("/rankings") ? "← 返回榜单" : ["/market", "/reports"].some(path => safeListReturn(query.returnTo, "/products").startsWith(path)) ? "← 返回研究入口" : "← 返回产品列表"}</Link>
   </>;
 }

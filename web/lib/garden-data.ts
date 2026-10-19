@@ -5,6 +5,9 @@ export type GardenProduct = {asin:string;title:string;url:string;price:number|nu
 export type GardenCategory = {key:string;label:string;sourceUrl:string;enabled:boolean;marketDate:string|null;completeMarketDays:number;latestComplete:boolean;products:GardenProduct[]};
 export type GardenData = {latestMarketDate:string|null;categories:GardenCategory[];weeklyReports:{key:string;title:string;marketDate:string;categoryKey:string|null}[];error?:string};
 type GardenRegistry = {categoryKey:string;labelZh:string;sourceUrl:string;enabled:boolean;groupKey?:string};
+export function meetsGardenCandidateThresholds(completeDays:number, confidence:number, score:number|null, signalCount:number) {
+ return completeDays>=7&&confidence>=50&&score!==null&&score>=45&&signalCount>0;
+}
 export function buildGardenData(input:{categories:readonly GardenRegistry[];categoryDays:readonly Pick<CategoryDayRow,'market_date'|'category_key'|'complete'>[];observations:readonly ObservationRow[];metadata:readonly ProductMetadataRow[];latestMarketDate?:string|null}):GardenData {
  const latestMarketDate=input.latestMarketDate??input.categoryDays.map(d=>d.market_date).sort().at(-1)??null;
  const categories=input.categories.map((category):GardenCategory=>{
@@ -35,7 +38,7 @@ export function buildGardenData(input:{categories:readonly GardenRegistry[];cate
    const confidence=Math.round(available*Math.min(1,history.length/7));
    const score=available?Math.round(total/available):null;
    const metadata=input.metadata.find(m=>m.asin===row.asin);
-   return {...row,rankChange,reviewGrowth,priceChange,history,signals,confidence,score,candidate:windowDates.length>=7&&confidence>=50&&score!==null&&score>=45&&signals.length>0,brand:metadata?.brandSource==='verified_metadata'?metadata.normalizedBrand:null};
+   return {...row,rankChange,reviewGrowth,priceChange,history,signals,confidence,score,candidate:meetsGardenCandidateThresholds(windowDates.length,confidence,score,signals.length),brand:metadata?.brandSource==='verified_metadata'?metadata.normalizedBrand:null};
   });
   return {key:category.categoryKey,label:category.labelZh,sourceUrl:category.sourceUrl,enabled:category.enabled,marketDate,completeMarketDays:dates.length,latestComplete:marketDate!==null&&marketDate===latestMarketDate,products};
  });

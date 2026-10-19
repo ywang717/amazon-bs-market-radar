@@ -9,3 +9,10 @@ test('failed latest capture retains last valid category date and marks stale',()
 test('rank continuity and unique ASINs are revalidated',()=>{const f=fixture(7);f.observations=f.observations.filter(r=>!(r.market_date==='2026-10-07'&&r.rank===30));assert.equal(buildGardenData(f).categories[0].completeMarketDays,6);});
 test('confidence penalizes missing fields and short product observation history',()=>{const f=fixture(7);for(const r of f.observations){r.rating=null;r.reviews=null;}const p=buildGardenData(f).categories[0].products[0];assert.ok(p.confidence<50);assert.equal(p.candidate,false);});
 test('a complete seven-day rising product qualifies with evidence',()=>{const f=fixture(7);for(const r of f.observations){const day=Number(r.market_date.slice(-2));if(r.asin==='B000000000'){r.rank=day===7?1:30;r.reviews=100+day*20;}else if(r.asin==='B000000029'){r.rank=day===7?30:1;}}const p=buildGardenData(f).categories[0].products.find(p=>p.asin==='B000000000');assert.equal(p.candidate,true);assert.ok(p.signals.includes('短期大幅波动，需核查促销'));});
+
+test('automatic candidate gate preserves seven days, confidence50, score45 and a real signal',async()=>{
+ const {meetsGardenCandidateThresholds}=await import('../lib/garden-data.ts');
+ assert.equal(typeof meetsGardenCandidateThresholds,'function');
+ assert.equal(meetsGardenCandidateThresholds(7,50,45,1),true);
+ for(const row of [[6,50,45,1],[7,49,45,1],[7,50,44,1],[7,50,null,1],[7,50,45,0]])assert.equal(meetsGardenCandidateThresholds(...row),false);
+});
