@@ -219,6 +219,29 @@ test("reimports the same verified receipt for its original market date to backfi
   assert.equal(env.statements.some((statement) => /^INSERT INTO product_metadata/i.test(statement.sql)), false);
 });
 
+test("same-receipt timestamp recovery preserves observations, discounts and product metadata", async () => {
+  const env = sqliteEnvironment();
+  try {
+    const initial = completeBundleV2();
+    initial.categories[0].observations[0].has_discount = true;
+    initial.categories[0].observations[0].discounts = [{ kind: "COUPON", amount: "10% off" }];
+    assert.equal((await request(initial, env)).status, 201);
+    const before = Object.fromEntries(["observations", "observation_discounts", "product_metadata", "category_days"]
+      .map((table) => [table, env.database.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()]));
+    const correction = { ...initial, schemaVersion: "amazon-bs-dashboard-bundle-v1", observedAt: "2026-08-14T07:50:00.307Z" };
+    delete correction.productMetadata;
+    assert.equal((await request(correction, env)).status, 201);
+    for (const table of Object.keys(before)) {
+      assert.deepEqual(env.database.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all(), before[table]);
+    }
+    const after = env.database.prepare("SELECT observed_at, receipt_sha256 FROM snapshots").get();
+    assert.equal(after.observed_at, correction.observedAt);
+    assert.equal(after.receipt_sha256, initial.receiptSha256);
+    assert.equal((await request(initial, env)).status, 409);
+    assert.deepEqual(env.database.prepare("SELECT observed_at, receipt_sha256 FROM snapshots").get(), after);
+  } finally { env.database.close(); }
+});
+
 test("writes snapshot observations discounts and product metadata in one application batch", async () => {
   const env = sameReceiptEnvironment();
   const response = await request(completeBundleV2(), env);
