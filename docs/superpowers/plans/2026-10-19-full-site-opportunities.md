@@ -1,0 +1,9 @@
+# 全站检查、修复与商机流程优化
+
+Approved implementation scope: 14 page families, 17 registered categories, all controls/API/task paths; preserve Pacific dates, database schema/history/access, existing edits, opportunity thresholds/weights and manual evidence gates. No production test records, economics gate, comparison/watchlist feature or redesign.
+
+1. Audit baseline and regression cases: real browser desktop/mobile/keyboard; errors vs healthy empty; local fixtures for protected writes; inventory/evidence ledger. P0 data loss/access, P1 core function/data, P2 usability/performance.
+2. Common UI: URL-restored product/ranking/Garden filters, reset preserving market/date/segment, PDF archiveDate filter with backward-compatible API (400 invalid, [] missing), PDF 20/page and Garden 30/page, retries/state clarity.
+3. Opportunities: preserve algorithms; explain signals/window/freshness/gaps and distinct empty reasons; filter published reviews by category/ASIN/status; prefill review scope using registered categories. Four dimensions, up to20 evidence sources each preserving metadata. Reset confirmation on edits, preserve draft on409, structured validation/save output. Public summaries only, secret memory only, legacy records retained.
+4. Pipeline: investigate10/18 SSL receipt vs actual upload; reconcile snapshots/Postgres/D1/R2 according to historical coverage. Inspect launchd calendar/environment/logs/exit codes; recover existing verified snapshots with -SkipEmail only if needed, retain idempotency/partial/failure semantics.
+5. Full typecheck/lint/Web suite/build + PowerShell regression; fresh review; commit and push current branch, Sites original audience/publication, post-release real browser/API/PDF verification. Cloud preferred; local real Chromium fallback labeled explicitly. Unknown/unverified != PASS.
