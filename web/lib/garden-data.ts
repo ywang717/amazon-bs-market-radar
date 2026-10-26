@@ -3,7 +3,7 @@ import { validateCategory } from './analytics.ts';
 import type { ObservationRow, ProductMetadataRow, CategoryDayRow } from './dashboard-store.ts';
 export type GardenProduct = {asin:string;title:string;url:string;price:number|null;rating:number|null;reviews:number|null;rank:number;rankChange:number|null;reviewGrowth:number|null;priceChange:number|null;history:{marketDate:string;rank:number;price:number|null;reviews:number|null}[];signals:string[];confidence:number;candidate:boolean;brand:string|null;score:number|null};
 export type GardenCategory = {key:string;label:string;sourceUrl:string;enabled:boolean;marketDate:string|null;completeMarketDays:number;latestComplete:boolean;products:GardenProduct[]};
-export type GardenData = {latestMarketDate:string|null;categories:GardenCategory[];weeklyReports:{key:string;title:string;marketDate:string;categoryKey:string|null}[];error?:string};
+export type GardenData = {latestMarketDate:string|null;updatedAt:string|null;categories:GardenCategory[];weeklyReports:{key:string;title:string;marketDate:string;categoryKey:string|null}[];error?:string};
 type GardenRegistry = {categoryKey:string;labelZh:string;sourceUrl:string;enabled:boolean;groupKey?:string};
 export function meetsGardenCandidateThresholds(completeDays:number, confidence:number, score:number|null, signalCount:number) {
  return completeDays>=7&&confidence>=50&&score!==null&&score>=45&&signalCount>0;
@@ -42,7 +42,7 @@ export function buildGardenData(input:{categories:readonly GardenRegistry[];cate
   });
   return {key:category.categoryKey,label:category.labelZh,sourceUrl:category.sourceUrl,enabled:category.enabled,marketDate,completeMarketDays:dates.length,latestComplete:marketDate!==null&&marketDate===latestMarketDate,products};
  });
- return {latestMarketDate,categories,weeklyReports:[]};
+ return {latestMarketDate,updatedAt:null,categories,weeklyReports:[]};
 }
 export function gardenRegistryCategories():readonly GardenRegistry[] {
  return productionCategoryRegistry.categories.filter(c=>(c as GardenRegistry).groupKey==='patio_lawn_garden'||c.categoryKey==='patio_lawn_garden'||c.categoryKey.startsWith('garden_'));
@@ -52,9 +52,10 @@ export async function loadGardenData():Promise<GardenData> {
  try {
   const {getD1,ensureSchema}=await import('./d1.ts'); const db=getD1();await ensureSchema(db);
   // Scope queries to garden and bound history; old project records are untouched.
-  const keys=categories.map(c=>c.categoryKey); if(!keys.length)return {latestMarketDate:null,categories:[],weeklyReports:[]};
+  const keys=categories.map(c=>c.categoryKey); if(!keys.length)return {latestMarketDate:null,updatedAt:null,categories:[],weeklyReports:[]};
   const placeholders=keys.map(()=>'?').join(',');
   const latest=await db.prepare('SELECT MAX(market_date) AS date FROM category_days').first<{date:string|null}>();
+  const latestSnapshot=await db.prepare('SELECT observed_at FROM snapshots WHERE market_date = ? ORDER BY observed_at DESC LIMIT 1').bind(latest?.date??'1970-01-01').first<{observed_at:string|null}>();
   const [days,observations,metadata,reports]=await Promise.all([
    db.prepare(`SELECT market_date,category_key,complete FROM category_days WHERE category_key IN (${placeholders}) AND market_date>=date(?,'-90 days')`).bind(...keys,latest?.date??'1970-01-01').all<CategoryDayRow>(),
    db.prepare(`SELECT market_date,category_key,rank,asin,title,url,price,rating,reviews FROM observations WHERE category_key IN (${placeholders}) AND market_date>=date(?,'-90 days') ORDER BY market_date,category_key,rank`).bind(...keys,latest?.date??'1970-01-01').all<ObservationRow>(),
@@ -62,6 +63,6 @@ export async function loadGardenData():Promise<GardenData> {
    db.prepare(`SELECT key,title,market_date,category_key FROM reports WHERE kind='weekly' AND category_key IN (${placeholders}) ORDER BY market_date DESC LIMIT 30`).bind(...keys).all<{key:string;title:string;market_date:string;category_key:string|null}>(),
   ]);
   const data=buildGardenData({categories,categoryDays:days.results,observations:observations.results,metadata:metadata.results.map(m=>({asin:m.asin,normalizedBrand:m.normalized_brand,brandSource:m.brand_source} as ProductMetadataRow)),latestMarketDate:latest?.date});
-  return {...data,weeklyReports:reports.results.map(r=>({key:r.key,title:r.title,marketDate:r.market_date,categoryKey:r.category_key}))};
+  return {...data,updatedAt:latestSnapshot?.observed_at??null,weeklyReports:reports.results.map(r=>({key:r.key,title:r.title,marketDate:r.market_date,categoryKey:r.category_key}))};
  }catch(error){console.error('garden_data_unavailable',error);return {...buildGardenData({categories,categoryDays:[],observations:[],metadata:[]}),error:'数据暂时无法读取，请稍后重试。'};}
 }

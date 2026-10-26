@@ -7,7 +7,7 @@ import { MarketContext } from "./components/MarketContext";
 import { MetricCard } from "./components/MetricCard";
 import { SignalCard } from "./components/SignalCard";
 import { DashboardDataNotices } from "./components/DashboardDataNotices";
-import { marketContextLabels, resolvePageMarketContext } from "@/lib/market-context";
+import { marketContextLabels, resolvePageMarketContext, serializeMarketContext } from "@/lib/market-context";
 import { ContextLink } from "./components/ContextLink";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +69,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
       </div> : <EmptyState description="当前市场没有检测到高优先级变化，普通变化仍可在市场页面查看。" />}
     </section>
 
-    {worthStudying.length > 0 && <section className="sectionBlock"><div className="sectionHeading"><h2>值得研究</h2><ContextLink href="/market">查看市场 →</ContextLink></div><div className="secondarySignalGrid">{worthStudying.map((row) => <article className="summarySurface" key={row.asin}><ProductIdentity asin={row.asin} title={row.title} brand={row.brand} type={row.productType} /><RankDisplay rank={row.rank} delta={row.delta} /><p>{formatExactNumber(row.reviews)} Reviews · 有效在榜日 {row.presenceDays}/{row.presenceWindowDays}</p><p>{row.reason} · 值得进一步研究</p><ContextLink href={`/products/${row.asin}`}>查看产品 →</ContextLink></article>)}</div></section>}
+    {worthStudying.length > 0 && <section className="sectionBlock"><div className="sectionHeading"><h2>值得研究</h2><ContextLink href="/market">查看市场 →</ContextLink></div><div className="secondarySignalGrid">{worthStudying.map((row) => <article className="summarySurface" key={row.asin}><ProductIdentity asin={row.asin} title={row.title} brand={row.brand} type={row.productType} /><RankDisplay rank={row.rank} delta={row.delta} /><p>{formatExactNumber(row.reviews)} Reviews · 有效在榜日 {row.presenceDays}/{row.presenceWindowDays}</p><p><strong>为什么入选：</strong>{row.reason}</p><p><strong>数据依据：</strong>{rawCategory.marketDate} 市场日 · 比较日 {category.comparison.baselineDate??"不足"}</p><p><strong>证据缺口：</strong>需求、竞争、差异化及销售障碍仍需人工核验。</p><p>研究优先级不代表成交概率或销量预测。</p><ContextLink href={`/products/${row.asin}?returnTo=${encodeURIComponent("/?"+serializeMarketContext(context,{date:rawCategory.marketDate}))}`} target="_top">查看产品 →</ContextLink></article>)}</div></section>}
 
     <section className="overviewBottomGrid">
       <article className="summarySurface">

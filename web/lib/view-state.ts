@@ -23,6 +23,6 @@ export function safeListReturn(value: unknown, fallback: string): string {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return fallback;
   try {
     const url = new URL(value, "https://market-radar.local");
-    return url.origin === "https://market-radar.local" && ["/products", "/rankings", "/market", "/reports"].includes(url.pathname) ? `${url.pathname}${url.search}` : fallback;
+    return url.origin === "https://market-radar.local" && ["/", "/products", "/rankings", "/market", "/reports"].includes(url.pathname) ? `${url.pathname}${url.search}` : fallback;
   } catch { return fallback; }
 }

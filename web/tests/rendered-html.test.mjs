@@ -953,7 +953,7 @@ test('worth-studying entries disclose comparison evidence and restore their sour
  const response=await render('/reports?date=2026-08-13&category=pressure_washers&segment=all',dynamicD1Environment('2026-08-13',{strongSignal:true}));
  assert.equal(response.status,200);const html=await response.text();
  assert.match(html,/不代表成交概率或销量预测/);
- assert.match(html,/指标比较区间/);assert.match(html,/证据缺口/);assert.match(html,/returnTo=/);
+ assert.match(html,/为什么入选/);assert.match(html,/数据依据/);assert.match(html,/下一步/);assert.match(html,/指标比较区间/);assert.match(html,/证据缺口/);assert.match(html,/returnTo=/);assert.match(html,/查看产品数据/);
 });
 
 test('seller archive date stays independent from the top market date',async()=>{

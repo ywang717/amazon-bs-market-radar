@@ -23,6 +23,14 @@ test('published review reader rejects malformed dimensions rather than crashing 
  for(const bad of [{},{reviews:[{...row,dimensions:{demand:null}}]},{reviews:[{...row,issues:'invalid'}]},{reviews:[{...row,status:'guaranteed_sales'}]}])assert.throws(()=>readPublishedReviews(bad));
 });
 
+test('opportunity status copy distinguishes automatic leads from published conclusions',async()=>{
+ const {OPPORTUNITY_STATUS_LABELS,OPPORTUNITY_STATUS_HELP}=await import('../lib/garden-opportunity-copy.ts');
+ assert.deepEqual(OPPORTUNITY_STATUS_LABELS,{observation:'观察线索',pending_verification:'待核验',worth_validating:'值得进一步验证',not_recommended:'暂不建议'});
+ assert.doesNotMatch(OPPORTUNITY_STATUS_HELP.observation,/自动初筛/);
+ assert.match(OPPORTUNITY_STATUS_HELP.pending_verification,/待核验项/);
+ assert.match(OPPORTUNITY_STATUS_HELP.worth_validating,/人工核验/);
+});
+
 test('signal choices retain every eligible membership before ASIN deduplication',async()=>{
  const {gardenSignalOptions}=await import('../lib/garden-browser.ts');
  const shared=[{...categories[0],products:[{...product('B000000001',1),signals:['A']}]},{...categories[1],products:[{...product('B000000001',2),signals:['B']}]}];

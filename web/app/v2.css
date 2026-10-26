@@ -413,3 +413,5 @@ thead { position: sticky; top: 0; z-index: 2; background: var(--surface-1); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+.worthStudying .opportunityGuide{padding:14px;background:var(--surface-2);border-radius:8px;line-height:1.7}.opportunityGuide>strong{margin-right:12px}.opportunityFacts{margin:0;display:grid;gap:8px}.opportunityFacts>div{display:flex;justify-content:space-between;gap:12px}.opportunityFacts dd{margin:0}.worthStudying td>a{display:block;padding:8px 0}.worthStudying td{vertical-align:top}

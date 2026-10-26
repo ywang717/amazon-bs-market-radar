@@ -13,3 +13,12 @@ test('garden navigation renders native top-frame links from reports and every se
   assert.ok(links.length>=1,path+' has garden entry');for(const link of links)assert.match(link,/target="_top"/,path+' navigation must work in an embedded Site');
  }
 });
+
+test('garden opportunities explains the research-to-verification path and empty-state meaning',async()=>{
+ const r=await worker.fetch(new Request('http://localhost/garden/opportunities'),env,{waitUntil(){},passThroughOnException(){}});
+ assert.equal(r.status,200);const html=await r.text();
+ assert.match(html,/如何阅读商机/);
+ assert.match(html,/自动初筛只发现研究线索/);
+ assert.match(html,/人工核验/);
+ assert.match(html,/完整市场日不足/);
+});

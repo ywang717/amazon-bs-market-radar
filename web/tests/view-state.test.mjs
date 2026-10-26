@@ -20,3 +20,5 @@ test('product return paths restore list filters without accepting external redir
  assert.equal(safeListReturn('/rankings?limit=10','/products'),'/rankings?limit=10');
  for(const bad of ['//evil.example/products','https://evil.example/products','/api/sync/v1/bundles','javascript:alert(1)'])assert.equal(safeListReturn(bad,'/products'),'/products');
 });
+
+test('home research returns preserve context with the same internal-only safety rules',async()=>{const {safeListReturn}=await import('../lib/view-state.ts');assert.equal(safeListReturn('/?date=2026-10-18&category=pressure_washers&segment=all','/products'),'/?date=2026-10-18&category=pressure_washers&segment=all');});

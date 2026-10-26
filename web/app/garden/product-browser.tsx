@@ -5,7 +5,7 @@ import { pageRows, readChoice } from "@/lib/view-state";
 import { useViewQuery } from "../components/useViewQuery";
 import { ListPagination } from "../components/ListPagination";
 
-export function ProductBrowser({ categories, opportunities = false, error }: {categories:GardenCategory[];opportunities?:boolean;error?:string}) {
+export function ProductBrowser({ categories, opportunities = false, error, updatedAt, updatedMarketDate }: {categories:GardenCategory[];opportunities?:boolean;error?:string;updatedAt?:string|null;updatedMarketDate?:string|null}) {
  const {params,update}=useViewQuery();
  const categoryKey=readChoice(params,'categoryKey',['',...categories.map(c=>c.key)],'');
  const signals=gardenSignalOptions(categories,categoryKey,opportunities);
@@ -21,6 +21,7 @@ export function ProductBrowser({ categories, opportunities = false, error }: {ca
  const filter=(changes:Record<string,string|null>)=>update({...changes,page:null});
  const returnTo=`${opportunities?'/garden/opportunities':'/garden/products'}?${params}`;
  return <>
+  {opportunities&&<div className="gardenPanel opportunityGuide"><h3>自动候选怎么读</h3><p>这里展示的是研究线索：先看入选信号和数据依据，再检查证据缺口。只有完成需求、竞争、差异化和销售可行性限制的人工核验，才会形成已发布结论。</p><p>园艺最新完整市场日：{categories.map(c=>c.marketDate).filter(Boolean).sort().at(-1)??'暂无'}。各候选的实际市场日见卡片。全站采集市场日：{updatedMarketDate??'暂无'} · 全站采集时间：{updatedAt?new Intl.DateTimeFormat('zh-CN',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'medium'}).format(new Date(updatedAt))+' (Pacific Time)':'暂无记录'} · 研究优先级不代表成交概率或销量预测。</p></div>}
   <div className="gardenFilters">
    <label>所属榜单<select aria-label="所属榜单" value={categoryKey} onChange={e=>filter({categoryKey:e.target.value,signal:null})}><option value="">全部榜单</option>{categories.map(c=><option key={c.key} value={c.key}>{c.label}</option>)}</select></label>
    <label>机会信号<select aria-label="机会信号" value={signal} onChange={e=>filter({signal:e.target.value})}><option value="">全部信号</option>{signals.map(s=><option key={s}>{s}</option>)}</select></label>
@@ -44,7 +45,7 @@ export function ProductBrowser({ categories, opportunities = false, error }: {ca
     <p>所属榜单：{categories.flatMap(c=>c.products.filter(x=>x.asin===p.asin).map(x=>`${c.label} #${x.rank}`)).join('；')}</p>
     <p>{p.asin} · 数据截至 {p.category.marketDate||'日期未知'}{!p.category.latestComplete&&' · 最近采集不完整'}</p>
     <dl className="gardenMetrics"><div><dt>价格</dt><dd>{p.price===null?'缺失':`$${p.price}`}</dd></div><div><dt>评分 / 评论</dt><dd>{p.rating??'—'} / {p.reviews??'—'}</dd></div><div><dt>排名提升</dt><dd>{p.rankChange??'—'}</dd></div><div><dt>评论增长</dt><dd>{p.reviewGrowth??'—'}</dd></div></dl>
-    {opportunities&&<><p>入选信号：{p.signals.join(' · ')||'无附加信号'}</p><p>初筛评分 {p.score??'—'} · 置信度 {p.confidence} · {p.category.completeMarketDays} 个完整市场日</p><p>指标比较区间：{p.history[0]?.marketDate??'不足'} 至 {p.history.at(-1)?.marketDate??'不足'} · {p.history.length} 条观测</p><p>证据缺口：{gaps.length?gaps.join('、'):'当前展示指标无缺失；需求、竞争、差异化及销售障碍仍需人工核验'}</p><a target="_top" href={`/garden/review?asin=${encodeURIComponent(p.asin)}&categoryKey=${encodeURIComponent(p.category.key)}&returnTo=${encodeURIComponent(returnTo)}`}>查看证据与核验 →</a></>}
+    {opportunities&&<><section className="opportunityCardSection"><strong>为什么入选</strong><p>{p.signals.join(' · ')||'达到现有商机初筛规则'}</p></section><section className="opportunityCardSection"><strong>数据依据</strong><p>初筛评分 {p.score??'—'} · 置信度 {p.confidence} · {p.category.completeMarketDays} 个完整市场日</p><p>指标比较区间：{p.history[0]?.marketDate??'不足'} 至 {p.history.at(-1)?.marketDate??'不足'} · {p.history.length} 条观测</p></section><section className="opportunityCardSection"><strong>还需核验</strong><p>指标缺口：{gaps.length?gaps.join('、'):'当前展示指标无缺失'}</p><p>需求、竞争、差异化及销售障碍仍需人工核验。</p></section><a target="_top" href={`/garden/review?asin=${encodeURIComponent(p.asin)}&categoryKey=${encodeURIComponent(p.category.key)}&returnTo=${encodeURIComponent(returnTo)}`}>进入人工核验 →</a></>}
     <details><summary>同榜单历史 ({p.history.length})</summary><div className="gardenTable"><table><thead><tr><th>市场日</th><th>排名</th><th>价格</th><th>评论数</th></tr></thead><tbody>{p.history.map(h=><tr key={h.marketDate}><td>{h.marketDate}</td><td>{h.rank??'—'}</td><td>{h.price===null?'—':`$${h.price}`}</td><td>{h.reviews??'—'}</td></tr>)}</tbody></table></div></details>
    </article>;
   })}</div>}
