@@ -95,6 +95,7 @@ export function validateSyncBundle(input: unknown, registry: RuntimeCategoryRegi
   const errors: string[] = [];
   const isV1 = bundle.schemaVersion === "amazon-bs-dashboard-bundle-v1";
   const isV2 = bundle.schemaVersion === "amazon-bs-dashboard-bundle-v2";
+  if (bundle.metadataConflictPolicy !== undefined && (!isV2 || bundle.metadataConflictPolicy !== "quarantine")) errors.push("无效的元数据冲突策略");
   if (!isV1 && !isV2) errors.push("不支持的同步版本");
   if (!isValidMarketDate(bundle.marketDate)) errors.push("市场日期无效");
   if (isV2 && !isValidObservedAt(bundle.observedAt)) errors.push("观测时间无效");

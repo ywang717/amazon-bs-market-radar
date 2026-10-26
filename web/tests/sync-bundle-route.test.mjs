@@ -130,19 +130,21 @@ function sqliteEnvironment({ failProductMetadata = false, failWithOrdinaryBrandS
       const isSchemaBatch = statements.every((statement) => statement.sql.startsWith("CREATE"));
       if (!isSchemaBatch) applicationBatches.push(statements);
       if (!isSchemaBatch && beforeApplicationBatch !== null) await beforeApplicationBatch(database);
+      const results = [];
       database.exec("BEGIN");
       try {
         for (const statement of statements) {
-          if (failProductMetadata && /^INSERT INTO product_metadata/i.test(statement.sql)) throw new Error("simulated metadata failure");
+          if (failProductMetadata && /INSERT INTO product_metadata\b/i.test(statement.sql)) throw new Error("simulated metadata failure");
           if (failWithOrdinaryBrandSourceNotNull && /^INSERT INTO product_metadata/i.test(statement.sql)) throw new Error("NOT NULL constraint failed: product_metadata.brand_source");
-          database.prepare(statement.sql).run(...statement.values);
+          if (/^SELECT/.test(statement.sql)) results.push({results:database.prepare(statement.sql).all(...statement.values)});
+          else {const result=database.prepare(statement.sql).run(...statement.values);results.push({meta:{changes:Number(result.changes)}});}
         }
         database.exec("COMMIT");
       } catch (error) {
         database.exec("ROLLBACK");
         throw error;
       }
-      return [];
+      return results;
     },
   };
   return { DB, database, applicationBatches, SYNC_SECRET: "local-secret", ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } };
@@ -476,4 +478,21 @@ test('expanded full capture keeps a coherent receipt for 17 categories',async()=
  assert.equal(snapshot.receipt_sha256,bundle.receiptSha256);
  assert.equal(snapshot.complete_category_count,bundle.categories.length);
  assert.equal(snapshot.public_status,'已更新');
+});
+
+test('quarantine policy imports rankings while preserving conflicting trusted metadata atomically', async()=>{
+ const bundle=completeBundleV2();bundle.metadataConflictPolicy='quarantine';
+ const target=bundle.productMetadata[0];Object.assign(target,{brandSource:'verified_metadata',rawBrand:'Westinghouse',normalizedBrand:'Westinghouse',normalizedBrandKey:'westinghouse',brandAliasRuleId:'brand-westinghouse'});
+ assert.ok(target);
+ const env=sqliteEnvironment({beforeApplicationBatch(db){db.prepare('INSERT OR IGNORE INTO product_metadata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run('AMAZON_US',target.asin,'unknown','low',null,'rules-v1','[]','Old Brand','Old Brand','old brand',null,'manual_review','2026-01-01','2026-08-01');}});
+ try{const response=await request(bundle,env);assert.equal(response.status,201);const value=await response.json();assert.equal(value.metadataQuarantined,1);assert.equal(value.metadataImported,bundle.productMetadata.length-1);assert.equal(value.metadataConflicts[0].asin,target.asin);assert.equal(env.database.prepare('SELECT normalized_brand_key FROM product_metadata WHERE asin=?').get(target.asin).normalized_brand_key,'old brand');assert.equal(env.database.prepare('SELECT COUNT(*) AS n FROM observations').get().n,90);}finally{env.database.close();}
+});
+
+test('quarantine handles multiple conflicts and replay with unknown rows while ordinary SQL failures roll back',async()=>{
+ for(const fail of [false,true]){
+  const b=completeBundleV2();b.metadataConflictPolicy='quarantine';
+  for(const row of b.productMetadata.slice(0,2))Object.assign(row,{brandSource:'verified_metadata',rawBrand:'Westinghouse',normalizedBrand:'Westinghouse',normalizedBrandKey:'westinghouse',brandAliasRuleId:'brand-westinghouse'});
+  const e=sqliteEnvironment({failProductMetadata:fail,beforeApplicationBatch(db){for(const row of b.productMetadata.slice(0,2))db.prepare('INSERT OR IGNORE INTO product_metadata VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)').run('AMAZON_US',row.asin,'unknown','low',null,'rules-v1','[]','Old','Old','old',null,'verified_metadata','2026-01-01','2026-08-01');}});
+  try{if(fail){let failed=false;try{failed=(await request(b,e)).status>=500;}catch{failed=true;}assert.equal(failed,true);assert.equal(e.database.prepare('SELECT COUNT(*) n FROM observations').get().n,0);}else{for(let i=0;i<2;i++){const response=await request(b,e);assert.equal(response.status,201);const result=await response.json();assert.equal(result.metadataQuarantined,2);assert.equal(result.metadataImported,b.productMetadata.length-2);assert.equal(e.database.prepare('SELECT COUNT(*) n FROM observations').get().n,90);}}}finally{e.database.close();}
+ }
 });

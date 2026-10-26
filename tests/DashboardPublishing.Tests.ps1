@@ -109,6 +109,7 @@ Describe 'Dashboard publishing bundle' {
                 return [pscustomobject]@{ status = 'imported'; observations = 90 }
             }.GetNewClosure()
         @{
+            ReportsToUpload = { @() }
             BuildSyncBundle = $buildSyncBundle
             Health = $health
             SellerReports = $sellerReports
@@ -699,5 +700,21 @@ Describe 'Dashboard publishing bundle' {
         $registerScript | Should Match '-ProxyUrl'
         $launcherScript | Should Match 'ProxyUrl'
         $launcherScript | Should Match 'http_proxy'
+    }
+
+    It 'records FAILED when report selection fails after data import' {
+        $root=Join-Path $TestDrive 'failed-report-selection';New-Item -ItemType Directory -Path $root -Force|Out-Null
+        $paths=@(New-TestSellerReportFiles -Root $root);$analysis=@(New-TestAnalysisReportFiles -Root $root);$selection=@{called=0};$calls=New-Object System.Collections.ArrayList
+        $hooks=New-TestPublisherHooks -SellerPaths $paths -Calls $calls
+        $hooks.ReportsToUpload={$selection.called++;throw 'missing required PDF'}.GetNewClosure()
+        $hooks.SellerReports={param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate)[pscustomobject]@{Status='CREATED';ReportCount=$paths.Count;ReportPaths=$paths}}.GetNewClosure()
+        $hooks.AnalysisReports={param($SnapshotPath,$SnapshotsRoot,$ReportKind,$ReportDate)[pscustomobject]@{Status='CREATED';ReportCount=$analysis.Count;ReportPaths=$analysis}}.GetNewClosure()
+        $env:AMAZON_BS_DASHBOARD_SYNC_SECRET='test-secret'
+        try{
+            { & (Join-Path $projectRoot 'scripts/Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $root -SnapshotsRoot $root -TestHooks $hooks }|Should Throw
+            $state=Read-DashboardPublishState -Root $root -MarketDate '2026-08-24'
+            $state.Status|Should Be 'FAILED'
+            $selection.called|Should Be 1
+        }finally{Remove-Item Env:AMAZON_BS_DASHBOARD_SYNC_SECRET -ErrorAction SilentlyContinue}
     }
 }

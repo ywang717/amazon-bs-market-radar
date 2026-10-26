@@ -12,6 +12,12 @@ if ([string]::IsNullOrWhiteSpace($RegistryPath)) { $RegistryPath = Join-Path $pr
 Import-Module (Join-Path $projectRoot 'src\BestSellersAnalysis.psm1') -Force
 Import-Module (Join-Path $projectRoot 'src\BestSellersCaptureReceipt.psm1') -Force
 if ([string]::IsNullOrWhiteSpace($OutputPath)) { $OutputPath = Join-Path (Split-Path -Parent (Resolve-Path -LiteralPath $SnapshotPath).Path) 'best-sellers-capture-receipt.json' }
+if (Test-Path -LiteralPath $OutputPath -PathType Leaf) {
+    $verified=Resolve-BestSellersAuthorizedSnapshot -SnapshotPath $SnapshotPath -ReceiptPath $OutputPath -RegistryPath $RegistryPath
+    $existing=Get-Content -LiteralPath $OutputPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    [pscustomobject]@{Status=$existing.status;MarketDate=$existing.market_date;SourceMetadataVerified=$existing.source_metadata_verified;SnapshotSha256=$verified.snapshot_sha256;ReceiptPath=$OutputPath} | ConvertTo-Json -Depth 6
+    return
+}
 $receipt = New-BestSellersCaptureReceipt -SnapshotPath $SnapshotPath -SourceConfigPath $SourceConfigPath -RegistryPath $RegistryPath
 $path = Write-BestSellersCaptureReceipt -Receipt $receipt -Path $OutputPath
 [pscustomobject]@{ Status = $receipt.status; MarketDate = $receipt.market_date; SourceMetadataVerified = $receipt.source_metadata_verified; SnapshotSha256 = $receipt.snapshot_sha256; ReceiptPath = $path } | ConvertTo-Json -Depth 6

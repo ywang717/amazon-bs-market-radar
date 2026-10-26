@@ -7,7 +7,7 @@ interface D1PreparedStatement {
 
 interface D1Database {
   prepare(sql: string): D1PreparedStatement;
-  batch(statements: D1PreparedStatement[]): Promise<Array<{ meta?: { changes?: number; [key: string]: unknown } }>>;
+  batch(statements: D1PreparedStatement[]): Promise<Array<{ results?: unknown[]; meta?: { changes?: number; [key: string]: unknown } }>>;
 }
 
 interface R2Bucket {

@@ -73,7 +73,7 @@ function Read-DashboardPublishState {
             if ($propertyNames -notcontains $requiredProperty) { return $null }
         }
         if ($state.MarketDate -ne $MarketDate) { return $null }
-        if (@('PUBLISHED', 'FAILED') -notcontains [string]$state.Status) { return $null }
+        if (@('PUBLISHED', 'PUBLISHED_WITH_WARNINGS', 'FAILED') -notcontains [string]$state.Status) { return $null }
         if ([string]::IsNullOrWhiteSpace([string]$state.CompletedAt)) { return $null }
         $completedAt = [DateTimeOffset]::MinValue
         if (-not [DateTimeOffset]::TryParse([string]$state.CompletedAt, [ref]$completedAt)) { return $null }
@@ -96,10 +96,12 @@ function Write-DashboardPublishState {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
         [Parameter(Mandatory = $true)][string]$MarketDate,
-        [Parameter(Mandatory = $true)][ValidateSet('PUBLISHED', 'FAILED')][string]$Status,
+        [Parameter(Mandatory = $true)][ValidateSet('PUBLISHED', 'PUBLISHED_WITH_WARNINGS', 'FAILED')][string]$Status,
         [Parameter(Mandatory = $true)][int]$ObservationCount,
         [Parameter(Mandatory = $true)][int]$ReportsUploaded,
-        [AllowNull()][string]$ErrorMessage
+        [AllowNull()][string]$ErrorMessage,
+        [int]$MetadataQuarantined = 0,
+        [string]$MetadataQuarantinePath
     )
 
     $path = Get-DashboardPublishStatePath -Root $Root -MarketDate $MarketDate
@@ -114,6 +116,8 @@ function Write-DashboardPublishState {
         CompletedAt = [DateTimeOffset]::UtcNow.ToString('o')
         ObservationCount = $ObservationCount
         ReportsUploaded = $ReportsUploaded
+        MetadataQuarantined = $MetadataQuarantined
+        MetadataQuarantinePath = $MetadataQuarantinePath
         ErrorMessage = if ($Status -eq 'FAILED') { ConvertTo-DashboardPublishSanitizedError -ErrorMessage $ErrorMessage } else { $null }
     }
     $temporaryPath = $path + '.tmp'

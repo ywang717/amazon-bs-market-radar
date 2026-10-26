@@ -26,3 +26,14 @@ Describe 'Capture receipt timestamp preservation' {
         (Get-FileHash -LiteralPath $snapshotPath -Algorithm SHA256).Hash.ToLowerInvariant() | Should Be $sourceHash
     }
 }
+Describe 'Existing receipt replay' {
+ It 'keeps an already verified capture receipt byte-for-byte during recovery' {
+  $f=New-LegacyCategoryRegistryFixture -ProjectRoot $projectRoot -Root (Join-Path $TestDrive 'replay-registry')
+  $snapshot=Join-Path $TestDrive 'replay-snapshot.json';Copy-Item (Join-Path $projectRoot 'web/data/verified-snapshot-2026-08-12.json') $snapshot
+  $receipt=Join-Path $TestDrive 'replay-receipt.json'
+  & (Join-Path $projectRoot 'scripts/Register-BestSellersSnapshot.ps1') -SnapshotPath $snapshot -OutputPath $receipt -SourceConfigPath $f.SourceConfigPath -RegistryPath $f.RegistryPath | Out-Null
+  $before=(Get-FileHash $receipt).Hash
+  & (Join-Path $projectRoot 'scripts/Register-BestSellersSnapshot.ps1') -SnapshotPath $snapshot -OutputPath $receipt -SourceConfigPath $f.SourceConfigPath -RegistryPath $f.RegistryPath | Out-Null
+  (Get-FileHash $receipt).Hash|Should Be $before
+ }
+}

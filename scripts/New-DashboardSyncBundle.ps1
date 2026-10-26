@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory=$true)][string]$SnapshotPath,
     [string]$OutputPath,
     [string]$CategoryKey,
+    [ValidateSet("quarantine")][string]$MetadataConflictPolicy,
     [string]$RegistryPath
 )
 $ErrorActionPreference = 'Stop'
@@ -55,5 +56,6 @@ $bundle = [ordered]@{
     productMetadata = $productMetadata
     reports = @()
 }
+if($MetadataConflictPolicy){$bundle.metadataConflictPolicy=$MetadataConflictPolicy}
 [IO.File]::WriteAllText($OutputPath, ($bundle | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding($false)))
 [pscustomobject]@{ Status='CREATED'; MarketDate=$bundle.marketDate; ObservationCount=@($categories | ForEach-Object observations).Count; BundlePath=$OutputPath; ReceiptSha256=$bundle.receiptSha256 } | ConvertTo-Json

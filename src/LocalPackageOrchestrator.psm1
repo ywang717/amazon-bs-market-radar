@@ -431,6 +431,10 @@ function Invoke-LocalPackageDailyGates {
         throw "Step 'ImportSnapshot' did not confirm a verified import."
     }
 
+    if ((Get-LocalPackagePropertyValue -InputObject $run.Result -Name 'MetadataQuarantined') -gt 0) {
+        $Summary.artifacts | Add-Member -NotePropertyName metadata_quarantine_path -NotePropertyValue $run.Result.MetadataQuarantinePath -Force
+        $Summary.artifacts | Add-Member -NotePropertyName metadata_quarantined -NotePropertyValue $run.Result.MetadataQuarantined -Force
+    }
     $snapshotsRoot = Join-Path $ProjectRoot 'var\amazon-bestsellers'
     $previousPath = Resolve-LocalPackagePreviousSnapshot -SnapshotsRoot $snapshotsRoot -MarketDate $MarketDate
     $Summary.artifacts.previous_snapshot_path = $previousPath
@@ -626,7 +630,7 @@ function Invoke-LocalPackageMode {
                 Assert-LocalPackageStepSucceeded -Name $Mode -Run $run
             }
         }
-        $summary.status = 'SUCCESS'
+        $summary.status = if ((Get-LocalPackagePropertyValue -InputObject $summary.artifacts -Name 'metadata_quarantined') -gt 0) { 'SUCCESS_WITH_WARNINGS' } else { 'SUCCESS' }
         $summary.exit_code = 0
     }
     catch {

@@ -9,6 +9,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$metadataCount=0
+$metadataPath=$null
 $sourceRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($RegistryPath)) { $RegistryPath = Join-Path $sourceRoot 'config\category-registry.json' }
 Import-Module (Join-Path $sourceRoot 'src\DashboardPublishHttp.psm1') -Force
@@ -399,7 +401,7 @@ try {
             Invoke-DashboardPublishHook -Name 'BuildSyncBundle' -Arguments @($snapshotPath)
         }
         else {
-            & (Join-Path $sourceRoot 'scripts\New-DashboardSyncBundle.ps1') -SnapshotPath $snapshotPath -RegistryPath $RegistryPath | ConvertFrom-Json
+            & (Join-Path $sourceRoot 'scripts\New-DashboardSyncBundle.ps1') -SnapshotPath $snapshotPath -RegistryPath $RegistryPath -MetadataConflictPolicy quarantine | ConvertFrom-Json
         }
         $health = if (Test-DashboardPublishHook -Name 'Health') {
             Invoke-DashboardPublishHook -Name 'Health' -Arguments @($MarketDate)
@@ -409,8 +411,14 @@ try {
         }
         if ([string]$health.Status -ne 'HEALTHY') { throw 'Operational health must be healthy before dashboard publishing.' }
         $headers = @{ Authorization = "Bearer $secret" }
+        $sitesAuthorization=[Environment]::GetEnvironmentVariable("OAI_SITES_AUTHORIZATION","Process")
+        if($sitesAuthorization){$headers["OAI-Sites-Authorization"]=$sitesAuthorization}
         $result = Invoke-DashboardPublishRest -Uri ([uri]::new($DashboardUrl,'/api/sync/v1/bundles')) -Method Post -Headers $headers -ContentType 'application/json' -InFile $bundleSummary.BundlePath
 
+        $metadataCount = if ($result.PSObject.Properties['metadataQuarantined']) {[int]$result.metadataQuarantined} else {0}
+        $metadataPath = Join-Path (Split-Path -Parent $snapshotPath) 'website-metadata-quarantine.json'
+        New-Item -ItemType Directory -Path (Split-Path -Parent $metadataPath) -Force | Out-Null
+        [pscustomobject]@{marketDate=$MarketDate;sourceSha256=$bundleSummary.ReceiptSha256;metadataImported=$result.metadataImported;metadataQuarantined=$metadataCount;conflicts=@($result.metadataConflicts)} | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $metadataPath -Encoding UTF8
         $sellerEndpoint = [uri]::new($DashboardUrl,'/api/sync/v1/seller-intelligence')
         Invoke-DashboardSellerIntelligenceBundle -Endpoint $sellerEndpoint -Headers $headers -SnapshotPath $snapshotPath -SnapshotsRoot $SnapshotsRoot -ReportKind Daily -ReceiptSha256 ([string]$bundleSummary.ReceiptSha256)
 
@@ -451,7 +459,7 @@ try {
             $desktopRootName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('5Lqa6ams6YCKYnPmppzljZXmr4/ml6Xnm5Hmjqc='))
             $desktopRoot = Join-Path ([Environment]::GetFolderPath('Desktop')) $desktopRootName
             $reportEndpoint = [uri]::new($DashboardUrl,'/api/sync/v1/reports')
-            $reportsToUpload = @(Get-DashboardReportsToUpload -DesktopRoot $desktopRoot -MarketDate $MarketDate -BeijingDate $beijingDate -RegistryPath $RegistryPath)
+            $reportsToUpload = if(Test-DashboardPublishHook -Name 'ReportsToUpload') {@(Invoke-DashboardPublishHook -Name 'ReportsToUpload' -Arguments @($MarketDate))} else {@(Get-DashboardReportsToUpload -DesktopRoot $desktopRoot -MarketDate $MarketDate -BeijingDate $beijingDate -RegistryPath $RegistryPath)}
 
             foreach ($report in $reportsToUpload) {
                 $reportHeaders = @{
@@ -463,6 +471,7 @@ try {
                     # HTTP header values must be ASCII; retain readable English by removing diacritics.
                     'x-report-title' = ([string]$report.Title).Normalize([Text.NormalizationForm]::FormD) -replace '\p{Mn}', ''
                 }
+                if($sitesAuthorization){$reportHeaders["OAI-Sites-Authorization"]=$sitesAuthorization}
                 Invoke-DashboardPublishRest -Uri $reportEndpoint -Method Post -Headers $reportHeaders -ContentType 'application/pdf' -InFile $report.File.FullName | Out-Null
                 $reportsUploaded++
             }
@@ -473,13 +482,19 @@ try {
         }
 
         Import-Module (Join-Path $sourceRoot 'src\DashboardPublishPolicy.psm1') -Force
+        if($reportUploadFailed){throw 'Report upload incomplete; data imported but full publication failed.'}
         $publishResult = New-DashboardPublishResult -MarketDate $MarketDate -RemoteStatus ([string]$result.status) -ObservationCount ([int]$result.observations) -ReportsUploaded $reportsUploaded -ReportUploadFailed:$reportUploadFailed
     }
 
     if ($null -eq $publishResult -or [string]$publishResult.Status -ne 'PUBLISHED') {
         throw 'Dashboard publication did not produce a PUBLISHED result.'
     }
-    Write-DashboardPublishState -Root $ProjectRoot -MarketDate $MarketDate -Status PUBLISHED -ObservationCount ([int]$publishResult.ObservationCount) -ReportsUploaded ([int]$publishResult.ReportsUploaded) | Out-Null
+    if ($null -ne $metadataCount -and $metadataCount -gt 0) {
+        $publishResult.Status='PUBLISHED_WITH_WARNINGS'
+        $publishResult | Add-Member -NotePropertyName MetadataQuarantined -NotePropertyValue $metadataCount -Force
+        $publishResult | Add-Member -NotePropertyName MetadataQuarantinePath -NotePropertyValue $metadataPath -Force
+    }
+    Write-DashboardPublishState -Root $ProjectRoot -MarketDate $MarketDate -Status $publishResult.Status -MetadataQuarantined $metadataCount -MetadataQuarantinePath $metadataPath -ObservationCount ([int]$publishResult.ObservationCount) -ReportsUploaded ([int]$publishResult.ReportsUploaded) | Out-Null
     $publishResult | ConvertTo-Json
 }
 catch {

@@ -148,3 +148,51 @@ function Invoke-BestSellersMetadataPostgresImport {
 }
 
 Export-ModuleMember -Function New-BestSellersImportSql, Invoke-BestSellersPostgresImport, New-BestSellersMetadataImportSql, Invoke-BestSellersMetadataPostgresImport
+
+function Split-BestSellersMetadataConflicts {
+ param([object[]]$MetadataRows,[object[]]$StoredBrands,[string]$MarketDate,[string]$SourceSha)
+ $stored=@{};foreach($r in $StoredBrands){$stored[[string]$r.asin]=$r}
+ $accepted=New-Object 'System.Collections.Generic.List[object]';$conflicts=New-Object 'System.Collections.Generic.List[object]'
+ foreach($row in $MetadataRows){
+  $old=$stored[[string]$row.asin]
+  if($null -ne $old -and $row.brand_source -in @('verified_metadata','manual_review') -and $old.brand_source -in @('verified_metadata','manual_review') -and ([string]::IsNullOrWhiteSpace([string]$old.normalized_brand_key) -or [string]$old.normalized_brand_key -cne [string]$row.normalized_brand_key)) {
+   $conflicts.Add([pscustomobject]@{asin=$row.asin;market_date=$MarketDate;source_sha256=$SourceSha;old_brand=$old.raw_brand;new_brand=$row.raw_brand;old_key=$old.normalized_brand_key;new_key=$row.normalized_brand_key;reason='trusted_brand_conflict'})
+  }else{$accepted.Add($row)}
+ }
+ [pscustomobject]@{Accepted=@($accepted.ToArray());Conflicts=@($conflicts.ToArray())}
+}
+function Get-BestSellersStoredBrands {
+ param([Parameter(Mandatory=$true)]$PostgresSettings)
+ $psql=Join-Path $PostgresSettings.install_root 'bin/psql.exe'
+ $saved=[Environment]::GetEnvironmentVariable('PGPASSWORD','Process')
+ try{
+  $env:PGPASSWORD=[string]$PostgresSettings.password
+  $json=@(& $psql -X --no-psqlrc -qAt -v ON_ERROR_STOP=1 -h $PostgresSettings.host -p $PostgresSettings.port -U $PostgresSettings.username -d $PostgresSettings.database -c "SELECT COALESCE(json_agg(t),'[]'::json) FROM (SELECT asin,raw_brand,normalized_brand_key,brand_source FROM amazon_intelligence.best_sellers_product_metadata WHERE marketplace_code='AMAZON_US') t;")
+  if($LASTEXITCODE -ne 0){throw 'Stored brand read failed.'}
+  @((($json -join '')|ConvertFrom-Json))
+ }finally{if($null -eq $saved){Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue}else{$env:PGPASSWORD=$saved}}
+}
+Export-ModuleMember -Function Split-BestSellersMetadataConflicts,Get-BestSellersStoredBrands
+function New-BestSellersQuarantineReceipt {
+ param($Partition,[ValidateSet('PENDING','IMPORTED','FAILED')][string]$Status,[string]$MarketDate,[string]$SourceSha)
+ [pscustomobject]@{status=$Status;market_date=$MarketDate;source_sha256=$SourceSha;metadata_imported=if($Status -eq 'IMPORTED'){@($Partition.Accepted).Count}else{0};metadata_quarantined=@($Partition.Conflicts).Count;conflicts=@($Partition.Conflicts)}
+}
+Export-ModuleMember -Function New-BestSellersQuarantineReceipt
+function Invoke-BestSellersQuarantineImport {
+ param([object[]]$MetadataRows,[string]$MarketDate,[string]$SourceSha,[scriptblock]$ReadStored,[scriptblock]$ImportRows,[scriptblock]$WriteReceipt)
+ $previous=$null;$failure=$null
+ for($attempt=0;$attempt -lt 2;$attempt++){
+  $partition=Split-BestSellersMetadataConflicts -MetadataRows $MetadataRows -StoredBrands @(& $ReadStored) -MarketDate $MarketDate -SourceSha $SourceSha
+  if($attempt -gt 0 -and (@($partition.Conflicts|ForEach-Object asin|Sort-Object) -join ',') -eq (@($previous.Conflicts|ForEach-Object asin|Sort-Object) -join ',')){throw $failure}
+  & $WriteReceipt -Receipt (New-BestSellersQuarantineReceipt -Partition $partition -Status PENDING -MarketDate $MarketDate -SourceSha $SourceSha)
+  try{
+   & $ImportRows -Rows @($partition.Accepted)
+   & $WriteReceipt -Receipt (New-BestSellersQuarantineReceipt -Partition $partition -Status IMPORTED -MarketDate $MarketDate -SourceSha $SourceSha)
+   return $partition
+  }catch{
+   & $WriteReceipt -Receipt (New-BestSellersQuarantineReceipt -Partition $partition -Status FAILED -MarketDate $MarketDate -SourceSha $SourceSha)
+   if($attempt -eq 1){throw};$failure=$_;$previous=$partition
+  }
+ }
+}
+Export-ModuleMember -Function Invoke-BestSellersQuarantineImport

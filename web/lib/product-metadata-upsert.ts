@@ -82,7 +82,7 @@ export function buildProductMetadataUpsertStatement(db: D1Database, metadata: Pr
   );
 }
 
-export function buildProductMetadataBulkUpsertStatement(db: D1Database, metadata: ProductMetadata[]) {
+export function buildProductMetadataBulkUpsertStatement(db: D1Database, metadata: ProductMetadata[], quarantine = false) {
   return db.prepare(`WITH incoming AS (
     SELECT
       json_extract(entry.value, '$.marketplace') AS marketplace,
@@ -115,7 +115,7 @@ export function buildProductMetadataBulkUpsertStatement(db: D1Database, metadata
     FROM incoming AS candidate
     INNER JOIN product_metadata AS stored
       ON stored.marketplace = candidate.marketplace AND stored.asin = candidate.asin
-    WHERE candidate.brand_source IN ('verified_metadata', 'manual_review')
+    WHERE ${quarantine ? 'candidate.marketplace = incoming.marketplace AND candidate.asin = incoming.asin AND' : ''} candidate.brand_source IN ('verified_metadata', 'manual_review')
       AND stored.brand_source IN ('verified_metadata', 'manual_review')
       AND (stored.normalized_brand_key IS NULL
         OR TRIM(stored.normalized_brand_key) = ''
@@ -154,4 +154,15 @@ export function buildProductMetadataBulkUpsertStatement(db: D1Database, metadata
     brand_source = CASE WHEN excluded.brand_source IN ('verified_metadata', 'manual_review') THEN excluded.brand_source ELSE product_metadata.brand_source END,
     first_seen_market_date = MIN(product_metadata.first_seen_market_date, excluded.first_seen_market_date),
     last_seen_market_date = MAX(product_metadata.last_seen_market_date, excluded.last_seen_market_date)`).bind(JSON.stringify(metadata));
+}
+
+export function buildMetadataConflictsStatement(db: D1Database, metadata: ProductMetadata[]) {
+ return db.prepare(`SELECT stored.asin, stored.raw_brand AS oldBrand,
+ json_extract(entry.value, '$.rawBrand') AS newBrand,
+ stored.normalized_brand_key AS oldKey, json_extract(entry.value, '$.normalizedBrandKey') AS newKey
+ FROM json_each(?) entry JOIN product_metadata stored
+ ON stored.marketplace = json_extract(entry.value, '$.marketplace') AND stored.asin = json_extract(entry.value, '$.asin')
+ WHERE stored.brand_source IN ('verified_metadata','manual_review')
+ AND json_extract(entry.value, '$.brandSource') IN ('verified_metadata','manual_review')
+ AND (stored.normalized_brand_key IS NULL OR TRIM(stored.normalized_brand_key) = '' OR stored.normalized_brand_key <> json_extract(entry.value, '$.normalizedBrandKey'))`).bind(JSON.stringify(metadata));
 }

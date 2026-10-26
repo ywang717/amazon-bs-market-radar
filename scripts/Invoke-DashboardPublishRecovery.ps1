@@ -16,7 +16,7 @@ Import-Module (Join-Path $sourceRoot 'src\DashboardPublishState.psm1') -Force
 $mutex = Enter-DashboardPublishLock -MarketDate $MarketDate
 try {
     $state = Read-DashboardPublishState -Root $ProjectRoot -MarketDate $MarketDate
-    if ($null -ne $state -and $state.Status -eq 'PUBLISHED') {
+    if ($null -ne $state -and $state.Status -in @('PUBLISHED','PUBLISHED_WITH_WARNINGS')) {
         [pscustomobject]@{
             Status = 'SKIPPED_ALREADY_PUBLISHED'
             MarketDate = $MarketDate
