@@ -53,8 +53,8 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
   return <>
     <MarketContext marketDate={category.marketDate} validMarketDates={category.validMarketDates} context={context} page="reports" />
     <PageHeader eyebrow="每日市场简报" title="报告" description={`${labels.category} · ${labels.segment} 的实时市场解读、经营预警、竞争观察与已验证报告归档。`} />
-    <section className="panel reportMarketSummary" aria-label="市场摘要"><h2>市场摘要</h2><p>{summary}</p></section>
-    <section className="reportSummary" aria-label="日报摘要"><article className="panel"><span>市场日期</span><strong>{category.marketDate}</strong><small>{labels.category} · {labels.segment}</small></article><article className="panel"><span>High</span><strong>{high.length}</strong><small>优先关注</small></article><article className="panel"><span>Watch</span><strong>{watch.length}</strong><small>持续观察</small></article><article className="panel"><span>市场动态</span><strong>{activity.length}</strong><small>普通市场变化</small></article></section>
+    <section className="panel reportMarketSummary reportCommandHero" aria-label="市场摘要"><h2>市场摘要</h2><p>{summary}</p></section>
+    <section className="reportSummary reportWorkspaceGrid" aria-label="日报摘要"><article className="panel"><span>市场日期</span><strong>{category.marketDate}</strong><small>{labels.category} · {labels.segment}</small></article><article className="panel"><span>High</span><strong>{high.length}</strong><small>优先关注</small></article><article className="panel"><span>Watch</span><strong>{watch.length}</strong><small>持续观察</small></article><article className="panel"><span>市场动态</span><strong>{activity.length}</strong><small>普通市场变化</small></article></section>
     {noSignals && <section className="sectionBlock"><EmptyState description="今日暂无 High / Watch / Activity 市场变化。" /></section>}
     {high.length > 0 && <section className="sectionBlock"><div className="sectionHeading"><div><h2>High</h2><p>需要优先注意的已验证变化</p></div></div><div className="marketSignalGrid">{high.map((signal) => <SignalCard signal={signal} context={context} marketDate={category.marketDate} key={`high-${signal.kind}-${signal.asin ?? signal.brand}`} />)}</div></section>}
     {watch.length > 0 && <section className="sectionBlock"><div className="sectionHeading"><div><h2>Watch</h2><p>值得持续观察的变化，最多展示 5 条</p></div></div><div className="marketSignalGrid">{watch.slice(0, 5).map((signal) => <SignalCard signal={signal} context={context} marketDate={category.marketDate} key={`watch-${signal.kind}-${signal.asin ?? signal.brand}`} />)}</div></section>}
@@ -65,7 +65,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
     </section>
     {activity.length > 0 && <details className="panel reportActivity"><summary>今日另外记录 {activity.length} 条普通市场动态</summary><div className="marketSignalGrid">{activity.map((signal) => <SignalCard signal={signal} context={context} marketDate={category.marketDate} key={`activity-${signal.kind}-${signal.asin ?? signal.brand}`} />)}</div></details>}
     <details className="panel signalEvidence"><summary>证据与方法</summary><p>信号只比较当前日与上一有效市场日；失败或不完整抓取不参与比较。High、Watch 与 Activity 来自全站唯一 Signal Engine，页面只做展示筛选。</p><p>建议对价格、优惠、评论与详情页变化进行人工确认；缺失字段不以 0 代替。</p></details>
-    <section className="reportHubGrid">
+    <section className="reportHubGrid reportEvidenceActions">
       <a href={analysisHref()} target="_top"><span>01</span><h2>智能报告</h2><p>实时解读与历史归档</p><b>进入 →</b></a>
       <a href={analysisHref("seller_alert")} target="_top"><span>02</span><h2>经营预警</h2><p>高优先级 / 观察变化与人工核查项</p><b>进入 →</b></a>
       <a href={analysisHref("competition_strategy")} target="_top"><span>03</span><h2>竞争观察</h2><p>基于充分证据的描述性市场事实</p><b>进入 →</b></a>

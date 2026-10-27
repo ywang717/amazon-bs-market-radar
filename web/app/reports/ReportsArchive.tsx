@@ -50,7 +50,7 @@ export function ReportsArchive({ context, marketDate, kind }: { context: MarketC
     </div>
     {archiveDate && !isValidMarketDate(archiveDate) && <p role="alert">归档日期无效，请重新选择或查看全部归档日期。</p>}
     <section className="reportSummary"><article className="panel"><span>已同步日报</span><strong>{dailyCount}</strong><small>当前归档筛选范围</small></article><article className="panel"><span>已同步周报</span><strong>{weeklyCount}</strong><small>当前归档筛选范围</small></article><article className="panel"><span>当前同步状态</span><strong className="smaller">{statusLabel}</strong><small>只展示已成功上传的 PDF</small></article></section>
-    <section id="report-archive" className="panel reportList" aria-busy={!loaded}>
+    <section id="report-archive" className="panel reportList reportArchivePanel" aria-busy={!loaded}>
       <div className="panelHead"><div><h2>报告归档</h2><p>报告标题包含对应市场日信息</p></div><QualityBadge tone={status === "ready" ? "good" : status === "error" ? "danger" : "warning"}>{status === "ready" ? `已同步 ${visibleReports.length} 份` : statusLabel}</QualityBadge></div>
       {status === "ready" ? pagination.rows.map(report => <article key={report.key}><div className="pdfIcon">PDF</div><div><b>{report.label}</b><p>{report.kindLabel} · 市场日 {report.market_date} · {report.segmentLabel}</p></div><span>{report.sizeLabel}</span><a className="downloadButton" href={report.href} target="_blank" rel="noreferrer">查看 PDF</a></article>) : <p className="emptyReports" role={status === "error" ? "alert" : "status"}>{status === "loading" ? "正在读取已验证报告…" : status === "error" ? "报告服务暂时不可用，请稍后重试。" : "暂无已验证报告归档"}</p>}
       {status === "error" && <button type="button" onClick={() => setAttempt(value => value + 1)}>重试读取报告</button>}

@@ -415,3 +415,21 @@ thead { position: sticky; top: 0; z-index: 2; background: var(--surface-1); }
 }
 
 .worthStudying .opportunityGuide{padding:14px;background:var(--surface-2);border-radius:8px;line-height:1.7}.opportunityGuide>strong{margin-right:12px}.opportunityFacts{margin:0;display:grid;gap:8px}.opportunityFacts>div{display:flex;justify-content:space-between;gap:12px}.opportunityFacts dd{margin:0}.worthStudying td>a{display:block;padding:8px 0}.worthStudying td{vertical-align:top}
+
+/* Evidence-first command-center layout */
+.dashboardCommandHero,.reportCommandHero{position:relative;overflow:hidden;border:1px solid rgba(79,140,255,.2);background:linear-gradient(120deg,var(--surface-1),rgba(79,140,255,.08));}
+.dashboardCommandHero::after,.reportCommandHero::after{content:"";position:absolute;inset:auto -10% -70% 35%;height:180px;background:radial-gradient(ellipse,rgba(79,140,255,.18),transparent 70%);pointer-events:none;}
+.dashboardTrendRail{position:relative;}
+.dashboardTrendRail::before{content:"趋势与状态";position:absolute;right:16px;top:-17px;color:var(--text-3);font-size:9px;letter-spacing:.08em;text-transform:uppercase;}
+.dashboardEvidenceActions,.reportEvidenceActions{position:relative;}
+.dashboardEvidenceActions .summarySurface,.reportEvidenceActions>a{transition:transform .16s ease,border-color .16s ease,background-color .16s ease;}
+.dashboardEvidenceActions .summarySurface:hover,.reportEvidenceActions>a:hover{transform:translateY(-2px);border-color:rgba(79,140,255,.35);}
+.reportWorkspaceGrid{grid-template-columns:repeat(4,minmax(0,1fr));}
+.reportWorkspaceGrid .panel:first-child{grid-column:span 2;}
+.reportArchivePanel{position:relative;}
+.reportArchivePanel::before,.analysisTimelineRail::before{content:"时间线与归档";display:block;margin:-4px 0 12px;color:var(--text-3);font-size:9px;letter-spacing:.08em;text-transform:uppercase;}
+.analysisWorkspaceGrid{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;}
+.analysisWorkspaceGrid .tabs{margin:0;}
+.analysisTimelineRail{position:relative;}
+@media(max-width:900px){.reportWorkspaceGrid{grid-template-columns:repeat(2,minmax(0,1fr));}.reportWorkspaceGrid .panel:first-child{grid-column:auto;}.analysisWorkspaceGrid{grid-template-columns:1fr;align-items:start;}.analysisWorkspaceGrid .tabs{width:100%;}}
+@media(max-width:560px){.reportWorkspaceGrid{grid-template-columns:1fr;}.reportWorkspaceGrid .panel:first-child{grid-column:auto;}}

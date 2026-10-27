@@ -22,7 +22,7 @@ export function ProductBrowser({ categories, opportunities = false, error, updat
  const returnTo=`${opportunities?'/garden/opportunities':'/garden/products'}?${params}`;
  return <>
   {opportunities&&<div className="gardenPanel opportunityGuide"><h3>自动候选怎么读</h3><p>这里展示的是研究线索：先看入选信号和数据依据，再检查证据缺口。只有完成需求、竞争、差异化和销售可行性限制的人工核验，才会形成已发布结论。</p><p>园艺最新完整市场日：{categories.map(c=>c.marketDate).filter(Boolean).sort().at(-1)??'暂无'}。各候选的实际市场日见卡片。全站采集市场日：{updatedMarketDate??'暂无'} · 全站采集时间：{updatedAt?new Intl.DateTimeFormat('zh-CN',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'medium'}).format(new Date(updatedAt))+' (Pacific Time)':'暂无记录'} · 研究优先级不代表成交概率或销量预测。</p></div>}
-  <div className="gardenFilters">
+  <div className="gardenFilters gardenCommandGrid">
    <label>所属榜单<select aria-label="所属榜单" value={categoryKey} onChange={e=>filter({categoryKey:e.target.value,signal:null})}><option value="">全部榜单</option>{categories.map(c=><option key={c.key} value={c.key}>{c.label}</option>)}</select></label>
    <label>机会信号<select aria-label="机会信号" value={signal} onChange={e=>filter({signal:e.target.value})}><option value="">全部信号</option>{signals.map(s=><option key={s}>{s}</option>)}</select></label>
    <label>搜索产品或 ASIN<input value={q} onChange={e=>update({q:e.target.value,page:null},true)}/></label>
@@ -39,7 +39,7 @@ export function ProductBrowser({ categories, opportunities = false, error, updat
    <p>{empty==='error'?'数据服务暂时不可用，读取失败不代表没有商机。':empty==='insufficient'?`当前最多 ${Math.max(0,...categories.map(c=>c.completeMarketDays))} 个完整市场日，至少需要 7 个；请等待真实数据积累。`:empty==='threshold'?'当前没有同时达到现有评分、置信度和信号要求的候选，不降低门槛生成结论。':'请调整关键词、所属榜单、信号或价格区间。'}</p>
    {empty==='error'?<button type="button" onClick={()=>window.location.reload()}>重试读取数据</button>:<><button type="button" onClick={reset}>清除当前筛选</button> <a target="_top" href="/garden">查看市场数据 →</a></>}
   </div>}
-  {!error&&<div className="gardenCards">{pagination.rows.map(p=>{
+  {!error&&<div className="gardenCards gardenTimelinePanel">{pagination.rows.map(p=>{
    const gaps=[p.price===null?'价格':null,p.rating===null?'评分':null,p.reviews===null?'评论数':null,p.rankChange===null?'可比较排名历史':null].filter(Boolean);
    return <article key={`${p.category.key}-${p.asin}`}><span className="gardenBadge">{p.category.label} · #{p.rank}</span><h3><a href={p.url} target="_blank" rel="noreferrer">{p.title}</a></h3>
     <p>所属榜单：{categories.flatMap(c=>c.products.filter(x=>x.asin===p.asin).map(x=>`${c.label} #${x.rank}`)).join('；')}</p>
