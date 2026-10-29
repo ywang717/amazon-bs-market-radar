@@ -7,7 +7,7 @@ const source = async (path) => readFile(new URL(`../${path}`, import.meta.url), 
 test("overview uses command hero, trend rail, and evidence action zones", async () => {
   const value = await source("app/page.tsx");
   assert.match(value, /dashboardCommandHero/);
-  assert.match(value, /dashboardTrendRail/);
+  assert.match(value, /TrendPanel/);
   assert.match(value, /dashboardEvidenceActions/);
 });
 

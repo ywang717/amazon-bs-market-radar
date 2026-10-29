@@ -321,10 +321,10 @@ test("renders the signal-first market dashboard", async () => {
   assert.match(html, /Amazon 美国站畅销榜公开页面/);
   assert.match(html, /高压清洗机/);
   assert.match(html, /今日需要关注|市场动态/);
-  assert.match(html, /高优先级信号/);
+  assert.match(html, />High<|优先信号/);
   assert.match(html, /新入榜/);
-  assert.match(html, /Top10 稳定度（1D）/);
-  assert.match(html, /市场波动/);
+  assert.match(html, /Top10/);
+  assert.match(html, /波动/);
   assert.match(html, /品牌变化/);
   assert.match(html, /市场结构/);
   assert.doesNotMatch(html, /MARKET INTELLIGENCE|MARKET SUMMARY|Top10 Stability|Turnover|Top3 Brands|High \/ Watch|vs previous valid market day|Data status/);
@@ -695,9 +695,9 @@ test("does not render unavailable comparison metrics as zero", async () => {
   const response = await render("/", dynamicD1Environment("2026-08-13", { disjointAsins: true }));
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /等待有效比较日/);
-  assert.match(html, /<h2>Top10 稳定度（1D）<\/h2>/);
-  assert.doesNotMatch(html, /<strong>0%<\/strong><h2>Top10 稳定度（1D）<\/h2>/);
+  assert.match(html, /等待比较日/);
+  assert.match(html, /Top10/);
+  assert.doesNotMatch(html, /<strong>0%<\/strong>/);
 });
 
 test("labels verified fallback data when the live dashboard is unavailable", async () => {

@@ -32,4 +32,16 @@ test('workspace CSS defines desktop three-column and mobile action layouts', asy
   assert.match(css, /workspaceEvidence/);
   assert.match(css, /workspaceActionDock/);
   assert.match(css, /@media\s*\(max-width:\s*700px\)/);
+  assert.match(css, /\.container\s*\{[^}]*max-width:\s*(?:18|19)\d{2}px/s);
+  assert.doesNotMatch(css, /\.dashboardTrendRail::before/);
+});
+
+test('overview renders one wide-screen metric rail without the legacy duplicate cards', async () => {
+  const page = await source('page.tsx');
+  assert.doesNotMatch(page, /MetricCard/);
+  assert.doesNotMatch(page, /metricCardGrid/);
+  assert.match(page, /label: "High"/);
+  assert.match(page, /label: "新入榜"/);
+  assert.match(page, /label: "Top10"/);
+  assert.match(page, /label: "波动"/);
 });
