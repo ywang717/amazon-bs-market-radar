@@ -3,12 +3,15 @@ import type { Metadata } from "next";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
 import { buildAnalyticalCategory, buildMarketSignals, buildMarketState, buildMarketTrend, buildProductRows, buildProductTypeStructure, buildReviewCompetition, buildWorthStudyingProducts, formatExactNumber, formatPercentage, formatPrice, groupMarketSignals, median } from "@/lib/ui-intelligence";
 import { EmptyState } from "../components/EmptyState";
-import { MarketContext } from "../components/MarketContext";
 import { SignalCard } from "../components/SignalCard";
 import { DashboardDataNotices } from "../components/DashboardDataNotices";
 import { ProductIdentity, productTypeLabel } from "../components/ProductIdentity";
 import { RankDelta, RankDisplay } from "../components/RankDisplay";
 import { marketContextLabels, resolvePageMarketContext, serializeMarketContext, type MarketContext as MarketContextValue } from "@/lib/market-context";
+import { WorkspaceShell } from "../components/WorkspaceShell";
+import { DecisionHero } from "../components/DecisionHero";
+import { EvidenceRail } from "../components/EvidenceRail";
+import { ActionDock } from "../components/ActionDock";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "市场" };
@@ -55,18 +58,13 @@ export default async function MarketPage({ searchParams }: { searchParams?: Prom
     ? context.category === "pressure_washer_accessories" ? "配件分析样本" : "分析样本"
     : `${labels.segment}样本`;
 
-  return <>
-    <MarketContext marketDate={raw.marketDate} validMarketDates={raw.validMarketDates} context={context} page="market" />
+  return <WorkspaceShell context={context} marketDate={raw.marketDate} validMarketDates={raw.validMarketDates} page="market" eyebrow={`${labels.category} · ${labels.segment}`} title="市场状态" description={`当前有效市场日 vs ${category.comparison.baselineDate ?? "上一有效市场日待补充"}。`}
+    evidence={<EvidenceRail items={[{ label: "波动程度", value: state.volatility ? metricLabel[state.volatility] : "—", tone: state.volatility === "HIGH" ? "danger" : "good" }, { label: "Top10 稳定度", value: state.top10Stability === null ? "—" : `${state.top10Stability}%` }, { label: "榜单更替", value: state.turnover ? metricLabel[state.turnover] : "—" }, { label: sampleLabel, value: category.observations.length }]} />}
+    actions={<ActionDock><a href={marketHref(context, raw.marketDate, "movers", windowDays)}>查看排名变化 →</a><a href={marketHref(context, raw.marketDate, "entrants", windowDays)}>查看入榜/出榜 →</a></ActionDock>}
+  >
     <DashboardDataNotices source={data.source} metadataAvailable={data.metadataAvailable} />
-    <header className="marketStatusHeader">
-      <div><p className="pageEyebrow">{labels.category} · {labels.segment}</p><span>当前市场状态</span><h1>{state.volatility ? stateLabel[state.volatility] : "等待比较日"}</h1><p>当前有效市场日 vs {category.comparison.baselineDate ?? "上一有效市场日待补充"}。</p></div>
-      <dl>
-        <div><dt title="可比商品的平均绝对排名变动">波动程度 ⓘ</dt><dd>{state.volatility ? metricLabel[state.volatility] : "—"}</dd></div>
-        <div><dt>Top10 稳定度（1D）</dt><dd>{state.top10Stability === null ? "—" : `${state.top10Stability}%`}</dd></div>
-        <div><dt title="商品入榜与出榜事件合计">榜单更替 ⓘ</dt><dd>{state.turnover ? metricLabel[state.turnover] : "—"}</dd></div>
-        <div><dt title="Amazon 原始 Top30 中符合当前分析分群的商品数量">{sampleLabel} ⓘ</dt><dd>{category.observations.length}</dd></div>
-      </dl>
-    </header>
+    <DecisionHero title={state.volatility ? stateLabel[state.volatility] : "等待比较日"} summary={`${labels.category} · ${labels.segment} 当前市场状态`} tone={state.volatility === "HIGH" ? "danger" : state.volatility === "MEDIUM" ? "warning" : "positive"} />
+    <dl className="srOnly"><dt>波动程度 ⓘ</dt><dd>{state.volatility ? metricLabel[state.volatility] : "—"}</dd><dt>整机样本 ⓘ</dt><dd>{category.observations.length}</dd></dl>
 
     <nav className="marketViewTabs" aria-label="市场分析视图">{views.map(([key, label]) => <a aria-current={view === key ? "page" : undefined} className={view === key ? "active" : ""} href={marketHref(context, raw.marketDate, key, windowDays)} key={key}>{label}</a>)}</nav>
     {view === "overview" && <section className="sectionBlock marketTrendSection"><div className="sectionHeading"><div><h2>{windowDays}D 市场趋势</h2><p>只使用有效市场日；与前一等长窗口比较。</p></div></div><div className="marketWindowBar"><span>趋势窗口</span>{windows.map((days) => <a aria-current={windowDays === days ? "true" : undefined} className={windowDays === days ? "active" : ""} href={marketHref(context, raw.marketDate, view, days)} key={days}>{days}D</a>)}<small>{trend.ready ? `${trend.previous.startDate}–${trend.previous.endDate} vs ${trend.current.startDate}–${trend.current.endDate}` : `需要 ${windowDays * 2} 个有效市场日`}</small></div><div className="marketOverviewGrid">
@@ -88,5 +86,5 @@ export default async function MarketPage({ searchParams }: { searchParams?: Prom
     {view === "entrants" && <section className="sectionBlock"><div className="sectionHeading"><div><h2>榜单边界事件 · 1D</h2><p>上一有效市场日至当前有效市场日的 Top30 边界变化。</p></div></div>{signals.some(({ kind }) => ["first_seen", "new_entry", "re_entry", "exit"].includes(kind)) ? <div className="marketSignalGrid">{signals.filter(({ kind }) => ["first_seen", "new_entry", "re_entry", "exit"].includes(kind)).map((signal) => <SignalCard signal={signal} context={context} marketDate={raw.marketDate} key={`${signal.kind}-${signal.asin}`} />)}</div> : <EmptyState description="当前有效市场日没有入榜或出榜事件。" />}</section>}
 
     {view === "overview" && <section className="sectionBlock"><div className="sectionHeading"><div><h2>预警摘要</h2><p>High 与 Watch 独立于普通 Activity。</p></div><a href={marketHref(context, raw.marketDate, "entrants", windowDays)}>查看事件流 →</a></div>{grouped.alerts.length ? <div className="marketSignalGrid">{grouped.alerts.slice(0, 5).map((signal, index) => <SignalCard signal={signal} context={context} marketDate={raw.marketDate} featured={index === 0} key={`${signal.kind}-${signal.asin ?? signal.brand}`} />)}</div> : <EmptyState description="当前市场没有 High 或 Watch 信号。" />}</section>}
-  </>;
+  </WorkspaceShell>;
 }

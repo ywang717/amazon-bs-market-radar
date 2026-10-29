@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
-import { PageHeader } from "../components/PageHeader";
+import { WorkspaceShell } from "../components/WorkspaceShell";
+import { EvidenceRail } from "../components/EvidenceRail";
 import { DashboardDataNotices } from "../components/DashboardDataNotices";
 import { RankingExplorer } from "./RankingExplorer";
 import { buildAnalyticalCategory, buildProductRows } from "@/lib/ui-intelligence";
@@ -17,8 +18,9 @@ export default async function RankingsPage({ searchParams }: { searchParams?: Pr
   const data = await loadLiveDashboard({ marketDate: requestedDate, preferLatestSnapshot: !requestedDate });
   const rawCategory = data.categoryRows.find((row) => row.key === context.category)!;
   const category = buildAnalyticalCategory(rawCategory, data.productMetadata, context);
-  return <>
-    <PageHeader eyebrow="Amazon 畅销榜" title="Top30 榜单" description={`${labels.category} · ${labels.segment}；“全部榜单”保留 Amazon 原始 Top30，细分分群仅显示已有可信分类的商品。`} />
+  return <WorkspaceShell context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="rankings" eyebrow="Amazon 畅销榜" title="Top30 榜单" description={`${labels.category} · ${labels.segment}；“全部榜单”保留 Amazon 原始 Top30，细分分群仅显示已有可信分类的商品。`}
+    evidence={<EvidenceRail items={[{ label: "市场日", value: rawCategory.marketDate }, { label: "当前样本", value: category.observations.length }, { label: "比较日", value: category.comparison.baselineDate ?? "不足", tone: category.comparison.baselineDate ? "good" : "warning" }]} />}
+  >
     <DashboardDataNotices source={data.source} metadataAvailable={data.metadataAvailable} />
     <RankingExplorer context={context} group={{
       key: category.key,
@@ -28,5 +30,5 @@ export default async function RankingsPage({ searchParams }: { searchParams?: Pr
       baselineDate: category.comparison.baselineDate ?? null,
       rows: buildProductRows({ observations: category.observations, comparison: category.comparison, metadata: data.productMetadata }),
     }} />
-  </>;
+  </WorkspaceShell>;
 }

@@ -3,7 +3,11 @@ import { buildAnalyticalCategory, buildBrandMovement, buildBrandStructure, build
 import { ProductIdentity } from "./components/ProductIdentity";
 import { RankDisplay } from "./components/RankDisplay";
 import { EmptyState } from "./components/EmptyState";
-import { MarketContext } from "./components/MarketContext";
+import { WorkspaceShell } from "./components/WorkspaceShell";
+import { DecisionHero } from "./components/DecisionHero";
+import { TrendPanel } from "./components/TrendPanel";
+import { EvidenceRail } from "./components/EvidenceRail";
+import { ActionDock } from "./components/ActionDock";
 import { MetricCard } from "./components/MetricCard";
 import { SignalCard } from "./components/SignalCard";
 import { DashboardDataNotices } from "./components/DashboardDataNotices";
@@ -46,20 +50,22 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
         ? `${labels.segment}市场整体稳定，暂无高优先级异常，检测到 ${signalGroups.activity.length} 条普通市场变化。`
       : "今天市场整体较稳定，暂未检测到高优先级变化。";
 
-  return <>
-    <MarketContext marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} context={context} page="overview" />
+  return <WorkspaceShell context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="overview" eyebrow={`Daily Brief · ${rawCategory.marketDate}`} title={labels.category} description={marketSummary}
+    evidence={<EvidenceRail items={[{ label: "数据更新", value: data.observedAt ? new Date(data.observedAt).toLocaleString("zh-CN", { hour12: false }) : "暂无" }, { label: "完整市场日", value: category.history?.length ?? 0 }, { label: "数据状态", value: data.source === "seed_fallback" ? "部分数据" : "可用", tone: data.source === "seed_fallback" ? "warning" : "good" }]} />}
+    actions={<ActionDock><ContextLink href="/market" target="_top">查看市场状态 →</ContextLink><ContextLink href="/rankings" target="_top">查看榜单 →</ContextLink><ContextLink href="/reports" target="_top">打开报告 →</ContextLink></ActionDock>}
+  >
     <DashboardDataNotices source={data.source} metadataAvailable={data.metadataAvailable} />
-    <header className="overviewHero dashboardCommandHero">
-      <div><p className="pageEyebrow">Daily Brief · {rawCategory.marketDate}</p><h1>{labels.category}</h1><p>{marketSummary}</p></div>
+    <DecisionHero className="dashboardCommandHero" title={marketState.volatility === "HIGH" ? "市场波动较高" : "今日市场判断"} summary={marketSummary} tone={highSignals ? "danger" : watchSignals ? "warning" : "positive"}>
       <ContextLink href="/market" target="_top">查看市场状态 →</ContextLink>
-    </header>
+    </DecisionHero>
 
+    <TrendPanel title="趋势与状态" subtitle="先看市场方向，再看证据和行动" metrics={[{ label: "High", value: highSignals, detail: "优先信号" }, { label: "Watch", value: watchSignals, detail: "持续观察" }, { label: "Top10", value: marketState.top10Stability === null ? "—" : `${marketState.top10Stability}%`, detail: "1D 稳定度" }, { label: "波动", value: marketState.volatility ? stateLabels[marketState.volatility] : "—", detail: "当前状态" }]}>
     <section className="metricCardGrid dashboardTrendRail" aria-label="核心市场指标">
       <MetricCard value={highSignals} label="高优先级信号" detail={watchSignals ? `${watchSignals} 个观察项` : "暂无观察项"} tone={highSignals ? "danger" : "positive"} />
       <MetricCard value={category.comparison.ready ? category.comparison.entries ?? "—" : "—"} label="新入榜" detail="1D · 对比上一有效市场日" />
       <MetricCard value={marketState.top10Stability === null ? "—" : `${marketState.top10Stability}%`} label="Top10 稳定度（1D）" detail="1D · 头部阵容留存" tone="positive" />
       <MetricCard value={marketState.volatility ? stateLabels[marketState.volatility] : "—"} label="市场波动" detail={marketState.ready ? "基于平均绝对排名变动" : "等待有效比较日"} tone={marketState.volatility === "HIGH" ? "warning" : "neutral"} />
-    </section>
+    </section></TrendPanel>
 
     <section className="sectionBlock signalSection">
       <div className="sectionHeading"><div><h2>{signalGroups.alerts.length ? "今日需要关注" : "市场动态"}</h2><p>只展示当前市场中优先级最高的 5 条变化</p></div><ContextLink href="/market" target="_top">查看全部 →</ContextLink></div>
@@ -87,5 +93,5 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
         <ContextLink className="surfaceLink" href="/market" target="_top">查看市场 →</ContextLink>
       </article>
     </section>
-  </>;
+  </WorkspaceShell>;
 }

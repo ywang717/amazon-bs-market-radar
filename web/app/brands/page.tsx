@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
 import { buildAnalyticalCategory, buildBrandMovement, buildBrandSeatTrend, buildBrandStructure } from "@/lib/ui-intelligence";
-import { MarketContext } from "../components/MarketContext";
-import { PageHeader } from "../components/PageHeader";
+import { WorkspaceShell } from "../components/WorkspaceShell";
+import { EvidenceRail } from "../components/EvidenceRail";
 import { DashboardDataNotices } from "../components/DashboardDataNotices";
 import { marketContextLabels, resolvePageMarketContext } from "@/lib/market-context";
 
@@ -41,10 +41,10 @@ export default async function BrandsPage({ searchParams }: { searchParams?: Prom
   const metadataByAsin = new Map(data.productMetadata.map((row) => [row.asin, row]));
   const maxSeats = Math.max(1, ...presence.map((row) => row.currentSeats));
 
-  return <>
-    <MarketContext marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} context={context} page="brands" />
+  return <WorkspaceShell context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="brands" eyebrow="品牌结构" title="品牌" description={`观察 ${labels.category} · ${labels.segment} 在 Top30 中的品牌席位、头部存在与变化。`}
+    evidence={<EvidenceRail items={[{ label: "Top30 品牌数", value: structure.rows.length }, { label: "Top3 集中度", value: structure.top3Concentration === null ? "—" : `${structure.top3Concentration}%` }, { label: "7D 趋势", value: trendReady ? "可用" : "积累中", tone: trendReady ? "good" : "warning" }]} />}
+  >
     <DashboardDataNotices source={data.source} metadataAvailable={data.metadataAvailable} />
-    <PageHeader eyebrow="" title="品牌" description={`观察 ${labels.category} · ${labels.segment} 在 Top30 中的品牌席位、头部存在与变化。`} />
     <section className="brandPresenceSurface">
       <div className="sectionHeading"><div><h2>品牌分布</h2><p>当前席位、席位占比与 7D 有效市场日趋势</p></div></div>
       {!trendReady && <p className="sourceNotice" role="status">当前已有 {category.history?.length ?? 0} 个完整市场日；有效市场日不足，暂无法计算 7D 席位趋势。</p>}
@@ -61,5 +61,5 @@ export default async function BrandsPage({ searchParams }: { searchParams?: Prom
       const deltaCell = (delta: number | null) => <td className={`numberCell ${delta !== null && delta > 0 ? "positive" : delta !== null && delta < 0 ? "negative" : "neutral"}`}>{delta === null ? "—" : delta > 0 ? `+${delta}` : delta}</td>;
       return <tr key={row.brand}><td><b>{row.brand === "Unknown" ? "未知品牌" : row.brand}</b></td><td className="numberCell">{row.currentSeats}</td><td className="numberCell">{row.seatShare}%</td><td className="numberCell">{top10}</td>{deltaCell(row.oneDayDelta)}{deltaCell(row.sevenDayDelta)}<td className="numberCell">{average}</td></tr>;
     })}</tbody></table></section>
-  </>;
+  </WorkspaceShell>;
 }

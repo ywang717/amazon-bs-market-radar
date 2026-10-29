@@ -1,0 +1,3 @@
+export function TrendPanel({ title, subtitle, metrics, children }: { title: string; subtitle?: string; metrics?: Array<{ label: string; value: React.ReactNode; detail?: string }>; children?: React.ReactNode }) {
+  return <section className="trendPanel workspacePanel" aria-label={title}><div className="panelHead"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div><span className="trendMark">TREND</span></div>{metrics && <div className="trendMetricRail">{metrics.map((metric) => <div key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong>{metric.detail && <small>{metric.detail}</small>}</div>)}</div>}{children}</section>;
+}

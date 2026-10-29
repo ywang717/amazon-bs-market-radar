@@ -1,10 +1,11 @@
 import { WorthStudying } from "../components/WorthStudying";
 import type { Metadata } from "next";
-import { PageHeader } from "../components/PageHeader";
+import { WorkspaceShell } from "../components/WorkspaceShell";
+import { EvidenceRail } from "../components/EvidenceRail";
+import { ActionDock } from "../components/ActionDock";
 import { ReportsArchive } from "./ReportsArchive";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
 import { marketContextLabels, resolvePageMarketContext, serializeMarketContext } from "@/lib/market-context";
-import { MarketContext } from "../components/MarketContext";
 import { buildAnalyticalCategory, buildBrandMovement, buildBrandStructure, buildMarketSignals, buildMarketState, buildProductRows, buildProductTypeStructure, buildWorthStudyingProducts, productDisplayName } from "@/lib/ui-intelligence";
 import { SignalCard } from "../components/SignalCard";
 import { EmptyState } from "../components/EmptyState";
@@ -50,9 +51,10 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
     ? `当前已有 ${analytical.history?.length ?? 0} 个完整市场日，尚缺少可验证比较日。`
     : `${marketState.volatility === "HIGH" ? `今日${labels.segment}市场波动较高。` : `今日${labels.segment}市场整体稳定。`} ${marketState.top10Stability === null ? "Top10 稳定度待补充。" : `Top10 稳定度为 ${marketState.top10Stability}%。`} High ${high.length} · Watch ${watch.length} · 市场动态 ${activity.length}。${largestBrand ? ` ${largestBrand.brand} 当前拥有最多 Top30 席位（${largestBrand.seats} 席）。` : ""}${largestMove ? ` 最大排名变化为 ${productDisplayName(largestMove.title, metadataByAsin.get(largestMove.asin)?.normalizedBrand ?? null, 42)} ${largestMove.absoluteMove} 位。` : ""}`;
   const analysisHref = (workspace?: string) => `/analysis?${serializeMarketContext(context, { date: category.marketDate, ...(workspace ? { workspace } : {}) })}`;
-  return <>
-    <MarketContext marketDate={category.marketDate} validMarketDates={category.validMarketDates} context={context} page="reports" />
-    <PageHeader eyebrow="每日市场简报" title="报告" description={`${labels.category} · ${labels.segment} 的实时市场解读、经营预警、竞争观察与已验证报告归档。`} />
+  return <WorkspaceShell context={context} marketDate={category.marketDate} validMarketDates={category.validMarketDates} page="reports" eyebrow="每日市场简报" title="报告" description={`${labels.category} · ${labels.segment} 的实时市场解读、经营预警、竞争观察与已验证报告归档。`}
+    evidence={<EvidenceRail items={[{ label: "报告日期", value: category.marketDate }, { label: "High", value: high.length, tone: high.length ? "danger" : "good" }, { label: "Watch", value: watch.length, tone: watch.length ? "warning" : "good" }, { label: "Activity", value: activity.length }]} />}
+    actions={<ActionDock><a href={analysisHref()}>智能报告 →</a><a href={analysisHref("seller_alert")}>经营预警 →</a><a href="#report-archive">报告归档 →</a></ActionDock>}
+  >
     <section className="panel reportMarketSummary reportCommandHero" aria-label="市场摘要"><h2>市场摘要</h2><p>{summary}</p></section>
     <section className="reportSummary reportWorkspaceGrid" aria-label="日报摘要"><article className="panel"><span>市场日期</span><strong>{category.marketDate}</strong><small>{labels.category} · {labels.segment}</small></article><article className="panel"><span>High</span><strong>{high.length}</strong><small>优先关注</small></article><article className="panel"><span>Watch</span><strong>{watch.length}</strong><small>持续观察</small></article><article className="panel"><span>市场动态</span><strong>{activity.length}</strong><small>普通市场变化</small></article></section>
     {noSignals && <section className="sectionBlock"><EmptyState description="今日暂无 High / Watch / Activity 市场变化。" /></section>}
@@ -72,5 +74,5 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
     </section>
     <div className="sectionHeading reportArchiveHeading"><div><h2>已验证报告归档</h2><p>只有已验证 PDF 才提供下载</p></div><ReportTypeFilters context={context} marketDate={category.marketDate} kind={kind} /></div>
     <ReportsArchive context={context} marketDate={category.marketDate} kind={kind} />
-  </>;
+  </WorkspaceShell>;
 }
