@@ -638,8 +638,7 @@ test("honors a valid market-date deep link and inherits it through primary navig
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /<select[^>]*aria-label="市场日期"[^>]*>/);
-  assert.match(html, /<option[^>]*value="2026-08-12"[^>]*selected=""/);
+  assert.match(html, /class="dateCalendarTrigger"[^>]*>Aug 12, 2026/);
   assert.match(html, /href="\/products\?date=2026-08-12&amp;category=pressure_washers&amp;segment=machines"/);
 });
 

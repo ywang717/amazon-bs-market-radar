@@ -1,0 +1,3 @@
+"use client";
+import { useState } from "react";
+export function WatchlistButton({ asin }: { asin: string }) { const [saved,setSaved]=useState(()=>typeof window !== "undefined" && JSON.parse(localStorage.getItem("amazon-bs-watchlist")||"[]").includes(asin)); const toggle=()=>{const list=JSON.parse(localStorage.getItem("amazon-bs-watchlist")||"[]") as string[]; const next=saved?list.filter(x=>x!==asin):[...new Set([...list,asin])]; localStorage.setItem("amazon-bs-watchlist",JSON.stringify(next));setSaved(!saved);}; return <button type="button" onClick={toggle} aria-pressed={saved}>{saved?"已关注":"关注产品"}</button>; }

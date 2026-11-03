@@ -769,3 +769,74 @@ export function buildBrandSeatTrend(history: TrendDay[], metadata: ProductMetada
   const previous = history.at(-(windowDays + 1))!.observations;
   return buildBrandMovement({ current, previous, metadata }).filter(({ verified }) => verified);
 }
+
+export type TwoDayComparison = {
+  ready: boolean;
+  reason?: string;
+  startDate?: string;
+  endDate?: string;
+  top10: { common: number; startTotal: number; endTotal: number };
+  top30: { common: number; startTotal: number; endTotal: number };
+  entries: Observation[];
+  exits: Observation[];
+  movers: Array<Observation & { startRank: number; endRank: number; rankChange: number; priceChange: number | null; reviewChange: number | null }>;
+  brandSeats: Array<{ brand: string; startSeats: number; endSeats: number; delta: number }>;
+};
+
+const emptyTwoDay = (reason: string): TwoDayComparison => ({ ready: false, reason, top10: { common: 0, startTotal: 0, endTotal: 0 }, top30: { common: 0, startTotal: 0, endTotal: 0 }, entries: [], exits: [], movers: [], brandSeats: [] });
+
+export function buildTwoDayComparison(startDay: TrendDay | null | undefined, endDay: TrendDay | null | undefined, metadata: ProductMetadata[] = []): TwoDayComparison {
+  if (!startDay || !endDay) return emptyTwoDay("起止日期必须是有效市场日");
+  if (startDay.marketDate === endDay.marketDate) return emptyTwoDay("至少需要两个有效市场日");
+  if (startDay.marketDate > endDay.marketDate) return emptyTwoDay("开始日期必须早于结束日期");
+  const startByAsin = new Map(startDay.observations.map((row) => [row.asin, row]));
+  const endByAsin = new Map(endDay.observations.map((row) => [row.asin, row]));
+  const startTop = (limit: number) => new Set(startDay.observations.filter((row) => row.rank <= limit).map((row) => row.asin));
+  const endTop = (limit: number) => new Set(endDay.observations.filter((row) => row.rank <= limit).map((row) => row.asin));
+  const overlap = (limit: number) => { const a = startTop(limit), b = endTop(limit); return { common: [...a].filter((asin) => b.has(asin)).length, startTotal: a.size, endTotal: b.size }; };
+  const entries = endDay.observations.filter((row) => !startByAsin.has(row.asin));
+  const exits = startDay.observations.filter((row) => !endByAsin.has(row.asin));
+  const movers = endDay.observations.filter((row) => startByAsin.has(row.asin)).map((row) => {
+    const previous = startByAsin.get(row.asin)!;
+    return { ...row, startRank: previous.rank, endRank: row.rank, rankChange: previous.rank - row.rank, priceChange: previous.price !== null && row.price !== null ? row.price - previous.price : null, reviewChange: previous.reviews !== null && row.reviews !== null ? row.reviews - previous.reviews : null };
+  }).toSorted((a, b) => Math.abs(b.rankChange) - Math.abs(a.rankChange) || a.endRank - b.endRank);
+  const brandByAsin = new Map(metadata.map((row) => [row.asin, row.normalizedBrand]));
+  const seats = (rows: Observation[]) => rows.reduce((map, row) => { const brand = brandByAsin.get(row.asin); if (brand) map.set(brand, (map.get(brand) ?? 0) + 1); return map; }, new Map<string, number>());
+  const startSeats = seats(startDay.observations), endSeats = seats(endDay.observations);
+  const brands = new Set([...startSeats.keys(), ...endSeats.keys()]);
+  const brandSeats = [...brands].map((brand) => ({ brand, startSeats: startSeats.get(brand) ?? 0, endSeats: endSeats.get(brand) ?? 0, delta: (endSeats.get(brand) ?? 0) - (startSeats.get(brand) ?? 0) })).toSorted((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.brand.localeCompare(b.brand));
+  return { ready: true, startDate: startDay.marketDate, endDate: endDay.marketDate, top10: overlap(10), top30: overlap(30), entries, exits, movers, brandSeats };
+}
+
+export type RangeAnalysis = {
+  ready: boolean;
+  reason?: string;
+  validDays: string[];
+  summary: { startDate?: string; endDate?: string; completeDays: number; top10Overlap: number | null; top30Common: number | null };
+  products: Array<{ asin: string; title: string; points: Array<{ marketDate: string; rank: number | null; observation: Observation | null }>; startRank: number | null; endRank: number | null; rankChange: number | null; startPrice: number | null; endPrice: number | null; priceChange: number | null; startReviews: number | null; endReviews: number | null; reviewChange: number | null; presenceDays: number; presencePercent: number }>;
+  brandTrends: Array<{ marketDate: string; seats: Array<{ brand: string; seats: number }> }>;
+  brandSummary: Array<{ brand: string; startSeats: number; endSeats: number; delta: number }>;
+  marketTrend: Array<{ marketDate: string; top10Stability: number | null; entries: number | null; exits: number | null; averageAbsoluteMove: number | null; brandConcentration: number | null }>;
+};
+
+export function buildRangeAnalysis(history: TrendDay[], startDate: string, endDate: string, metadata: ProductMetadata[] = []): RangeAnalysis {
+  const days = history.toSorted((a, b) => a.marketDate.localeCompare(b.marketDate));
+  const validDays = days.map((day) => day.marketDate);
+  const base = { ready: false, validDays, summary: { completeDays: 0, top10Overlap: null, top30Common: null }, products: [], brandTrends: [], brandSummary: [], marketTrend: [] } as RangeAnalysis;
+  if (!validDays.includes(startDate) || !validDays.includes(endDate)) return { ...base, ready: false, reason: "起止日期必须是有效市场日" };
+  if (startDate === endDate) return { ...base, ready: false, reason: "至少需要两个有效市场日" };
+  if (startDate > endDate) return { ...base, ready: false, reason: "开始日期必须早于结束日期" };
+  const selected = days.filter((day) => day.marketDate >= startDate && day.marketDate <= endDate);
+  if (selected.length < 2) return { ...base, ready: false, reason: "至少需要两个有效市场日" };
+  const first = selected[0], last = selected.at(-1)!;
+  const comparison = buildTwoDayComparison(first, last, metadata);
+  const asins = new Set(selected.flatMap((day) => day.observations.map((row) => row.asin)));
+  const products = [...asins].map((asin) => {
+    const points = selected.map((day) => { const observation = day.observations.find((row) => row.asin === asin) ?? null; return { marketDate: day.marketDate, rank: observation?.rank ?? null, observation }; });
+    const start = points[0].observation, end = points.at(-1)!.observation;
+    return { asin, title: end?.title ?? start?.title ?? asin, points, startRank: start?.rank ?? null, endRank: end?.rank ?? null, rankChange: start && end ? start.rank - end.rank : null, startPrice: start?.price ?? null, endPrice: end?.price ?? null, priceChange: start?.price !== null && start?.price !== undefined && end?.price !== null && end?.price !== undefined ? end.price - start.price : null, startReviews: start?.reviews ?? null, endReviews: end?.reviews ?? null, reviewChange: start?.reviews !== null && start?.reviews !== undefined && end?.reviews !== null && end?.reviews !== undefined ? end.reviews - start.reviews : null, presenceDays: points.filter((point) => point.observation).length, presencePercent: Math.round(points.filter((point) => point.observation).length / selected.length * 1000) / 10 };
+  }).toSorted((a, b) => (a.endRank ?? 999) - (b.endRank ?? 999));
+  const brandByAsin = new Map(metadata.map((row) => [row.asin, row.normalizedBrand]));
+  const brandTrends = selected.map((day) => { const map = new Map<string, number>(); day.observations.forEach((row) => { const brand = brandByAsin.get(row.asin); if (brand) map.set(brand, (map.get(brand) ?? 0) + 1); }); return { marketDate: day.marketDate, seats: [...map].map(([brand, seats]) => ({ brand, seats })).toSorted((a, b) => b.seats - a.seats || a.brand.localeCompare(b.brand)) }; });
+  return { ready: true, validDays, summary: { startDate, endDate, completeDays: selected.length, top10Overlap: comparison.top10.common, top30Common: comparison.top30.common }, products, brandTrends, brandSummary: comparison.brandSeats, marketTrend: selected.map((day, index) => { if (!index) return { marketDate: day.marketDate, top10Stability: null, entries: null, exits: null, averageAbsoluteMove: null, brandConcentration: null }; const previous = buildTwoDayComparison(selected[index - 1], day, metadata); return { marketDate: day.marketDate, top10Stability: previous.top10.startTotal ? Math.round(previous.top10.common / previous.top10.startTotal * 1000) / 10 : null, entries: previous.entries.length, exits: previous.exits.length, averageAbsoluteMove: previous.movers.length ? Math.round(previous.movers.reduce((sum, row) => sum + Math.abs(row.rankChange), 0) / previous.movers.length * 10) / 10 : null, brandConcentration: null }; }) };
+}

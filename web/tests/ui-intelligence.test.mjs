@@ -16,6 +16,8 @@ import {
   buildProductTypeStructure,
   buildWorthStudyingProducts,
   buildReviewCompetition,
+  buildTwoDayComparison,
+  buildRangeAnalysis,
   resolveCanonicalEventState,
   activityPriorityPresentation,
   compactProductTitle,
@@ -64,6 +66,47 @@ const metadata = (asin, normalizedBrand, productType = "electric_pressure_washer
   brandSource: normalizedBrand ? "verified_metadata" : "unknown",
   firstSeenMarketDate: "2026-08-26",
   lastSeenMarketDate: "2026-08-27",
+});
+
+test("compares two real market days without inventing endpoint values", () => {
+  const first = { marketDate: "2026-09-20", observations: [
+    observation("CMP000001", 1, "Alpha", { price: 10, reviews: 100 }),
+    observation("CMP000002", 11, "Beta", { price: null, reviews: 50 }),
+  ] };
+  const last = { marketDate: "2026-10-28", observations: [
+    observation("CMP000001", 3, "Alpha", { price: 12, reviews: 120 }),
+    observation("CMP000003", 2, "Gamma", { price: 8, reviews: 80 }),
+  ] };
+  const result = buildTwoDayComparison(first, last, [metadata("CMP000001", "Brand A"), metadata("CMP000002", "Brand B"), metadata("CMP000003", "Brand C")]);
+  assert.equal(result.ready, true);
+  assert.equal(result.top10.common, 1);
+  assert.deepEqual(result.entries.map(({ asin }) => asin), ["CMP000003"]);
+  assert.deepEqual(result.exits.map(({ asin }) => asin), ["CMP000002"]);
+  assert.deepEqual(result.movers.map(({ asin, rankChange, priceChange, reviewChange }) => [asin, rankChange, priceChange, reviewChange]), [["CMP000001", -2, 2, 20]]);
+  assert.equal(result.brandSeats.find(({ brand }) => brand === "Brand A")?.delta, 0);
+});
+
+test("range analysis uses selected real days and preserves missing product points", () => {
+  const history = [
+    { marketDate: "2026-09-20", observations: [observation("RNG000001", 5), observation("RNG000002", 8)] },
+    { marketDate: "2026-09-22", observations: [observation("RNG000001", 4)] },
+    { marketDate: "2026-10-28", observations: [observation("RNG000002", 2), observation("RNG000003", 1)] },
+  ];
+  const result = buildRangeAnalysis(history, "2026-09-20", "2026-10-28", [metadata("RNG000001", "Brand A"), metadata("RNG000002", "Brand B"), metadata("RNG000003", "Brand C")]);
+  assert.equal(result.ready, true);
+  assert.deepEqual(result.validDays, ["2026-09-20", "2026-09-22", "2026-10-28"]);
+  assert.equal(result.summary.completeDays, 3);
+  assert.deepEqual(result.products.find(({ asin }) => asin === "RNG000001")?.points.map(({ rank }) => rank), [5, 4, null]);
+  assert.equal(result.products.find(({ asin }) => asin === "RNG000001")?.endRank, null);
+  assert.equal(result.brandSummary.find(({ brand }) => brand === "Brand C")?.startSeats, 0);
+  assert.equal(result.marketTrend.length, 3);
+});
+
+test("range analysis rejects reversed, equal, or unavailable endpoints", () => {
+  const history = [{ marketDate: "2026-09-20", observations: [observation("RNG000004", 1)] }, { marketDate: "2026-09-22", observations: [observation("RNG000004", 2)] }];
+  assert.equal(buildRangeAnalysis(history, "2026-09-22", "2026-09-20").reason, "开始日期必须早于结束日期");
+  assert.equal(buildRangeAnalysis(history, "2026-09-20", "2026-09-20").reason, "至少需要两个有效市场日");
+  assert.equal(buildRangeAnalysis(history, "2026-09-19", "2026-09-22").reason, "起止日期必须是有效市场日");
 });
 
 test("uses one analytical universe while preserving the pressure-washer raw ranking", () => {

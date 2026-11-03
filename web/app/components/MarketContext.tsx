@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MARKET_CONFIG, resolveMarketDate, resolvePageMarketContext, resolveSegmentForCategory, serializeMarketContext, type MarketContext as MarketContextValue, type PageMarket } from "@/lib/market-context";
-import { formatMarketDate } from "@/lib/ui-intelligence";
+import { MarketDateCalendar } from "./MarketDateCalendar";
 
 export function MarketContext({ marketDate, validMarketDates = [marketDate], context, page }: { marketDate: string; validMarketDates?: string[]; context: MarketContextValue; page: PageMarket }) {
   const pathname = usePathname();
@@ -27,6 +27,14 @@ export function MarketContext({ marketDate, validMarketDates = [marketDate], con
     window.dispatchEvent(new CustomEvent("market-radar:navigation", { detail: { search: query } }));
   }
 
+  const analysisMode = searchParams.get("analysis_mode") ?? "single";
+  function setMode(mode: string) {
+    const params = new URLSearchParams(currentQuery);
+    if (mode === "single") params.delete("analysis_mode"); else params.set("analysis_mode", mode);
+    if (mode === "range") { params.set("range_end", marketDate); if (!params.get("range_start")) params.set("range_start", validMarketDates.at(-2) ?? marketDate); }
+    if (mode === "compare" && !params.get("compare_date")) params.set("compare_date", validMarketDates.filter((date) => date < marketDate).at(-1) ?? marketDate);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }
   return <><div className="marketContextBar">
     <div className="marketContextControls" aria-label="当前页面市场">
       <span className="marketplaceLabel"><span aria-hidden="true">🇺🇸</span> 美国站</span><i aria-hidden="true">/</i>
@@ -36,12 +44,7 @@ export function MarketContext({ marketDate, validMarketDates = [marketDate], con
       }}>{Object.values(MARKET_CONFIG).map((market) => <option value={market.categoryId} key={market.categoryId}>{market.label}</option>)}</select></label><i aria-hidden="true">/</i>
       <label>分群<select aria-label="市场分群" value={context.segment} onChange={(event) => navigate({ ...context, segment: event.target.value as MarketContextValue["segment"] })}>{MARKET_CONFIG[context.category].segments.map((segment) => <option value={segment.key} key={segment.key}>{segment.label}</option>)}</select></label>
     </div>
-    <label className="dateControl"><span className="srOnly">市场日期</span><select aria-label="市场日期" value={marketDate} onChange={(event) => {
-      const params = new URLSearchParams(currentQuery);
-      params.set("date", event.target.value);
-      const query = params.toString();
-      router.push(`${pathname}?${query}`, { scroll: false });
-      window.dispatchEvent(new CustomEvent("market-radar:navigation", { detail: { search: query } }));
-    }}>{validMarketDates.toSorted().toReversed().map((date) => <option value={date} key={date}>{formatMarketDate(date)}</option>)}</select></label>
-  </div>{resolvedDate.needsNormalization ? <p className="sourceNotice" role="status">所选日期 {searchParams.get("date")} 不是有效市场日，已回落到 {resolvedDate.marketDate ? formatMarketDate(resolvedDate.marketDate) : "最近有效市场日"}。</p> : null}</>;
+    <div className="dateControl"><MarketDateCalendar marketDate={marketDate} validMarketDates={validMarketDates} /></div>
+    <div className="analysisModeBar" aria-label="分析模式"><span>分析</span>{[["single", "单日"], ["compare", "两日比较"], ["range", "区间分析"]].map(([mode, label]) => <button type="button" key={mode} className={analysisMode === mode ? "active" : ""} aria-pressed={analysisMode === mode} onClick={() => setMode(mode)}>{label}</button>)}</div>
+  </div>{resolvedDate.needsNormalization ? <p className="sourceNotice" role="status">所选日期 {searchParams.get("date")} 不是有效市场日，已回落到最近有效市场日。</p> : null}</>;
 }

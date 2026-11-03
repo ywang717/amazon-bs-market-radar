@@ -1,7 +1,7 @@
 import { WorthStudying } from "../components/WorthStudying";
 import type { Metadata } from "next";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
-import { buildAnalyticalCategory, buildMarketSignals, buildMarketState, buildMarketTrend, buildProductRows, buildProductTypeStructure, buildReviewCompetition, buildWorthStudyingProducts, formatExactNumber, formatPercentage, formatPrice, groupMarketSignals, median } from "@/lib/ui-intelligence";
+import { buildAnalyticalCategory, buildMarketSignals, buildMarketState, buildMarketTrend, buildProductRows, buildProductTypeStructure, buildReviewCompetition, buildWorthStudyingProducts, buildTwoDayComparison, buildRangeAnalysis, formatExactNumber, formatPercentage, formatPrice, groupMarketSignals, median } from "@/lib/ui-intelligence";
 import { EmptyState } from "../components/EmptyState";
 import { SignalCard } from "../components/SignalCard";
 import { DashboardDataNotices } from "../components/DashboardDataNotices";
@@ -12,6 +12,8 @@ import { WorkspaceShell } from "../components/WorkspaceShell";
 import { DecisionHero } from "../components/DecisionHero";
 import { EvidenceRail } from "../components/EvidenceRail";
 import { ActionDock } from "../components/ActionDock";
+import { RangeControls } from "./RangeControls";
+import { RangeExportButtons } from "./RangeExportButtons";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "市场" };
@@ -39,10 +41,20 @@ export default async function MarketPage({ searchParams }: { searchParams?: Prom
   const data = await loadLiveDashboard({ marketDate: typeof query.date === "string" ? query.date : undefined });
   const raw = data.categoryRows.find((row) => row.key === context.category)!;
   const category = buildAnalyticalCategory(raw, data.productMetadata, context);
+  const history = (category.history ?? []).toSorted((a, b) => a.marketDate.localeCompare(b.marketDate));
+  const analysisMode = query.analysis_mode === "compare" || query.analysis_mode === "range" ? String(query.analysis_mode) : "single";
+  const compareDate = typeof query.compare_date === "string" ? query.compare_date : history.filter((day) => day.marketDate < raw.marketDate).at(-1)?.marketDate;
+  const compare = analysisMode === "compare" ? buildTwoDayComparison(history.find((day) => day.marketDate === compareDate), history.find((day) => day.marketDate === raw.marketDate), data.productMetadata) : null;
+  const rangeStart = typeof query.range_start === "string" ? query.range_start : history.at(-2)?.marketDate;
+  const rangeEnd = typeof query.range_end === "string" ? query.range_end : raw.marketDate;
+  const range = analysisMode === "range" ? buildRangeAnalysis(history, rangeStart ?? raw.marketDate, rangeEnd, data.productMetadata) : null;
   const trend = buildMarketTrend(category.history ?? [], windowDays, data.productMetadata);
   const state = buildMarketState(category);
   const signals = buildMarketSignals({ categoryRows: [category], productMetadata: data.productMetadata });
-  const grouped = groupMarketSignals(signals);
+  const signalLevel = ["all", "high", "watch", "activity"].includes(String(query.signal_level)) ? String(query.signal_level) : "all";
+  const signalKind = typeof query.signal_kind === "string" ? query.signal_kind : "all";
+  const filteredSignals = signals.filter((signal) => (signalLevel === "all" || signal.level === signalLevel) && (signalKind === "all" || signal.kind === signalKind));
+  const grouped = groupMarketSignals(filteredSignals);
   const productRows = buildProductRows({ observations: category.observations, comparison: category.comparison, metadata: data.productMetadata, history: category.history });
   const productTypeHistory = [
     ...(raw.history ?? []).filter(({ marketDate }) => marketDate !== raw.marketDate),
@@ -66,6 +78,9 @@ export default async function MarketPage({ searchParams }: { searchParams?: Prom
     <DecisionHero title={state.volatility ? stateLabel[state.volatility] : "等待比较日"} summary={`${labels.category} · ${labels.segment} 当前市场状态`} tone={state.volatility === "HIGH" ? "danger" : state.volatility === "MEDIUM" ? "warning" : "positive"} />
     <dl className="srOnly"><dt>波动程度 ⓘ</dt><dd>{state.volatility ? metricLabel[state.volatility] : "—"}</dd><dt>整机样本 ⓘ</dt><dd>{category.observations.length}</dd></dl>
 
+    {analysisMode === "compare" && <section className="sectionBlock analysisWorkspace"><div className="sectionHeading"><div><h2>自选两日比较</h2><p>比较两个真实有效市场日，不补造缺失值。</p></div></div>{compare?.ready ? <div className="marketOverviewGrid"><article className="summarySurface"><h3>{compare.startDate} → {compare.endDate}</h3><p>Top10 共同商品：{compare.top10.common} · Top30 共同商品：{compare.top30.common}</p><p>入榜 {compare.entries.length} · 出榜 {compare.exits.length}</p></article><article className="summarySurface"><h3>排名变化</h3>{compare.movers.slice(0, 8).map((row) => <p key={row.asin}><strong>{row.asin}</strong> {row.startRank} → {row.endRank} · {row.rankChange > 0 ? `上升 ${row.rankChange}` : row.rankChange < 0 ? `下降 ${Math.abs(row.rankChange)}` : "持平"}</p>)}</article></div> : <EmptyState description={compare?.reason ?? "请选择两个有效市场日。"} />}</section>}
+    {analysisMode === "range" && <section className="sectionBlock analysisWorkspace"><RangeControls dates={history.map((day) => day.marketDate)} start={rangeStart ?? raw.marketDate} end={rangeEnd} /><div className="sectionHeading"><div><h2>区间分析</h2><p>只使用选定范围内实际存在的市场日，缺失点保留为空。</p></div>{range?.ready ? <RangeExportButtons products={range.products.map((row) => ({ asin: row.asin, title: row.title, startRank: row.startRank, endRank: row.endRank, rankChange: row.rankChange, presencePercent: row.presencePercent }))} marketTrend={range.marketTrend.map((row) => ({ ...row }))} start={range.summary.startDate ?? rangeStart ?? raw.marketDate} end={range.summary.endDate ?? rangeEnd} /> : null}</div>{range?.ready ? <><div className="rangeQuickLinks">最近有效日：{history.slice(-7).map((day) => <a href={`/market?${serializeMarketContext(context, { date: day.marketDate, view: "overview", analysis_mode: "range", range_start: history.slice(-7)[0].marketDate, range_end: day.marketDate })}`} key={day.marketDate}>{day.marketDate}</a>)}</div><div className="marketOverviewGrid"><article className="summarySurface"><h3>{range.summary.startDate} → {range.summary.endDate}</h3><p>有效市场日 {range.summary.completeDays} · Top10 共同商品 {range.summary.top10Overlap ?? "—"} · Top30 共同商品 {range.summary.top30Common ?? "—"}</p></article><article className="summarySurface"><h3>产品趋势</h3>{range.products.slice(0, 8).map((row) => <p key={row.asin}><strong>{row.asin}</strong> {row.startRank ?? "—"} → {row.endRank ?? "—"} · 在榜 {row.presencePercent}%</p>)}</article></div><div className="tableScroll"><table><thead><tr><th>市场日</th><th>Top10 稳定度</th><th>入榜</th><th>出榜</th><th>平均排名变化</th></tr></thead><tbody>{range.marketTrend.map((row) => <tr key={row.marketDate}><td>{row.marketDate}</td><td>{row.top10Stability === null ? "—" : `${row.top10Stability}%`}</td><td>{row.entries ?? "—"}</td><td>{row.exits ?? "—"}</td><td>{row.averageAbsoluteMove ?? "—"}</td></tr>)}</tbody></table></div></> : <EmptyState description={range?.reason ?? "请选择两个有效市场日。"} />}</section>}
+
     <nav className="marketViewTabs" aria-label="市场分析视图">{views.map(([key, label]) => <a aria-current={view === key ? "page" : undefined} className={view === key ? "active" : ""} href={marketHref(context, raw.marketDate, key, windowDays)} key={key}>{label}</a>)}</nav>
     {view === "overview" && <section className="sectionBlock marketTrendSection"><div className="sectionHeading"><div><h2>{windowDays}D 市场趋势</h2><p>只使用有效市场日；与前一等长窗口比较。</p></div></div><div className="marketWindowBar"><span>趋势窗口</span>{windows.map((days) => <a aria-current={windowDays === days ? "true" : undefined} className={windowDays === days ? "active" : ""} href={marketHref(context, raw.marketDate, view, days)} key={days}>{days}D</a>)}<small>{trend.ready ? `${trend.previous.startDate}–${trend.previous.endDate} vs ${trend.current.startDate}–${trend.current.endDate}` : `需要 ${windowDays * 2} 个有效市场日`}</small></div><div className="marketOverviewGrid">
       <article className="summarySurface"><h2>Top10 稳定度（{windowDays}D）</h2><strong>{trend.ready ? `${formatPercentage(trend.metrics.top10Stability.current, 1)} ${trendDirection(trend.metrics.top10Stability.direction)}` : "—"}</strong><p>{windowDays}D 当前窗口 vs 前一等长窗口</p></article>
@@ -85,6 +100,6 @@ export default async function MarketPage({ searchParams }: { searchParams?: Prom
 
     {view === "entrants" && <section className="sectionBlock"><div className="sectionHeading"><div><h2>榜单边界事件 · 1D</h2><p>上一有效市场日至当前有效市场日的 Top30 边界变化。</p></div></div>{signals.some(({ kind }) => ["first_seen", "new_entry", "re_entry", "exit"].includes(kind)) ? <div className="marketSignalGrid">{signals.filter(({ kind }) => ["first_seen", "new_entry", "re_entry", "exit"].includes(kind)).map((signal) => <SignalCard signal={signal} context={context} marketDate={raw.marketDate} key={`${signal.kind}-${signal.asin}`} />)}</div> : <EmptyState description="当前有效市场日没有入榜或出榜事件。" />}</section>}
 
-    {view === "overview" && <section className="sectionBlock"><div className="sectionHeading"><div><h2>预警摘要</h2><p>High 与 Watch 独立于普通 Activity。</p></div><a href={marketHref(context, raw.marketDate, "entrants", windowDays)}>查看事件流 →</a></div>{grouped.alerts.length ? <div className="marketSignalGrid">{grouped.alerts.slice(0, 5).map((signal, index) => <SignalCard signal={signal} context={context} marketDate={raw.marketDate} featured={index === 0} key={`${signal.kind}-${signal.asin ?? signal.brand}`} />)}</div> : <EmptyState description="当前市场没有 High 或 Watch 信号。" />}</section>}
+    {view === "overview" && <section className="sectionBlock"><div className="sectionHeading"><div><h2>预警摘要</h2><p>High 与 Watch 独立于普通 Activity。</p></div><a href={marketHref(context, raw.marketDate, "entrants", windowDays)}>查看事件流 →</a></div><div className="signalFilters" role="group" aria-label="市场信号筛选"><span>级别</span>{[["all","全部"],["high","High"],["watch","Watch"],["activity","Activity"]].map(([value,label]) => <a className={signalLevel === value ? "active" : ""} href={`/market?${serializeMarketContext(context, { date: raw.marketDate, view, window: String(windowDays), signal_level: value })}`} key={value}>{label}</a>)}<span>{filteredSignals.length} 条信号</span></div>{grouped.alerts.length ? <div className="marketSignalGrid">{grouped.alerts.slice(0, 5).map((signal, index) => <SignalCard signal={signal} context={context} marketDate={raw.marketDate} featured={index === 0} key={`${signal.kind}-${signal.asin ?? signal.brand}`} />)}</div> : <EmptyState description="当前筛选没有匹配信号。" />}</section>}
   </WorkspaceShell>;
 }

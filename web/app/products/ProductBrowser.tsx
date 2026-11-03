@@ -8,6 +8,9 @@ import { productTypeFiltersForContext, serializeMarketContext, type MarketContex
 
 import { useViewQuery } from "../components/useViewQuery";
 import { readChoice } from "@/lib/view-state";
+import { CsvDownloadButton } from "../components/CsvDownloadButton";
+import { WatchlistButton } from "../components/WatchlistButton";
+import { ProductComparePanel } from "./ProductComparePanel";
 
 const filters = ["全部", "上升", "下降", "Top10", "新入榜", "高在榜率"] as const;
 type Filter = (typeof filters)[number];
@@ -17,6 +20,8 @@ export function ProductBrowser({ rows, context, marketDate, emptyReason }: { row
   const query = params.get("q") ?? "";
   const filter = readChoice<Filter>(params, "filter", filters, "全部");
   const typeFilter = readChoice<SegmentKey | "all">(params, "productType", ["all", ...productTypeFiltersForContext(context).map(t => t.key)], "all");
+  const sort = params.get("sort") ?? "rank"; const direction = params.get("direction") === "desc" ? -1 : 1;
+  const compareAsins = (params.get("compare_asins") ?? "").split(",").filter(Boolean).slice(0, 4);
   const returnQuery = new URLSearchParams(params); returnQuery.delete("returnTo");
   const returnTo = `/products?${returnQuery}`;
   const typeFilters = useMemo(() => productTypeFiltersForContext(context), [context]);
@@ -30,17 +35,20 @@ export function ProductBrowser({ rows, context, marketDate, emptyReason }: { row
       || (filter === "高在榜率" && (row.presencePercent ?? 0) >= HIGH_PRESENCE_THRESHOLD);
     const allowedTypes = typeFilter === "all" ? null : typeFilters.find(({ key }) => key === typeFilter)?.productTypes;
     return matchesQuery && matchesFilter && (!allowedTypes || allowedTypes.includes(row.productType));
-  }), [rows, query, filter, typeFilter, typeFilters]);
+  }).toSorted((a,b) => { const av = sort === "delta" ? a.delta : sort === "price" ? a.price : sort === "reviews" ? a.reviews : sort === "presence" ? a.presencePercent : a.rank; const bv = sort === "delta" ? b.delta : sort === "price" ? b.price : sort === "reviews" ? b.reviews : sort === "presence" ? b.presencePercent : b.rank; if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1; return (Number(av)-Number(bv))*direction; }), [rows, query, filter, typeFilter, typeFilters, sort, direction]);
 
+  const selectedRows = visible.filter(row => compareAsins.includes(row.asin));
   return <>
+    <ProductComparePanel rows={selectedRows} onClear={() => update({ compare_asins: null })} />
     <div className="productBrowserControls">
       <label className="productSearch"><span className="srOnly">搜索产品</span><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => update({ q: event.target.value }, true)} placeholder="搜索 ASIN / 产品 / 品牌" /></label>
       <div className="filterChips" role="group" aria-label="产品筛选">{filters.map((item) => <button type="button" aria-pressed={filter === item} onClick={() => update({ filter: item === "全部" ? null : item })} key={item}>{item}</button>)}</div>
       {typeFilters.length ? <div className="filterChips" role="group" aria-label="产品类型筛选"><button type="button" aria-pressed={typeFilter === "all"} onClick={() => update({ productType: null })}>全部类型</button>{typeFilters.map((item) => <button type="button" aria-pressed={typeFilter === item.key} onClick={() => update({ productType: item.key })} key={item.key}>{item.label}</button>)}</div> : null}
       <button type="button" onClick={() => update({ q: null, filter: null, productType: null })}>清除产品筛选</button>
+      <label>排序<select value={sort} onChange={(event) => update({ sort: event.target.value })}><option value="rank">排名</option><option value="delta">排名变化</option><option value="price">价格</option><option value="reviews">评论数</option><option value="presence">在榜率</option></select></label><button type="button" onClick={() => update({ direction: direction === 1 ? "desc" : null })}>{direction === 1 ? "升序" : "降序"}</button><CsvDownloadButton filename={`products-${marketDate}.csv`} rows={visible.map(({ asin,title,rank,delta,price,reviews,presencePercent }) => ({ asin,title,rank,delta,price,reviews,presencePercent }))} />
     </div>
     {visible.length ? <div className="rankingSurface tableScroll"><table className="productBrowserTable"><thead><tr><th>产品</th><th>品牌</th><th>当前排名</th><th>1D</th><th title="有效市场日不足，暂无法计算 7D 趋势。">7D</th><th>价格</th><th>优惠</th><th>评论数</th><th>在榜率</th></tr></thead><tbody>{visible.map((row) => <tr key={row.asin}>
-      <td><ProductIdentity asin={row.asin} title={row.title} type={row.productType} href={`/products/${row.asin}?${serializeMarketContext(context, { date: marketDate })}&returnTo=${encodeURIComponent(returnTo)}`} /></td>
+      <td><ProductIdentity asin={row.asin} title={row.title} type={row.productType} href={`/products/${row.asin}?${serializeMarketContext(context, { date: marketDate })}&returnTo=${encodeURIComponent(returnTo)}`} /><WatchlistButton asin={row.asin} /><label><input type="checkbox" checked={compareAsins.includes(row.asin)} disabled={!compareAsins.includes(row.asin)&&compareAsins.length>=4} onChange={() => update({ compare_asins: compareAsins.includes(row.asin) ? compareAsins.filter(x=>x!==row.asin).join(",") || null : [...compareAsins,row.asin].join(",") })}/>对比</label></td>
       <td>{row.brand ?? "未知品牌"}</td>
       <td><RankDisplay rank={row.rank} /></td>
       <td>{row.isNew ? <span className="entryLabel">新入榜</span> : <RankDelta delta={row.delta} />}</td>
