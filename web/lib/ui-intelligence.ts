@@ -143,6 +143,8 @@ export type ProductIntelligenceRow = Observation & {
   presenceDays: number;
   presenceWindowDays: number;
   presencePercent: number | null;
+  priceQuality: "normal" | "suspicious";
+  priceReferenceMedian: number | null;
 };
 
 export const HIGH_PRESENCE_THRESHOLD = 80;
@@ -527,6 +529,29 @@ export function groupMarketSignals<T extends { level: MarketSignalLevel }>(signa
   };
 }
 
+export type MergedMarketSignal = MarketSignal & { relatedSignals: MarketSignal[] };
+
+/** Merge same-product signals for one market day while retaining every source signal. */
+export function mergeProductSignals(signals: MarketSignal[]): MergedMarketSignal[] {
+  const merged = new Map<string, MergedMarketSignal>();
+  for (const signal of signals) {
+    const key = signal.asin
+      ? `${signal.categoryKey}:${signal.marketDate ?? "unknown"}:${signal.asin}`
+      : `${signal.categoryKey}:${signal.marketDate ?? "unknown"}:${signal.brand ?? signal.kind}:${signal.kind}`;
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, { ...signal, relatedSignals: [signal] });
+      continue;
+    }
+    const primary = signalWeight(signal.level) < signalWeight(existing.level) ? signal : existing;
+    merged.set(key, { ...primary, relatedSignals: [...existing.relatedSignals, signal] });
+  }
+  return [...merged.values()].toSorted((left, right) => signalWeight(left.level) - signalWeight(right.level)
+    || Math.abs(right.delta ?? 0) - Math.abs(left.delta ?? 0)
+    || (left.currentRank ?? 31) - (right.currentRank ?? 31)
+    || (left.asin ?? left.brand ?? "").localeCompare(right.asin ?? right.brand ?? ""));
+}
+
 export function buildMarketState(row: { comparison: RankingComparison }): MarketState {
   const comparison = row.comparison;
   if (!comparison.ready || comparison.top10Retained === null || comparison.top10Retained === undefined
@@ -614,6 +639,12 @@ export function buildProductRows({ observations, comparison, metadata, history =
   return observations.map((observation): ProductIntelligenceRow => {
     const productMetadata = metadataByAsin.get(observation.asin);
     const mover = moverByAsin.get(observation.asin);
+    const historicalPrices = history
+      .flatMap(({ observations: rows }) => rows.find(({ asin }) => asin === observation.asin)?.price ?? null)
+      .filter((price): price is number => typeof price === "number" && Number.isFinite(price) && price > 0);
+    const priorPrices = historicalPrices.length > 1 ? historicalPrices.slice(0, -1) : historicalPrices;
+    const priceReferenceMedian = median(priorPrices);
+    const priceRatio = observation.price !== null && priceReferenceMedian !== null && priceReferenceMedian > 0 ? observation.price / priceReferenceMedian : null;
     return {
       ...observation,
       brand: productMetadata?.brandSource !== "unknown" ? productMetadata?.normalizedBrand ?? null : null,
@@ -631,6 +662,8 @@ export function buildProductRows({ observations, comparison, metadata, history =
       presencePercent: presenceHistory.length
         ? Math.round(presenceHistory.filter(({ observations: rows }) => rows.some(({ asin }) => asin === observation.asin)).length / presenceHistory.length * 1000) / 10
         : null,
+      priceQuality: observation.price !== null && (observation.price > 10000 || (priceRatio !== null && (priceRatio >= 8 || priceRatio <= 0.125))) ? "suspicious" : "normal",
+      priceReferenceMedian,
     };
   });
 }

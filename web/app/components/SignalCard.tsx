@@ -47,7 +47,8 @@ function signalValue(signal: MarketSignal, value: string | number | null | undef
   return String(value);
 }
 
-export function SignalCard({ signal, context, marketDate, featured = false }: { signal: MarketSignal; context: MarketContext; marketDate: string; featured?: boolean }) {
+export function SignalCard({ signal, context, marketDate, featured = false }: { signal: MarketSignal & { relatedSignals?: MarketSignal[] }; context: MarketContext; marketDate: string; featured?: boolean }) {
+  const relatedSignals = signal.relatedSignals?.length ? signal.relatedSignals : [signal];
   const badge = signal.level === "high" ? "高优先级" : signal.level === "watch" ? "观察" : "动态";
   const brandSeatSignal = signal.kind === "brand_expansion" || signal.kind === "brand_contraction";
   const brandSeatExplanation = signal.delta === null ? "品牌席位无变化" : `较上一有效市场日${signal.delta > 0 ? "增加" : "减少"} ${Math.abs(signal.delta)} 个席位`;
@@ -61,6 +62,7 @@ export function SignalCard({ signal, context, marketDate, featured = false }: { 
     <div className="signalAccent" aria-hidden="true" />
     <div className="signalHeader"><span className={`signalBadge ${signal.level}`}>{badge}</span><span>{signal.categoryLabel}</span></div>
     <h3 title={signal.title}>{compactProductTitle(signal.title, featured ? 72 : 48)}</h3><p className="signalSummary">{signalLabels[signal.kind]}</p>
+    {relatedSignals.length > 1 && <div className="signalTags" aria-label="合并的产品信号">{relatedSignals.map((item) => <span key={`${item.kind}-${item.asin}`}>{signalLabels[item.kind]}</span>)}</div>}
     {(signal.previousRank !== null || signal.currentRank !== null) && <div className="signalRanks">{signal.previousRank !== null && <strong>#{signal.previousRank}</strong>}<span aria-hidden="true">→</span><RankDisplay rank={signal.currentRank} delta={signal.delta} /></div>}
     {signal.previousValue !== undefined && signal.currentValue !== undefined && <p className="signalValueChange">{priceChange ? <b>{priceChange}</b> : reviewChange ? <b>{reviewChange}</b> : <><b>{signalValue(signal, signal.previousValue)}</b> → <b>{signalValue(signal, signal.currentValue)}</b>{signal.magnitude !== null && signal.magnitude !== undefined ? ` · 变化幅度 ${signal.magnitude}${signal.kind === "price_change" ? "%" : ""}` : ""}</>}</p>}
     <div className="signalFacts">
@@ -70,7 +72,7 @@ export function SignalCard({ signal, context, marketDate, featured = false }: { 
       <span>价格 <b>{formatPrice(signal.price)}</b></span>
       <span>评论数 <b>{formatCompactNumber(signal.reviews)}</b></span>
     </div>
-    <details className="signalEvidence"><summary>验证依据与人工核查</summary><p>{signal.previousValue !== undefined ? (reviewChange ?? `${signalValue(signal, signal.previousValue)} → ${signalValue(signal, signal.currentValue)}`) : "基于当前日与上一有效市场日的已验证变化。"}</p><p>{signal.kind === "review_anomaly" ? "Amazon 评论展示口径可能发生变化，本次异常不计入评论动量。" : "建议结合 Amazon 详情页人工确认。"}</p></details>
+    <details className="signalEvidence"><summary>验证依据与人工核查</summary><p>{signal.previousValue !== undefined ? (reviewChange ?? `${signalValue(signal, signal.previousValue)} → ${signalValue(signal, signal.currentValue)}`) : "基于当前日与上一有效市场日的已验证变化。"}</p>{relatedSignals.length > 1 && <ul>{relatedSignals.filter((item) => item !== signal).map((item) => <li key={`${item.kind}-${item.asin}`}>{signalLabels[item.kind]}：{item.previousValue !== undefined ? `${signalValue(item, item.previousValue)} → ${signalValue(item, item.currentValue)}` : "已检测到"}</li>)}</ul>}<p>{signal.kind === "review_anomaly" ? "Amazon 评论展示口径可能发生变化，本次异常不计入评论动量。" : "建议结合 Amazon 详情页人工确认。"}</p></details>
     <div className="signalFooter"><span>{kindLabels[signal.kind]} · 验证状态：已验证</span><a href={signal.asin ? `/products/${signal.asin}?${serializeMarketContext(context, { date: marketDate })}` : `/brands?${serializeMarketContext(context, { date: marketDate })}`} target="_top">{signal.asin ? "查看产品" : "查看品牌"} →</a></div>
   </article>;
 }

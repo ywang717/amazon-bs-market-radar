@@ -53,7 +53,7 @@ export function ProductBrowser({ rows, context, marketDate, emptyReason }: { row
       <td><RankDisplay rank={row.rank} /></td>
       <td>{row.isNew ? <span className="entryLabel">新入榜</span> : <RankDelta delta={row.delta} />}</td>
       <td title={row.sevenDayDelta === null ? "有效市场日不足，暂无法计算 7D 趋势。" : undefined}><RankDelta delta={row.sevenDayDelta} comparisonLabel="较 7 个有效市场日前" /></td>
-      <td className="numberCell">{formatPrice(row.price)}</td>
+      <td className="numberCell">{row.priceQuality === "suspicious" ? <span className="priceWarning" title={`价格可能异常：当前 ${formatPrice(row.price)}，历史参考中位数 ${formatPrice(row.priceReferenceMedian)}。请核查原始数据。`}>{formatPrice(row.price)} ⚠</span> : formatPrice(row.price)}</td>
       <td className="numberCell">{formatDeal(row)}</td>
       <td className="numberCell">{formatCompactNumber(row.reviews)}</td>
       <td><span className="presenceBadge">{row.presencePercent === null ? "—" : `${row.presenceDays}/${row.presenceWindowDays} · ${row.presencePercent}%`}</span></td>

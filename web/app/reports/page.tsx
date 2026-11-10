@@ -6,7 +6,7 @@ import { ActionDock } from "../components/ActionDock";
 import { ReportsArchive } from "./ReportsArchive";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
 import { marketContextLabels, resolvePageMarketContext, serializeMarketContext } from "@/lib/market-context";
-import { buildAnalyticalCategory, buildBrandMovement, buildBrandStructure, buildMarketSignals, buildMarketState, buildProductRows, buildProductTypeStructure, buildWorthStudyingProducts, productDisplayName } from "@/lib/ui-intelligence";
+import { buildAnalyticalCategory, buildBrandMovement, buildBrandStructure, buildMarketSignals, buildMarketState, buildProductRows, buildProductTypeStructure, buildWorthStudyingProducts, mergeProductSignals, productDisplayName } from "@/lib/ui-intelligence";
 import { SignalCard } from "../components/SignalCard";
 import { EmptyState } from "../components/EmptyState";
 import { productTypeLabel } from "../components/ProductIdentity";
@@ -25,7 +25,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
   const data = await loadLiveDashboard({ marketDate: typeof query.date === "string" ? query.date : undefined });
   const category = data.categoryRows.find((row) => row.key === context.category)!;
   const analytical = buildAnalyticalCategory(category, data.productMetadata, context);
-  const signals = buildMarketSignals({ categoryRows: [analytical], productMetadata: data.productMetadata });
+  const signals = mergeProductSignals(buildMarketSignals({ categoryRows: [analytical], productMetadata: data.productMetadata }));
   const high = signals.filter(({ level }) => level === "high");
   const watch = signals.filter(({ level }) => level === "watch");
   const activity = signals.filter(({ level }) => level === "activity");

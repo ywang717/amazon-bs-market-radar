@@ -518,3 +518,44 @@ thead { position: sticky; top: 0; z-index: 2; background: var(--surface-1); }
   .signalSection { grid-column: 1 / -1; }
   .signalSection .secondarySignalGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* V3 data-terminal tokens: keep the dark brand header while giving content a readable light canvas. */
+:root {
+  color-scheme: light;
+  --page: #f5f7fa;
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #eef2f7;
+  --text-1: #111827;
+  --text-2: #334155;
+  --text-3: #64748b;
+  --border-subtle: #e2e8f0;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+  --positive: #0d9488;
+  --negative: #dc6262;
+  --warning-v2: #d97706;
+  --entry: #7c3aed;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+html, body { background: var(--page); color: var(--text-1); }
+.container { max-width: 1920px; }
+.panel, .kpi, .summarySurface, .metricCard, .signalCard, .rankingSurface { box-shadow: 0 2px 8px rgba(15, 23, 42, .04); }
+.marketContextControls select, .dateCalendarTrigger, .analysisModeBar button.active, .selectButton, .downloadButton, .filterBar input, .filterBar select, .sellerFilterGrid select { color: var(--text-1); background: var(--surface-1); border-color: var(--border-subtle); }
+.workspaceContext > p:not(.pageEyebrow), .panel p, .pageHeader p, .panelHead p, .muted, .mutedText { color: var(--text-2); }
+.decisionHero { background: var(--surface-1); }
+.decisionHero.positive { background: #f0fdfa; }
+.decisionHero.warning { background: #fffbeb; }
+.decisionHero.danger { background: #fff7f7; }
+.signalTags { display: flex; flex-wrap: wrap; gap: 5px; margin: 7px 0 0; }
+.signalTags span { padding: 3px 6px; border-radius: 999px; color: var(--accent); background: var(--accent-soft); font-size: 10px; }
+.priceWarning { color: var(--warning-v2); font-weight: 700; cursor: help; }
+.signalEvidence ul { margin: 7px 0; padding-left: 18px; color: var(--text-2); font-size: 11px; }
+.signalEvidence li { margin: 3px 0; }
+
+@media (max-width: 700px) {
+  .workspaceActionDock { background: rgba(255,255,255,.96); box-shadow: 0 10px 30px rgba(15,23,42,.16); }
+}
