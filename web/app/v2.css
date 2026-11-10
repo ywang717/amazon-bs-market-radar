@@ -36,6 +36,8 @@ a, button, input, select { transition: color 120ms ease, background-color 120ms 
 button { color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.skipLink { position: fixed; left: 16px; top: -60px; z-index: 100; padding: 10px 14px; border-radius: 8px; background: var(--nav, #10263d); color: #fff; font-weight: 700; box-shadow: 0 8px 20px rgba(15, 23, 42, .2); transition: top .15s ease; }
+.skipLink:focus { top: 12px; outline: 3px solid #74a7ff; outline-offset: 2px; }
 
 .topbar { height: 60px; padding: 0 max(20px, calc((100vw - 1880px) / 2)); gap: 28px; background: rgba(11, 15, 20, .95); border-bottom: 1px solid var(--border-subtle); box-shadow: none; backdrop-filter: blur(14px); }
 .brand { gap: 9px; font-size: 15px; letter-spacing: -.2px; }
