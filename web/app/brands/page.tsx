@@ -7,7 +7,7 @@ import { DashboardDataNotices } from "../components/DashboardDataNotices";
 import { marketContextLabels, resolvePageMarketContext } from "@/lib/market-context";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "品牌" };
+export const metadata: Metadata = { title: "品牌席位", description: "查看 Amazon 美国站畅销榜品牌席位、Top10/Top30 结构和历史变化。", alternates: { canonical: "/brands" } };
 
 export default async function BrandsPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const query = searchParams ? await searchParams : {};

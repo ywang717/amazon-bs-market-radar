@@ -7,7 +7,7 @@ import { RankingExplorer } from "./RankingExplorer";
 import { buildAnalyticalCategory, buildProductRows } from "@/lib/ui-intelligence";
 import { marketContextLabels, resolvePageMarketContext } from "@/lib/market-context";
 
-export const metadata: Metadata = { title: "榜单" };
+export const metadata: Metadata = { title: "Top30 榜单", description: "按市场日、分类和分群查看经过完整度校验的 Amazon 美国站 Top30 榜单。", alternates: { canonical: "/rankings" } };
 export const dynamic = "force-dynamic";
 
 export default async function RankingsPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {

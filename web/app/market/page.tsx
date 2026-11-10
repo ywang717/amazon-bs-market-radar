@@ -16,7 +16,7 @@ import { RangeControls } from "./RangeControls";
 import { RangeExportButtons } from "./RangeExportButtons";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "市场" };
+export const metadata: Metadata = { title: "市场趋势", description: "查看 Amazon 美国站畅销榜的市场波动、区间趋势、榜单更替和品牌结构。", alternates: { canonical: "/market" } };
 
 const stateLabel = { LOW: "稳定", MEDIUM: "温和波动", HIGH: "高波动" } as const;
 const metricLabel = { LOW: "低", MEDIUM: "中", HIGH: "高" } as const;

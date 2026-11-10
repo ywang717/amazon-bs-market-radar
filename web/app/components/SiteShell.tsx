@@ -9,6 +9,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       <ShellNavigation />
     </header>
     <main id="main-content" className="container">{children}</main>
-    <footer>公开页面仅展示经过质量校验的市场信息 · 数据源：Amazon 美国站畅销榜公开页面</footer>
+    <footer>公开页面仅展示经过质量校验的市场信息 · 数据源：Amazon 美国站畅销榜公开页面 · <a href="/methodology">查看方法与限制</a> · <a href="/insights">查看数据状态</a> · <a href="https://github.com/ywang717/amazon-bs-market-radar" target="_blank" rel="noreferrer">源码</a></footer>
   </>;
 }

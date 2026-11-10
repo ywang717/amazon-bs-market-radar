@@ -8,7 +8,7 @@ import { ActionDock } from "../components/ActionDock";
 import { loadLiveDashboard } from "@/lib/live-dashboard-data";
 import { marketContextLabels, resolvePageMarketContext, serializeMarketContext } from "@/lib/market-context";
 
-export const metadata: Metadata = { title: "智能报告" };
+export const metadata: Metadata = { title: "智能报告中心", description: "在证据优先工作区查看市场判断、卖家情报、历史归档和证据限制。", alternates: { canonical: "/analysis" } };
 export const dynamic = "force-dynamic";
 
 export default async function AnalysisPage({

@@ -6,7 +6,7 @@ import { DashboardDataNotices } from "../components/DashboardDataNotices";
 import { buildAnalyticalCategory, buildClassificationCoverage } from "@/lib/ui-intelligence";
 import { marketContextLabels, resolvePageMarketContext } from "@/lib/market-context";
 
-export const metadata: Metadata = { title: "数据状态" };
+export const metadata: Metadata = { title: "数据状态", description: "查看当前市场日、完整市场日、Top30 完整度和字段覆盖率。", alternates: { canonical: "/insights" } };
 export const dynamic = "force-dynamic";
 
 export default async function DataStatusPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {

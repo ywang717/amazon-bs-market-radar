@@ -16,7 +16,11 @@ import { TimelineEvent } from "../../components/TimelineEvent";
 import { RankHistoryChart } from "../RankHistoryChart";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "产品详情" };
+export async function generateMetadata({ params }: { params: Promise<{ asin: string }> }): Promise<Metadata> {
+  const { asin } = await params;
+  const safeAsin = encodeURIComponent(asin);
+  return { title: `产品 ${asin}`, description: `查看 ${asin} 的 Amazon 榜单排名、价格、评论和历史证据。`, alternates: { canonical: `/products/${safeAsin}` } };
+}
 
 function productEvidenceRange(history: Array<{ marketDate: string }>) {
   const start = history[0]?.marketDate ?? "";

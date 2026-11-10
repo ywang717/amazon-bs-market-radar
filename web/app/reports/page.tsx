@@ -13,7 +13,7 @@ import { productTypeLabel } from "../components/ProductIdentity";
 import { ReportTypeFilters } from "./ReportTypeFilters";
 import { parseReportKindFilter } from "@/lib/reports-view";
 
-export const metadata: Metadata = { title: "报告" };
+export const metadata: Metadata = { title: "市场报告归档", description: "阅读和下载经过数据质量校验的 Amazon 市场日报、周报和历史报告。", alternates: { canonical: "/reports" } };
 
 export const dynamic = "force-dynamic";
 

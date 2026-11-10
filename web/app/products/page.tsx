@@ -9,7 +9,7 @@ import { DashboardDataNotices } from "../components/DashboardDataNotices";
 import { marketContextLabels, resolvePageMarketContext } from "@/lib/market-context";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "产品" };
+export const metadata: Metadata = { title: "产品表现", description: "搜索 Amazon 美国站畅销榜产品，查看排名、价格、评论、在榜率和历史趋势。", alternates: { canonical: "/products" } };
 
 export default async function ProductsPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const query = searchParams ? await searchParams : {};

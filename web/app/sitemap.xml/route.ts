@@ -1,5 +1,5 @@
 const origin = "https://amazon-bs-market-radar-pacific.warrenwangyihao.chatgpt.site";
-const paths = ["/", "/market", "/rankings", "/products", "/brands", "/reports", "/analysis", "/garden", "/garden/products", "/garden/opportunities", "/methodology"];
+const paths = ["/", "/market", "/rankings", "/products", "/brands", "/reports", "/analysis", "/garden", "/garden/products", "/garden/opportunities", "/methodology", "/insights", "/llms.txt", "/llms-full.txt"];
 
 export function GET() {
   const urls = paths.map((path) => `<url><loc>${origin}${path}</loc></url>`).join("");

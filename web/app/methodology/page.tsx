@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "../components/PageHeader";
 
-export const metadata: Metadata = { title: "方法说明" };
+export const metadata: Metadata = { title: "方法与限制", description: "了解 Amazon BS 市场雷达的有效市场日、排名、趋势、品牌和数据完整度口径。", alternates: { canonical: "/methodology" } };
 const sections = [
   ["两层市场语义", "原始榜单保留所采集类目的完整 Top 30，不按分析分群删改；分析市场再依据产品元数据筛选，两者不会互相改写。"],
   ["Top 30 定义", "每个榜单仅采用真实可验证的全局排名 1–30。第一页不足时，只有后续页面明确延续全局排名才纳入；重新从 1 编号的数据会被排除。"],
