@@ -12,8 +12,10 @@ import { SignalCard } from "./components/SignalCard";
 import { DashboardDataNotices } from "./components/DashboardDataNotices";
 import { marketContextLabels, resolvePageMarketContext, serializeMarketContext } from "@/lib/market-context";
 import { ContextLink } from "./components/ContextLink";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "今日市场判断", alternates: { canonical: "/" } };
 
 const stateLabels = { LOW: "低", MEDIUM: "中等", HIGH: "高" } as const;
 

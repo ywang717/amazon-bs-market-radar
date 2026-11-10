@@ -1,4 +1,6 @@
 import { loadGardenData } from "@/lib/garden-data";
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Garden 监控", alternates: { canonical: "/garden" } };
 export const dynamic = "force-dynamic";
 export default async function GardenOverview() {
   const data = await loadGardenData();
