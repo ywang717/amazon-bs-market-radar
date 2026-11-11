@@ -70,7 +70,7 @@ export default async function MarketPage({ searchParams }: { searchParams?: Prom
     ? context.category === "pressure_washer_accessories" ? "配件分析样本" : "分析样本"
     : `${labels.segment}样本`;
 
-  return <WorkspaceShell context={context} marketDate={raw.marketDate} validMarketDates={raw.validMarketDates} page="market" eyebrow={`${labels.category} · ${labels.segment}`} title="市场状态" description={`当前有效市场日 vs ${category.comparison.baselineDate ?? "上一有效市场日待补充"}。`}
+  return <WorkspaceShell className="marketWorkspace" context={context} marketDate={raw.marketDate} validMarketDates={raw.validMarketDates} page="market" eyebrow={`${labels.category} · ${labels.segment}`} title="市场状态" description={`当前有效市场日 vs ${category.comparison.baselineDate ?? "上一有效市场日待补充"}。`}
     evidence={<EvidenceRail items={[{ label: "波动程度", value: state.volatility ? metricLabel[state.volatility] : "—", tone: state.volatility === "HIGH" ? "danger" : "good" }, { label: "Top10 稳定度", value: state.top10Stability === null ? "—" : `${state.top10Stability}%` }, { label: "榜单更替", value: state.turnover ? metricLabel[state.turnover] : "—" }, { label: sampleLabel, value: category.observations.length }]} />}
     actions={<ActionDock><a href={marketHref(context, raw.marketDate, "movers", windowDays)}>查看排名变化 →</a><a href={marketHref(context, raw.marketDate, "entrants", windowDays)}>查看入榜/出榜 →</a></ActionDock>}
   >

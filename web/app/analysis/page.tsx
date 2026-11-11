@@ -25,7 +25,7 @@ export default async function AnalysisPage({
   const sellerWorkspace = typeof resolvedSearchParams.workspace === "string" || Array.isArray(resolvedSearchParams.workspace);
   const modeHref = (params: Record<string, string> = {}) => `/analysis?${serializeMarketContext(context, { date: category.marketDate, ...params })}`;
   return (
-    <WorkspaceShell context={context} marketDate={category.marketDate} validMarketDates={category.validMarketDates} page="alerts" eyebrow="证据优先分析" title={sellerWorkspace ? "在线卖家情报中心" : "智能报告中心"} description={`${labels.category} · ${labels.segment}；${sellerWorkspace ? "经营预警、竞争观察与已验证归档统一展示，只输出公开可核查的描述性观察。" : "保留实时解读与历史智能报告，并提供卖家经营情报工作入口。"}`}
+    <WorkspaceShell className="analysisWorkspace" context={context} marketDate={category.marketDate} validMarketDates={category.validMarketDates} page="alerts" eyebrow="证据优先分析" title={sellerWorkspace ? "在线卖家情报中心" : "智能报告中心"} description={`${labels.category} · ${labels.segment}；${sellerWorkspace ? "经营预警、竞争观察与已验证归档统一展示，只输出公开可核查的描述性观察。" : "保留实时解读与历史智能报告，并提供卖家经营情报工作入口。"}`}
       evidence={<EvidenceRail items={[{ label: "市场日", value: category.marketDate }, { label: "完整市场日", value: category.history?.length ?? 0 }, { label: "工作区", value: sellerWorkspace ? "卖家情报" : "实时解读", tone: "good" }]} />}
       actions={<ActionDock><Link target="_top" prefetch={false} href={modeHref()}>实时解读 →</Link><Link target="_top" prefetch={false} href={modeHref({ workspace: "archive", profile: "seller_alert" })}>历史归档 →</Link></ActionDock>}
     >

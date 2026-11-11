@@ -41,6 +41,14 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
   const displayedSignals = signalGroups.alerts.length ? signalGroups.alerts : signalGroups.activity;
   const brandStructure = buildBrandStructure(category.observations, data.productMetadata);
   const top3Share = brandStructure.top3Concentration;
+  const trendDays = (category.history ?? []).slice(-8).map((day) => {
+    const top10 = day.observations.filter(({ rank }) => rank <= 10);
+    const averageRank = top10.length ? top10.reduce((sum, row) => sum + row.rank, 0) / top10.length : null;
+    return { marketDate: day.marketDate, averageRank };
+  });
+  const rankValues = trendDays.flatMap(({ averageRank }) => averageRank === null ? [] : [averageRank]);
+  const rankMin = rankValues.length ? Math.min(...rankValues) : 1;
+  const rankMax = rankValues.length ? Math.max(...rankValues) : 10;
   const marketSummary = !category.comparison.ready
     ? "当前市场日已载入，尚缺少可验证的上一市场日比较。"
     : marketState.volatility === "HIGH"
@@ -51,7 +59,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
         ? `${labels.segment}市场整体稳定，暂无高优先级异常，检测到 ${signalGroups.activity.length} 条普通市场变化。`
       : "今天市场整体较稳定，暂未检测到高优先级变化。";
 
-  return <WorkspaceShell context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="overview" eyebrow={`Daily Brief · ${rawCategory.marketDate}`} title={labels.category} description={marketSummary}
+  return <WorkspaceShell className="overviewWorkspace" context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="overview" eyebrow={`Daily Brief · ${rawCategory.marketDate}`} title={labels.category} description={marketSummary}
     evidence={<EvidenceRail items={[{ label: "数据更新", value: data.observedAt ? new Date(data.observedAt).toLocaleString("zh-CN", { hour12: false }) : "暂无" }, { label: "完整市场日", value: category.history?.length ?? 0 }, { label: "数据状态", value: data.source === "seed_fallback" ? "部分数据" : "可用", tone: data.source === "seed_fallback" ? "warning" : "good" }]} />}
     actions={<ActionDock><ContextLink href="/market" target="_top">查看市场状态 →</ContextLink><ContextLink href="/rankings" target="_top">查看榜单 →</ContextLink><ContextLink href="/reports" target="_top">打开报告 →</ContextLink></ActionDock>}
   >
@@ -60,7 +68,14 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
       <ContextLink href="/market" target="_top">查看市场状态 →</ContextLink>
     </DecisionHero>
 
-    <TrendPanel title="趋势与状态" subtitle="先看市场方向，再看证据和行动" metrics={[{ label: "High", value: highSignals, detail: watchSignals ? `${watchSignals} 个 Watch` : "暂无 Watch", }, { label: "新入榜", value: category.comparison.ready ? category.comparison.entries ?? "—" : "—", detail: "1D · 对比上一有效市场日" }, { label: "Top10", value: marketState.top10Stability === null ? "—" : `${marketState.top10Stability}%`, detail: "1D 稳定度" }, { label: "波动", value: marketState.volatility ? stateLabels[marketState.volatility] : "—", detail: marketState.ready ? "平均绝对排名变动" : "等待比较日" }]} />
+    <TrendPanel title="趋势与状态" subtitle="真实有效市场日 · Top10 平均排名（越高表示排名越靠前）" metrics={[{ label: "High", value: highSignals, detail: watchSignals ? `${watchSignals} 个 Watch` : "暂无 Watch", }, { label: "新入榜", value: category.comparison.ready ? category.comparison.entries ?? "—" : "—", detail: "1D · 对比上一有效市场日" }, { label: "Top10", value: marketState.top10Stability === null ? "—" : `${marketState.top10Stability}%`, detail: "1D 稳定度" }, { label: "波动", value: marketState.volatility ? stateLabels[marketState.volatility] : "—", detail: marketState.ready ? "平均绝对排名变动" : "等待比较日" }]}>
+      <div className="trendSparkline" aria-label="最近有效市场日 Top10 平均排名">
+        {trendDays.length ? trendDays.map(({ marketDate, averageRank }) => {
+          const height = averageRank === null || rankMax === rankMin ? 46 : 28 + ((rankMax - averageRank) / (rankMax - rankMin)) * 42;
+          return <div className={marketDate === rawCategory.marketDate ? "active" : ""} key={marketDate} title={`${marketDate} · Top10 平均排名 ${averageRank === null ? "—" : averageRank.toFixed(1)}`}><i style={{ height: `${height}%` }} /><span>{marketDate.slice(5)}</span></div>;
+        }) : <p className="mutedText">暂无足够的有效市场日用于趋势轨道。</p>}
+      </div>
+    </TrendPanel>
 
     <section className="sectionBlock signalSection">
       <div className="sectionHeading"><div><h2>{signalGroups.alerts.length ? "今日需要关注" : "市场动态"}</h2><p>只展示当前市场中优先级最高的 5 条变化</p></div><ContextLink href="/market" target="_top">查看全部 →</ContextLink></div>
@@ -70,9 +85,8 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
       </div> : <EmptyState description="当前市场没有检测到高优先级变化，普通变化仍可在市场页面查看。" />}
     </section>
 
-    {worthStudying.length > 0 && <section className="sectionBlock dashboardEvidenceActions"><div className="sectionHeading"><h2>值得研究</h2><ContextLink href="/market">查看市场 →</ContextLink></div><div className="secondarySignalGrid">{worthStudying.map((row) => <article className="summarySurface" key={row.asin}><ProductIdentity asin={row.asin} title={row.title} brand={row.brand} type={row.productType} /><RankDisplay rank={row.rank} delta={row.delta} /><p>{formatExactNumber(row.reviews)} Reviews · 有效在榜日 {row.presenceDays}/{row.presenceWindowDays}</p><p><strong>为什么入选：</strong>{row.reason}</p><p><strong>数据依据：</strong>{rawCategory.marketDate} 市场日 · 比较日 {category.comparison.baselineDate??"不足"}</p><p><strong>证据缺口：</strong>需求、竞争、差异化及销售障碍仍需人工核验。</p><p>研究优先级不代表成交概率或销量预测。</p><ContextLink href={`/products/${row.asin}?returnTo=${encodeURIComponent("/?"+serializeMarketContext(context,{date:rawCategory.marketDate}))}`} target="_top">查看产品 →</ContextLink></article>)}</div></section>}
-
-    <section className="overviewBottomGrid">
+    <section className="overviewLowerGrid">
+      {worthStudying.length > 0 ? <section className="sectionBlock dashboardEvidenceActions"><div className="sectionHeading"><div><h2>值得研究</h2><p>研究优先级不代表成交概率或销量预测。</p></div><ContextLink href="/market">查看市场 →</ContextLink></div><div className="secondarySignalGrid">{worthStudying.map((row) => <article className="summarySurface" key={row.asin}><ProductIdentity asin={row.asin} title={row.title} brand={row.brand} type={row.productType} /><RankDisplay rank={row.rank} delta={row.delta} /><p>{formatExactNumber(row.reviews)} Reviews · 有效在榜日 {row.presenceDays}/{row.presenceWindowDays}</p><p><strong>为什么入选：</strong>{row.reason}</p><p><strong>数据依据：</strong>{rawCategory.marketDate} 市场日 · 比较日 {category.comparison.baselineDate??"不足"}</p><p><strong>证据缺口：</strong>需求、竞争、差异化及销售障碍仍需人工核验。</p><ContextLink href={`/products/${row.asin}?returnTo=${encodeURIComponent("/?"+serializeMarketContext(context,{date:rawCategory.marketDate}))}`} target="_top">查看产品 →</ContextLink></article>)}</div></section> : <section className="sectionBlock dashboardEvidenceActions"><div className="sectionHeading"><h2>值得研究</h2></div><EmptyState description="当前没有满足研究条件的候选产品。" /></section>}
       <article className="summarySurface">
         <div className="sectionHeading"><div><h2>品牌变化</h2><p>Top30 席位变化 · 1D</p></div></div>
         {brandMovement.length ? <div className="movementList">{brandMovement.map((row) => <div key={row.brand}><b>{row.brand}</b><span>{row.previousSeats} → {row.currentSeats}</span><strong className={row.delta > 0 ? "positive" : "negative"}>{row.delta > 0 ? `+${row.delta}` : row.delta}</strong></div>)}</div> : <p className="mutedText">其余主要品牌席位稳定。</p>}

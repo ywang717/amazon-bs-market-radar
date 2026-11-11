@@ -12,6 +12,7 @@ export function WorkspaceShell({
   description,
   evidence,
   actions,
+  className,
 }: {
   children: React.ReactNode;
   context: MarketContextValue;
@@ -23,10 +24,11 @@ export function WorkspaceShell({
   description: string;
   evidence?: React.ReactNode;
   actions?: React.ReactNode;
+  className?: string;
 }) {
   return <>
     <MarketContext marketDate={marketDate} validMarketDates={validMarketDates} context={context} page={page} />
-    <section className="workspaceGrid" aria-label={`${title}工作区`}>
+    <section className={`workspaceGrid ${className ?? ""}`.trim()} aria-label={`${title}工作区`}>
       <aside className="workspaceContext"><p className="pageEyebrow">{eyebrow ?? '证据优先指挥台'}</p><h1>{title}</h1><p>{description}</p>{evidence && <div className="workspaceEvidence">{evidence}</div>}</aside>
       <main className="workspaceMain">{children}</main>
       <aside className="workspaceActions"><div className="workspaceEvidenceRail">{evidence}</div>{actions && <div className="workspaceActionDock">{actions}</div>}</aside>

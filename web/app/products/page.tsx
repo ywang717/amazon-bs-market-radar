@@ -20,7 +20,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
   const category = buildAnalyticalCategory(rawCategory, data.productMetadata, context);
   const rows = buildProductRows({ observations: category.observations, comparison: category.comparison, metadata: data.productMetadata, history: category.history });
 
-  return <WorkspaceShell context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="products" eyebrow="产品表现" title="产品" description={`搜索和分析 ${labels.category} · ${labels.segment} 中的产品表现。`}
+  return <WorkspaceShell className="productsWorkspace" context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="products" eyebrow="产品表现" title="产品" description={`搜索和分析 ${labels.category} · ${labels.segment} 中的产品表现。`}
     evidence={<EvidenceRail items={[{ label: "当前市场日", value: rawCategory.marketDate }, { label: "可验证商品", value: category.observations.length }, { label: "完整市场日", value: category.history?.length ?? 0 }, { label: "7D 趋势", value: category.history && category.history.length >= 8 ? "可用" : "积累中", tone: category.history && category.history.length >= 8 ? "good" : "warning" }]} />}
     actions={<ActionDock><a href={`/rankings?date=${rawCategory.marketDate}&category=${context.category}&segment=${context.segment}`}>查看榜单 →</a><a href={`/market?date=${rawCategory.marketDate}&category=${context.category}&segment=${context.segment}`}>查看趋势 →</a></ActionDock>}
   >

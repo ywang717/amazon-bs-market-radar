@@ -25,12 +25,16 @@ test("reports and analysis expose split workspace layout hooks", async () => {
 });
 
 test("garden pages expose the shared command and timeline layout", async () => {
-  const [products, opportunities, browser, css] = await Promise.all([
+  const [overview, products, opportunities, browser, css] = await Promise.all([
+    source("app/garden/page.tsx"),
     source("app/garden/products/page.tsx"),
     source("app/garden/opportunities/page.tsx"),
     source("app/garden/product-browser.tsx"),
     source("app/garden/garden.css"),
   ]);
+  assert.match(overview, /gardenCommandFrame/);
+  assert.match(overview, /EvidenceRail/);
+  assert.match(overview, /gardenStats/);
   assert.match(products, /gardenCommandGrid/);
   assert.match(opportunities, /gardenCommandGrid/);
   assert.match(opportunities, /gardenEvidenceRail/);

@@ -561,3 +561,92 @@ html, body { background: var(--page); color: var(--text-1); }
 @media (max-width: 700px) {
   .workspaceActionDock { background: rgba(255,255,255,.96); box-shadow: 0 10px 30px rgba(15,23,42,.16); }
 }
+
+/* Wide command-center composition: use the canvas for decisions, evidence, and action. */
+@media (min-width: 1101px) {
+  .container { padding-top: 16px; padding-bottom: 36px; }
+  .overviewWorkspace { grid-template-columns: minmax(230px, .2fr) minmax(0, 1fr) minmax(270px, .24fr); gap: 16px; }
+  .overviewWorkspace .workspaceMain { grid-template-columns: minmax(0, 1.08fr) minmax(320px, .72fr); gap: 12px; align-items: start; }
+  .overviewWorkspace .workspaceMain > :is(.dataQualityStatus, .sourceNotice) { grid-column: 1 / -1; margin-bottom: 0; }
+  .overviewWorkspace .workspaceMain > button { grid-column: 1 / -1; justify-self: start; min-height: 32px; padding: 0 11px; border: 1px solid rgba(37, 99, 235, .25); border-radius: var(--radius-md); color: var(--accent); background: var(--accent-soft); font-size: 11px; font-weight: 700; cursor: pointer; }
+  .overviewWorkspace .workspaceMain > button:hover { background: #dbeafe; }
+  .overviewWorkspace .workspaceMain > .decisionHero,
+  .overviewWorkspace .workspaceMain > .trendPanel { grid-column: auto; min-width: 0; }
+  .overviewWorkspace .workspaceMain > .decisionHero { min-height: 166px; }
+  .overviewWorkspace .workspaceMain > .trendPanel { min-height: 0; }
+  .overviewWorkspace .workspaceMain > .signalSection,
+  .overviewWorkspace .workspaceMain > .overviewLowerGrid { grid-column: 1 / -1; }
+  .overviewWorkspace .signalStack { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+  .overviewWorkspace .signalSection .secondarySignalGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .overviewLowerGrid { display: grid; grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(220px, .78fr)); gap: 12px; align-items: start; }
+  .overviewLowerGrid > .sectionBlock { margin-bottom: 0; }
+  .overviewLowerGrid .secondarySignalGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .overviewLowerGrid .summarySurface { height: 100%; }
+  .overviewLowerGrid .sectionHeading { align-items: start; }
+}
+
+/* The overview no longer reserves an empty chart-sized canvas when it has only summary metrics. */
+.workspaceMain .trendPanel { min-height: 0; }
+.dashboardCommandHero { position: relative; overflow: hidden; }
+.dashboardCommandHero::before { content: "01"; position: absolute; right: 16px; bottom: -13px; color: rgba(37, 99, 235, .09); font-size: 88px; font-weight: 850; letter-spacing: -.08em; line-height: 1; pointer-events: none; }
+.dashboardCommandHero > * { position: relative; z-index: 1; }
+.trendSparkline { min-height: 90px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); align-items: end; gap: 7px; padding: 8px 2px 0; border-top: 1px solid var(--border-subtle); }
+.trendSparkline > div { min-width: 0; display: grid; grid-template-rows: 58px auto; align-items: end; gap: 5px; text-align: center; }
+.trendSparkline i { display: block; width: min(20px, 70%); min-height: 8px; margin: 0 auto; border-radius: 4px 4px 2px 2px; background: #b7c9e8; opacity: .75; }
+.trendSparkline > div.active i { background: var(--accent); opacity: 1; box-shadow: 0 0 0 3px var(--accent-soft); }
+.trendSparkline span { color: var(--text-3); font-size: 9px; white-space: nowrap; }
+.trendSparkline > div.active span { color: var(--accent); font-weight: 750; }
+.trendSparkline > p { grid-column: 1 / -1; margin: 0; align-self: center; }
+
+@media (max-width: 1100px) and (min-width: 701px) {
+  .overviewWorkspace .workspaceMain { grid-template-columns: 1fr; }
+  .overviewWorkspace .workspaceMain > :is(.decisionHero, .trendPanel, .signalSection, .overviewLowerGrid) { grid-column: 1; }
+}
+
+@media (max-width: 700px) {
+  .overviewWorkspace .workspaceMain { grid-template-columns: 1fr; }
+  .overviewWorkspace .workspaceMain > button { justify-self: stretch; }
+  .overviewWorkspace .workspaceMain > :is(.decisionHero, .trendPanel, .signalSection, .overviewLowerGrid) { grid-column: 1; }
+  .overviewLowerGrid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .overviewLowerGrid .secondarySignalGrid { grid-template-columns: 1fr; }
+  .trendSparkline { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 10px; }
+  .trendSparkline > div { grid-template-rows: 48px auto; }
+  .marketContextBar { display: grid; grid-template-columns: 1fr; align-items: start; gap: 8px; }
+  .marketContextControls { grid-column: 1; width: 100%; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 7px; }
+  .marketContextControls i { display: none; }
+  .marketContextControls label { width: auto; flex: 1 1 0; min-width: 0; display: grid; gap: 3px; align-content: start; }
+  .marketContextControls select { width: 100%; min-width: 0; max-width: 100%; }
+  .dateControl { position: static; grid-column: 1; padding: 0; }
+  .dateCalendarTrigger { max-width: 100%; }
+  .analysisModeBar { grid-column: 1; max-width: 100%; overflow-x: auto; padding-bottom: 2px; }
+  .workspaceContext, .workspaceMain, .workspaceActions, .workspaceEvidence, .evidenceRail { min-width: 0; max-width: 100%; }
+  .workspaceContext { overflow: hidden; }
+  .workspaceEvidence, .workspaceEvidence .evidenceRail { width: 100%; overflow: hidden; }
+  .evidenceRail dl > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; min-width: 0; }
+  .evidenceRail dd { min-width: 0; max-width: none; overflow-wrap: anywhere; white-space: normal; font-size: 9px; }
+}
+
+/* Route-level density rules keep the same command-center rhythm outside the overview. */
+@media (min-width: 1101px) {
+  .reportsWorkspace .workspaceMain,
+  .marketWorkspace .workspaceMain,
+  .productsWorkspace .workspaceMain,
+  .rankingsWorkspace .workspaceMain,
+  .brandsWorkspace .workspaceMain { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .reportsWorkspace .workspaceMain > :is(.dataQualityStatus, .sourceNotice, .reportCommandHero, .reportSummary, .worthStudying, .reportInsightGrid, .reportActivity, .signalEvidence, .reportEvidenceActions, .reportArchiveHeading, .archiveDateControls, .reportArchivePanel),
+  .marketWorkspace .workspaceMain > :is(.dataQualityStatus, .sourceNotice, .decisionHero, .analysisWorkspace, .marketViewTabs, .marketTrendSection, .marketDecisionGrid, .sectionBlock, .rankingSurface),
+  .productsWorkspace .workspaceMain > :is(.dataQualityStatus, .sourceNotice, .productComparePanel, .productBrowserControls, .rankingSurface, .emptyState),
+  .rankingsWorkspace .workspaceMain > :is(.dataQualityStatus, .sourceNotice, .marketContextBar, .rankingToolbar, .rankingSurface),
+  .brandsWorkspace .workspaceMain > :is(.dataQualityStatus, .sourceNotice, .brandPresenceSurface, .sectionBlock, .rankingSurface),
+  .workspaceGrid:not(.overviewWorkspace) .workspaceMain > button { grid-column: 1 / -1; }
+  .analysisWorkspace .workspaceMain { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1100px) {
+  .reportsWorkspace .workspaceMain,
+  .marketWorkspace .workspaceMain,
+  .productsWorkspace .workspaceMain,
+  .rankingsWorkspace .workspaceMain,
+  .brandsWorkspace .workspaceMain,
+  .analysisWorkspace .workspaceMain { grid-template-columns: 1fr; }
+}

@@ -1,7 +1,5 @@
 import { type Observation } from "./analytics.ts";
 import { categories, categoryByKey, type CategoryKey } from "./catalog.ts";
-import { createD1DashboardStore } from "./dashboard-store.ts";
-import { getD1 } from "./d1.ts";
 import { loadVerifiedDashboardFromStore, type DashboardView } from "./live-dashboard-data.ts";
 import { isValidMarketDate } from "./public-validation.ts";
 import { readExplicitSpecificationsForCategory, readExplicitSpecificationsForProduct } from "./product-specs.ts";
@@ -327,6 +325,7 @@ export async function listSellerIntelligenceReports(filters: {
     values.push(filters.segment);
   }
   const where = clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "";
+  const { getD1 } = await import("./d1.ts");
   const db = getD1();
   const rows = await db
     .prepare(
@@ -338,6 +337,7 @@ export async function listSellerIntelligenceReports(filters: {
 }
 
 export async function readSellerIntelligenceReport(key: string) {
+  const { getD1 } = await import("./d1.ts");
   const db = getD1();
   const row = await db
     .prepare("SELECT content_json FROM seller_intelligence_reports WHERE key = ?")
@@ -358,6 +358,10 @@ export async function readSellerIntelligenceReport(key: string) {
 }
 
 export async function loadVerifiedLiveDashboardFromD1(marketDate?: string) {
+  const [{ getD1 }, { createD1DashboardStore }] = await Promise.all([
+    import("./d1.ts"),
+    import("./dashboard-store.ts"),
+  ]);
   const db = getD1();
   return loadVerifiedDashboardFromStore(createD1DashboardStore(db), { marketDate });
 }

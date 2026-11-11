@@ -46,7 +46,7 @@ export default async function BrandsPage({ searchParams }: { searchParams?: Prom
     return { marketDate: day.marketDate, values: [...byBrand].map(([brand, item]) => ({ brand, seats: item.seats, top10: item.top10, averageRank: (item.rankTotal / item.seats).toFixed(1) })) };
   });
 
-  return <WorkspaceShell context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="brands" eyebrow="品牌结构" title="品牌" description={`观察 ${labels.category} · ${labels.segment} 在 Top30 中的品牌席位、头部存在与变化。`}
+  return <WorkspaceShell className="brandsWorkspace" context={context} marketDate={rawCategory.marketDate} validMarketDates={rawCategory.validMarketDates} page="brands" eyebrow="品牌结构" title="品牌" description={`观察 ${labels.category} · ${labels.segment} 在 Top30 中的品牌席位、头部存在与变化。`}
     evidence={<EvidenceRail items={[{ label: "Top30 品牌数", value: structure.rows.length }, { label: "Top3 集中度", value: structure.top3Concentration === null ? "—" : `${structure.top3Concentration}%` }, { label: "7D 趋势", value: trendReady ? "可用" : "积累中", tone: trendReady ? "good" : "warning" }]} />}
   >
     <DashboardDataNotices source={data.source} metadataAvailable={data.metadataAvailable} />
