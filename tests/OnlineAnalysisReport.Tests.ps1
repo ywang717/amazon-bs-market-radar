@@ -30,21 +30,21 @@ Describe 'Online intelligent analysis report generator' {
 
         $reports = @(New-OnlineAnalysisReports -Snapshot $snapshot -ReceiptSha256 ('a' * 64) -ReportKind Daily)
 
-        $reports.Count | Should Be 18
-        @($reports | Where-Object { $null -ne $_.categoryKey } | Select-Object -ExpandProperty categoryKey -Unique).Count | Should Be 17
+        $reports.Count | Should Be 19
+        @($reports | Where-Object { $null -ne $_.categoryKey } | Select-Object -ExpandProperty categoryKey -Unique).Count | Should Be 18
         @($reports | Where-Object categoryKey -eq 'patio_lawn_garden').Count | Should Be 1
         $reports[0].evidence.level | Should Be $limited
         (@($reports[0].sections | ForEach-Object title) -join ' ') | Should Not Match ($trend + '|' + $association)
         ($reports[0].sections.statements -join ' ') | Should Match ($noConclusion + '|' + $incomplete)
     }
 
-    It 'returns independently writable report paths for all seventeen categories and overview' {
+    It 'returns independently writable report paths for all eighteen categories and overview' {
         Import-Module (Join-Path $projectRoot 'src\OnlineAnalysisReport.psm1') -Force
         $snapshot = [pscustomobject]@{ market_date='2026-08-24'; observed_at='2026-08-25T01:00:00Z'; pressure_washers=@(); sump_pumps=@(); pressure_washer_accessories=@() }
         $reports = @(New-OnlineAnalysisReports -Snapshot $snapshot -ReceiptSha256 ('b' * 64) -ReportKind Daily)
         $paths = @(Write-OnlineAnalysisReports -Reports $reports -OutputDirectory $TestDrive)
 
-        $paths.Count | Should Be 18
-        @($paths | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }).Count | Should Be 18
+        $paths.Count | Should Be 19
+        @($paths | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }).Count | Should Be 19
     }
 }
