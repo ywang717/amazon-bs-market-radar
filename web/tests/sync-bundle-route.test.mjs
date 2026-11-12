@@ -468,7 +468,7 @@ test("preserves metadata quality while merging first and last seen dates", async
   env.database.close();
 });
 
-test('expanded full capture keeps a coherent receipt for 17 categories',async()=>{
+test('expanded full capture keeps a coherent receipt for 18 categories',async()=>{
  const {productionCategoryRegistry}=await import('../lib/category-registry.ts');
  const bundle=completeBundle();const template=bundle.categories[0];
  bundle.categories=productionCategoryRegistry.categories.filter(c=>c.enabled).map(c=>({...template,key:c.categoryKey,sourceUrl:c.sourceUrl}));
