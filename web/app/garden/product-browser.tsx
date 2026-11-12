@@ -1,6 +1,7 @@
 "use client";
 import type { GardenCategory } from "@/lib/garden-data";
 import { gardenDiscoverySignalOptions, gardenEmptyReason, gardenSignalOptions, selectGardenProducts } from "@/lib/garden-browser";
+import { buildGardenOpportunityCsv, buildGardenOpportunityJson, downloadGardenText } from "@/lib/garden-export";
 import { pageRows, readChoice } from "@/lib/view-state";
 import { useViewQuery } from "../components/useViewQuery";
 import { ListPagination } from "../components/ListPagination";
@@ -22,6 +23,9 @@ export function ProductBrowser({ categories, opportunities = false, error, updat
  const reset=()=>update({categoryKey:null,signal:null,discovery:null,sort:null,q:null,minPrice:null,maxPrice:null,page:null});
  const filter=(changes:Record<string,string|null>)=>update({...changes,page:null});
  const returnTo=`${opportunities?'/garden/opportunities':'/garden/products'}?${params}`;
+ const focusTools=()=>filter({categoryKey:categories.some(c=>c.key==='garden_power_tools')?'garden_power_tools':null,signal:null,discovery:null});
+ const exportCsv=()=>downloadGardenText(`garden-opportunities-${updatedMarketDate??'latest'}.csv`,buildGardenOpportunityCsv(products,new Date().toISOString()),'text/csv');
+ const exportJson=()=>downloadGardenText(`garden-opportunities-${updatedMarketDate??'latest'}.json`,buildGardenOpportunityJson(products,{marketDate:updatedMarketDate,updatedAt}), 'application/json');
  return <>
   {opportunities&&<div className="gardenPanel opportunityGuide"><h3>自动候选怎么读</h3><p>这里展示的是研究线索：先看入选信号和数据依据，再检查证据缺口。只有完成需求、竞争、差异化和销售可行性限制的人工核验，才会形成已发布结论。</p><p>园艺最新完整市场日：{categories.map(c=>c.marketDate).filter(Boolean).sort().at(-1)??'暂无'}。各候选的实际市场日见卡片。全站采集市场日：{updatedMarketDate??'暂无'} · 全站采集时间：{updatedAt?new Intl.DateTimeFormat('zh-CN',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'medium'}).format(new Date(updatedAt))+' (Pacific Time)':'暂无记录'} · 研究优先级不代表成交概率或销量预测。</p></div>}
   <div className="gardenFilters gardenCommandGrid">
@@ -34,6 +38,7 @@ export function ProductBrowser({ categories, opportunities = false, error, updat
    <label>排序<select aria-label="排序" value={sort} onChange={e=>filter({sort:e.target.value})}><option value="score">初筛评分</option><option value="rank">榜单排名</option><option value="confidence">置信度</option><option value="price">价格从低到高</option></select></label>
    <button type="button" onClick={reset}>清除筛选</button>
   </div>
+  {opportunities&&<div className="gardenExportTools" role="group" aria-label="商机工具"><span>当前工具候选 {products.length} 条</span>{categories.some(c=>c.key==='garden_power_tools')&&<button type="button" onClick={focusTools}>只看工具榜单</button>}<button type="button" onClick={exportCsv} disabled={!products.length}>导出 CSV</button><button type="button" onClick={exportJson} disabled={!products.length}>下载证据 JSON</button></div>}
   {invalidPrice&&<p role="alert">请输入有效价格区间，最低价格不能高于最高价格。</p>}
   <p role="status">共 {products.length} 条{opportunities?'去重候选':'榜单记录'}</p>
   {opportunities&&<p className="gardenNotice">初筛评分仅用于研究优先级，置信度不代表成交概率。自动线索与已发布人工核验分别展示。</p>}
