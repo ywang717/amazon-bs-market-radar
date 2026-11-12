@@ -235,8 +235,8 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $root -SnapshotsRoot $root -TestHooks $hooks | Out-Null
             $analysisCalls = @($calls | Where-Object { $_.Uri -match '/api/sync/v1/analysis-reports$' })
             $analysisCalls.Count | Should Be 1
-            @($analysisCalls[0].Body.reports).Count | Should Be 18
-            @($analysisCalls[0].Body.reports.key | Select-Object -Unique).Count | Should Be 18
+            @($analysisCalls[0].Body.reports).Count | Should Be 19
+            @($analysisCalls[0].Body.reports.key | Select-Object -Unique).Count | Should Be 19
             [string]::IsNullOrWhiteSpace([string]$analysisCalls[0].InFile) | Should Be $true
         }
         finally {
@@ -283,7 +283,7 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $root -SnapshotsRoot $root -TestHooks $hooks | Out-Null
             Import-Module (Join-Path $projectRoot 'src\DashboardPublishState.psm1') -Force
             (Read-DashboardPublishState -Root $root -MarketDate '2026-08-24').Status | Should Be 'PUBLISHED'
-            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/analysis/' }).Count | Should Be 18
+            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/analysis/' }).Count | Should Be 19
         }
         finally {
             [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $null, 'Process')
@@ -400,7 +400,7 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $TestDrive -SnapshotsRoot $TestDrive -TestHooks (New-TestPublisherHooks -SellerPaths $paths -Calls $calls) | Out-Null
             $sellerPosts = @($calls | Where-Object { $_.Name -eq 'Rest' -and $_.Uri -match '/seller-intelligence$' })
             $sellerPosts.Count | Should Be 1
-            @($sellerPosts[0].Body.reports).Count | Should Be 18
+            @($sellerPosts[0].Body.reports).Count | Should Be 19
             [string]$sellerPosts[0].Body.receiptSha256 | Should Be ('a' * 64)
 
             $invalidCalls = New-Object System.Collections.ArrayList
@@ -601,7 +601,7 @@ Describe 'Dashboard publishing bundle' {
             & (Join-Path $projectRoot 'scripts\Publish-BestSellersDashboard.ps1') -DashboardUrl 'https://example.test/' -MarketDate '2026-08-24' -ProjectRoot $root -SnapshotsRoot $root -TestHooks $hooks | Out-Null
             Import-Module (Join-Path $projectRoot 'src\DashboardPublishState.psm1') -Force
             (Read-DashboardPublishState -Root $root -MarketDate '2026-08-24').Status | Should Be 'PUBLISHED'
-            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/seller-intelligence/' }).Count | Should Be 18
+            @($calls | Where-Object { $_.Method -eq 'Get' -and $_.Uri -match '/api/public/seller-intelligence/' }).Count | Should Be 19
         }
         finally {
             [Environment]::SetEnvironmentVariable('AMAZON_BS_DASHBOARD_SYNC_SECRET', $null, 'Process')
