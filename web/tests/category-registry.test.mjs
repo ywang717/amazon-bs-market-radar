@@ -31,6 +31,27 @@ test("generated production registry preserves category nodes", () => {
   );
 });
 
+test("production registry includes the verified Garden Hoses monitoring category", () => {
+  const gardenHoses = productionCategoryRegistry.categories.find((row) => row.categoryKey === "garden_hoses");
+  assert.deepEqual(gardenHoses && {
+    categoryKey: gardenHoses.categoryKey,
+    labelZh: gardenHoses.labelZh,
+    labelEn: gardenHoses.labelEn,
+    nodeId: gardenHoses.nodeId,
+    sourceUrl: gardenHoses.sourceUrl,
+    groupKey: gardenHoses.groupKey,
+    segments: gardenHoses.segments.map(({ key }) => key),
+  }, {
+    categoryKey: "garden_hoses",
+    labelZh: "花园软管",
+    labelEn: "Garden Hoses",
+    nodeId: "553966",
+    sourceUrl: "https://www.amazon.com/Best-Sellers-Garden-Hoses/zgbs/lawn-garden/553966",
+    groupKey: "patio_lawn_garden",
+    segments: ["all"],
+  });
+});
+
 test("Web catalog projects every enabled Category from the generated Registry", () => {
   assert.deepEqual(categories.map(({ key, label, nodeId, segments }) => ({ key, label, nodeId, segments })),
     productionCategoryRegistry.categories.filter(({ enabled, groupKey }) => enabled && !groupKey).map((category) => ({
