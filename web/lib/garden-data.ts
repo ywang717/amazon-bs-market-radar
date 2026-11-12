@@ -1,10 +1,52 @@
 import { productionCategoryRegistry } from './category-registry.ts';
 import { validateCategory } from './analytics.ts';
 import type { ObservationRow, ProductMetadataRow, CategoryDayRow } from './dashboard-store.ts';
-export type GardenProduct = {asin:string;title:string;url:string;price:number|null;rating:number|null;reviews:number|null;rank:number;rankChange:number|null;reviewGrowth:number|null;priceChange:number|null;history:{marketDate:string;rank:number;price:number|null;reviews:number|null}[];signals:string[];confidence:number;candidate:boolean;brand:string|null;score:number|null};
+type FormTerm = {pattern:string;label:string};
+const FORM_TERMS:readonly FormTerm[]=[
+ {pattern:'portable',label:'便携'},
+ {pattern:'cordless',label:'无线'},
+ {pattern:'compact',label:'紧凑'},
+ {pattern:'retractable',label:'可伸缩'},
+ {pattern:'wall mounted',label:'壁挂'},
+ {pattern:'wall-mounted',label:'壁挂'},
+ {pattern:'solar',label:'太阳能'},
+ {pattern:'smart',label:'智能'},
+ {pattern:'foldable',label:'折叠'},
+ {pattern:'collapsible',label:'可折叠'},
+ {pattern:'modular',label:'模块化'},
+ {pattern:'adjustable',label:'可调'},
+ {pattern:'telescoping',label:'伸缩'},
+ {pattern:'quick connect',label:'快接'},
+ {pattern:'leakproof',label:'防漏'},
+ {pattern:'soaker',label:'渗灌'},
+ {pattern:'self watering',label:'自浇灌'},
+ {pattern:'battery',label:'电池'},
+];
+export type GardenMarketGap = {rankTopPercent:number|null;reviewBelowPercent:number|null;crossCategoryCount:number};
+export type GardenProduct = {asin:string;title:string;url:string;price:number|null;rating:number|null;reviews:number|null;rank:number;rankChange:number|null;reviewGrowth:number|null;priceChange:number|null;history:{marketDate:string;rank:number;price:number|null;reviews:number|null}[];signals:string[];discoverySignals:string[];marketGap:GardenMarketGap;confidence:number;candidate:boolean;brand:string|null;score:number|null};
 export type GardenCategory = {key:string;label:string;sourceUrl:string;enabled:boolean;marketDate:string|null;completeMarketDays:number;latestComplete:boolean;products:GardenProduct[]};
 export type GardenData = {latestMarketDate:string|null;updatedAt:string|null;categories:GardenCategory[];weeklyReports:{key:string;title:string;marketDate:string;categoryKey:string|null}[];error?:string};
 type GardenRegistry = {categoryKey:string;labelZh:string;sourceUrl:string;enabled:boolean;groupKey?:string};
+function normalizedTitle(title:string|null|undefined){return String(title??'').toLowerCase().replace(/[–—]/g,'-');}
+function formTermCounts(rows:readonly ObservationRow[],terms:readonly FormTerm[]){return new Map(terms.map(term=>[term,rows.filter(row=>normalizedTitle(row.title).includes(term.pattern)).length]));}
+function discoveryEvidence(row:ObservationRow,currentRows:readonly ObservationRow[],firstRows:readonly ObservationRow[],crossCategoryCount:number,windowHasBaseline:boolean){
+ const ranks=currentRows.map(candidate=>candidate.rank).filter(Number.isFinite);
+ const reviews=currentRows.map(candidate=>candidate.reviews).filter((value):value is number=>typeof value==='number'&&Number.isFinite(value)&&value>=0);
+ const rankTopPercent=ranks.length?Math.round((ranks.filter(rank=>rank<=row.rank).length/ranks.length)*100):null;
+ const reviewBelowPercent=typeof row.reviews==='number'&&reviews.length?Math.round((reviews.filter(review=>review>=row.reviews!).length/reviews.length)*100):null;
+ const marketGap:GardenMarketGap={rankTopPercent,reviewBelowPercent,crossCategoryCount};
+ const signals:string[]=[];
+ if(rankTopPercent!==null&&reviewBelowPercent!==null&&rankTopPercent<=35&&reviewBelowPercent>=65)signals.push(`相对低评论壁垒：排名前 ${rankTopPercent}% · 评论低于同榜 ${reviewBelowPercent}% 商品`);
+ if(windowHasBaseline){
+  const currentCounts=formTermCounts(currentRows,FORM_TERMS);const firstCounts=formTermCounts(firstRows,FORM_TERMS);
+  for(const term of FORM_TERMS){
+   const current=currentCounts.get(term)??0;const first=firstCounts.get(term)??0;
+   if(current>0&&(first===0||current>=Math.max(2,first*2)))signals.push(current>=2?`新形态词多 ASIN 出现：${term.label}（${current} 个）`:`新形态词首次进入：${term.label}`);
+  }
+ }
+ if(crossCategoryCount>1)signals.push(`跨 Garden 榜单出现：${crossCategoryCount} 个榜单`);
+ return {signals,marketGap};
+}
 export function meetsGardenCandidateThresholds(completeDays:number, confidence:number, score:number|null, signalCount:number) {
  return completeDays>=7&&confidence>=50&&score!==null&&score>=45&&signalCount>0;
 }
@@ -14,7 +56,9 @@ export function buildGardenData(input:{categories:readonly GardenRegistry[];cate
   const rows=input.observations.filter(r=>r.category_key===category.categoryKey);
   const dates=[...new Set(input.categoryDays.filter(d=>d.category_key===category.categoryKey&&d.complete===1).map(d=>d.market_date))].sort().filter(date=>validateCategory(rows.filter(r=>r.market_date===date)).complete);
   const marketDate=dates.at(-1)??null; const windowDates=dates.slice(-7);
-  const products=rows.filter(r=>r.market_date===marketDate).map((row):GardenProduct=>{
+  const currentRows=rows.filter(r=>r.market_date===marketDate);const firstRows=rows.filter(r=>r.market_date===windowDates[0]);
+  const crossCategoryCounts=new Map<string,Set<string>>();for(const observation of input.observations.filter(r=>r.market_date===marketDate)){const memberships=crossCategoryCounts.get(observation.asin)??new Set<string>();memberships.add(observation.category_key);crossCategoryCounts.set(observation.asin,memberships);}
+  const products=currentRows.map((row):GardenProduct=>{
    const history=rows.filter(r=>r.asin===row.asin&&windowDates.includes(r.market_date)).sort((a,b)=>a.market_date.localeCompare(b.market_date)).map(r=>({marketDate:r.market_date,rank:r.rank,price:r.price,reviews:r.reviews}));
    const first=history[0];const comparable=history.length>=2;
    const rankChange=comparable?first.rank-row.rank:null;
@@ -38,7 +82,8 @@ export function buildGardenData(input:{categories:readonly GardenRegistry[];cate
    const confidence=Math.round(available*Math.min(1,history.length/7));
    const score=available?Math.round(total/available):null;
    const metadata=input.metadata.find(m=>m.asin===row.asin);
-   return {...row,rankChange,reviewGrowth,priceChange,history,signals,confidence,score,candidate:meetsGardenCandidateThresholds(windowDates.length,confidence,score,signals.length),brand:metadata?.brandSource==='verified_metadata'?metadata.normalizedBrand:null};
+   const discovery=discoveryEvidence(row,currentRows,firstRows,crossCategoryCounts.get(row.asin)?.size??1,windowDates.length>=2);
+   return {...row,rankChange,reviewGrowth,priceChange,history,signals,discoverySignals:discovery.signals,marketGap:discovery.marketGap,confidence,score,candidate:meetsGardenCandidateThresholds(windowDates.length,confidence,score,signals.length),brand:metadata?.brandSource==='verified_metadata'?metadata.normalizedBrand:null};
   });
   return {key:category.categoryKey,label:category.labelZh,sourceUrl:category.sourceUrl,enabled:category.enabled,marketDate,completeMarketDays:dates.length,latestComplete:marketDate!==null&&marketDate===latestMarketDate,products};
  });
