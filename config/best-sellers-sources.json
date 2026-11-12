@@ -63,6 +63,14 @@
     },
     {
       "active": true,
+      "amazon_node_id": "553966",
+      "category_key": "garden_hoses",
+      "category_slug": "garden-hoses",
+      "display_name": "Garden Hoses Best Sellers",
+      "url": "https://www.amazon.com/Best-Sellers-Garden-Hoses/zgbs/lawn-garden/553966"
+    },
+    {
+      "active": true,
       "amazon_node_id": "552808",
       "category_key": "garden_generators",
       "category_slug": "garden-generators",
