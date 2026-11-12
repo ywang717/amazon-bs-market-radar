@@ -68,7 +68,7 @@ Describe 'Windows PowerShell compatibility' {
 `$ErrorActionPreference = 'Stop'
 Import-Module '$module' -Force
 `$registry = Import-BestSellersCategoryRegistry -Path '$registry'
-if (`$registry.Categories.Count -ne 17) { throw 'Unexpected production category count.' }
+if (`$registry.Categories.Count -ne 18) { throw 'Unexpected production category count.' }
 "@
         $output = @(& $windowsPowerShell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $script 2>&1)
         $LASTEXITCODE | Should Be 0
@@ -385,8 +385,8 @@ Describe 'PowerShell consumers use the Category Registry' {
         $sellerResult = & (Join-Path $PSScriptRoot '..\scripts\New-SellerIntelligenceReports.ps1') -SnapshotPath $snapshotPath -SnapshotsRoot (Split-Path -Parent $tinyRoot) -OutputRoot (Join-Path $tinyRoot 'seller') -RegistryPath $tinyRegistryPath | ConvertFrom-Json
 
         $verification.valid | Should Be $true
-        @($receipt.categories | Where-Object target_count -eq 2).Count | Should Be 18
-        $bundleResult.ObservationCount | Should Be 36
+        @($receipt.categories | Where-Object target_count -eq 2).Count | Should Be 19
+        $bundleResult.ObservationCount | Should Be 38
         $onlineResult.ReportCount | Should Be 19
         $sellerResult.ReportCount | Should Be 19
     }
@@ -416,7 +416,7 @@ Describe 'PowerShell consumers use the Category Registry' {
         @($readiness.categories | Where-Object target_count -ne 2).Count | Should Be 0
         $readiness.target_count | Should Be 2
         $readinessCommand.target_count | Should Be 2
-        $historyAsins.Count | Should Be 36
+        $historyAsins.Count | Should Be 38
         $command.QualityPassed | Should Be $true
     }
 
