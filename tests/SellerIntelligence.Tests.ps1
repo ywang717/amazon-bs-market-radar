@@ -465,7 +465,7 @@ Describe 'Seller intelligence rules' {
         $null -eq $sump.strategy.priceBands | Should Be $true
     }
 
-    It 'writes seller alert JSON files for all seventeen categories and overview with distinct keys' {
+    It 'writes seller alert JSON files for all eighteen categories and overview with distinct keys' {
         Import-Module $receiptModulePath -Force
         $snapshotRoot = Join-Path $TestDrive 'current-category-reports'
         $fixture = New-SellerReceiptFixture -SnapshotsRoot $snapshotRoot -MarketDate '2026-08-24' -RegistryPath (Join-Path $projectRoot 'config/category-registry.json')
@@ -475,9 +475,9 @@ Describe 'Seller intelligence rules' {
 
         $result.Status | Should Be 'CREATED'
         $result.ReportKind | Should Be 'daily'
-        $result.ReportCount | Should Be 18
-        @($keys | Select-Object -Unique).Count | Should Be 18
-        @($keys | Where-Object { $_ -match '^seller-alert/daily/2026-08-24/.+\.json$' }).Count | Should Be 18
+        $result.ReportCount | Should Be 19
+        @($keys | Select-Object -Unique).Count | Should Be 19
+        @($keys | Where-Object { $_ -match '^seller-alert/daily/2026-08-24/.+\.json$' }).Count | Should Be 19
         ($keys -contains 'seller-alert/daily/2026-08-24/patio_lawn_garden.json') | Should Be $true
     }
 
@@ -659,7 +659,7 @@ Describe 'Seller intelligence rules' {
             @($global:backfillCalls).Count | Should Be 1
             @($global:backfillCalls | Where-Object { $_.Uri -ne 'https://example.test/api/sync/v1/seller-intelligence' }).Count | Should Be 0
             @($global:backfillCalls | Where-Object { $_.Authorization -ne "Bearer $processSecret" }).Count | Should Be 0
-            @((([string]$global:backfillCalls[0].Body | ConvertFrom-Json).reports)).Count | Should Be 18
+            @((([string]$global:backfillCalls[0].Body | ConvertFrom-Json).reports)).Count | Should Be 19
             $global:backfillCalls[0].InFile | Should Be ''
             $json | Should Not Match ([regex]::Escape($processSecret))
         }
