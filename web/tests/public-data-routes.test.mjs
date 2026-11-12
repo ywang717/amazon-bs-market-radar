@@ -437,7 +437,7 @@ test("product route rejects malformed ASINs without querying D1", async () => {
 
 test("raw rankings accept every registered garden category without changing main-page markets", async () => {
   const gardenKeys = productionCategoryRegistry.categories.filter((category) => category.enabled && category.groupKey).map((category) => category.categoryKey);
-  assert.equal(gardenKeys.length, 14);
+  assert.equal(gardenKeys.length, 15);
   for (const category of gardenKeys) {
     const response = await request(`/api/public/rankings?date=2026-10-15&category=${category}&segment=all`, dynamicD1Environment("2026-10-15", { extraCategoryKeys: gardenKeys, strictRankingQuery: true }));
     assert.equal(response.status, 200, category);
