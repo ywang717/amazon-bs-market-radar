@@ -310,6 +310,40 @@ export const generatedCategoryRegistry = {
       "treeVerifiedAt": "2026-10-13T07:31:36.164771+00:00"
     },
     {
+      "categoryKey": "garden_hoses",
+      "collectionLabelEn": "Garden Hoses",
+      "defaults": {
+        "alerts": "all",
+        "brands": "all",
+        "data_status": "all",
+        "market": "all",
+        "overview": "all",
+        "product_detail": "all",
+        "products": "all",
+        "rankings": "all",
+        "reports": "all"
+      },
+      "enabled": true,
+      "groupKey": "patio_lawn_garden",
+      "labelEn": "Garden Hoses",
+      "labelZh": "花园软管",
+      "nodeId": "553966",
+      "parentCategoryKey": "patio_lawn_garden",
+      "reportFileToken": "GardenHoses",
+      "segments": [
+        {
+          "key": "all",
+          "labelZh": "全部榜单",
+          "productTypes": []
+        }
+      ],
+      "slug": "garden-hoses",
+      "sourceUrl": "https://www.amazon.com/Best-Sellers-Garden-Hoses/zgbs/lawn-garden/553966",
+      "targetCount": 30,
+      "treeLevel": 1,
+      "treeVerifiedAt": "2026-11-12T07:20:23.507063+00:00"
+    },
+    {
       "categoryKey": "garden_generators",
       "collectionLabelEn": "Generators & Portable Power",
       "defaults": {
