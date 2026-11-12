@@ -44,9 +44,9 @@ Describe 'Category-independent configuration' {
         @($config.categories | Where-Object { $_.parent -eq 'pressure-washer-accessories' }).Count | Should Be 7
     }
 
-    It 'defines all seventeen verified Amazon Best Sellers nodes' {
+    It 'defines all eighteen verified Amazon Best Sellers nodes' {
         $config = Get-Content (Join-Path $projectRoot 'config\best-sellers-sources.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        @($config.sources | Where-Object { $_.active }).Count | Should Be 17
+        @($config.sources | Where-Object { $_.active }).Count | Should Be 18
         @($config.sources.amazon_node_id) -contains '552856' | Should Be $true
         @($config.sources.amazon_node_id) -contains '680335011' | Should Be $true
         @($config.sources.amazon_node_id) -contains '3023451' | Should Be $true
