@@ -119,6 +119,14 @@
       "active": true
     },
     {
+      "slug": "garden-hoses",
+      "name": "Garden Hoses",
+      "level": 2,
+      "parent": "patio-lawn-garden",
+      "accessory_type": null,
+      "active": true
+    },
+    {
       "slug": "garden-generators",
       "name": "Generators & Portable Power",
       "level": 2,
