@@ -1,16 +1,19 @@
 import type { GardenCategory } from './garden-data.ts';
-export type GardenFilters = {categoryKey?:string;q?:string;signal?:string;sort?:string;minPrice?:string;maxPrice?:string};
+export type GardenFilters = {categoryKey?:string;q?:string;signal?:string;discovery?:string;sort?:string;minPrice?:string;maxPrice?:string};
 function gardenMemberships(categories:GardenCategory[], categoryKey:string|undefined, opportunities:boolean) {
  return categories.filter(c=>!categoryKey||c.key===categoryKey).flatMap(c=>c.products.filter(p=>!opportunities||(c.completeMarketDays>=7&&p.candidate)).map(p=>({...p,category:c})));
 }
 export function gardenSignalOptions(categories:GardenCategory[],categoryKey:string,opportunities:boolean) {
  return [...new Set(gardenMemberships(categories,categoryKey,opportunities).flatMap(p=>p.signals))];
 }
+export function gardenDiscoverySignalOptions(categories:GardenCategory[],categoryKey:string,opportunities:boolean) {
+ return [...new Set(gardenMemberships(categories,categoryKey,opportunities).flatMap(p=>p.discoverySignals))];
+}
 export function selectGardenProducts(categories: GardenCategory[], filters: GardenFilters, opportunities: boolean) {
  const memberships=gardenMemberships(categories,filters.categoryKey,opportunities);
  const min=filters.minPrice?Number(filters.minPrice):null,max=filters.maxPrice?Number(filters.maxPrice):null;
  const query=(filters.q??'').trim().toLowerCase();
- const rows=memberships.filter(p=>(!query||`${p.asin} ${p.title} ${p.brand??''}`.toLowerCase().includes(query))&&(!filters.signal||p.signals.includes(filters.signal))&&(min===null||(p.price!==null&&p.price>=min))&&(max===null||(p.price!==null&&p.price<=max))).sort((a,b)=>filters.sort==='score'?(b.score??-1)-(a.score??-1)||b.confidence-a.confidence:filters.sort==='confidence'?b.confidence-a.confidence:filters.sort==='price'?(a.price??Infinity)-(b.price??Infinity):a.rank-b.rank);
+ const rows=memberships.filter(p=>(!query||`${p.asin} ${p.title} ${p.brand??''}`.toLowerCase().includes(query))&&(!filters.signal||p.signals.includes(filters.signal))&&(!filters.discovery||p.discoverySignals.includes(filters.discovery))&&(min===null||(p.price!==null&&p.price>=min))&&(max===null||(p.price!==null&&p.price<=max))).sort((a,b)=>filters.sort==='score'?(b.score??-1)-(a.score??-1)||b.confidence-a.confidence:filters.sort==='confidence'?b.confidence-a.confidence:filters.sort==='price'?(a.price??Infinity)-(b.price??Infinity):a.rank-b.rank);
  const seen=new Set<string>();return rows.filter(p=>{if(seen.has(p.asin))return false;seen.add(p.asin);return true;});
 }
 export function gardenEmptyReason(categories: Pick<GardenCategory,'completeMarketDays'>[], opportunities:boolean, failed:boolean, eligible:number, visible:number) {
