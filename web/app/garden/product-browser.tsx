@@ -1,6 +1,6 @@
 "use client";
 import type { GardenCategory } from "@/lib/garden-data";
-import { gardenEmptyReason, gardenSignalOptions, selectGardenProducts } from "@/lib/garden-browser";
+import { gardenDiscoverySignalOptions, gardenEmptyReason, gardenSignalOptions, selectGardenProducts } from "@/lib/garden-browser";
 import { pageRows, readChoice } from "@/lib/view-state";
 import { useViewQuery } from "../components/useViewQuery";
 import { ListPagination } from "../components/ListPagination";
@@ -10,14 +10,16 @@ export function ProductBrowser({ categories, opportunities = false, error, updat
  const categoryKey=readChoice(params,'categoryKey',['',...categories.map(c=>c.key)],'');
  const signals=gardenSignalOptions(categories,categoryKey,opportunities);
  const signal=readChoice(params,'signal',['',...signals],'');
+ const discoverySignals=gardenDiscoverySignalOptions(categories,categoryKey,opportunities);
+ const discovery=readChoice(params,'discovery',['',...discoverySignals],'');
  const sort=readChoice(params,'sort',['score','rank','confidence','price'],opportunities?'score':'rank');
  const q=params.get('q')??'',minPrice=params.get('minPrice')??'',maxPrice=params.get('maxPrice')??'';
  const invalidPrice=[minPrice,maxPrice].some(v=>v!==''&&(!Number.isFinite(Number(v))||Number(v)<0))||!!(minPrice&&maxPrice&&Number(minPrice)>Number(maxPrice));
- const products=invalidPrice?[]:selectGardenProducts(categories,{categoryKey,signal,sort,q,minPrice,maxPrice},opportunities);
+ const products=invalidPrice?[]:selectGardenProducts(categories,{categoryKey,signal,discovery,sort,q,minPrice,maxPrice},opportunities);
  const pagination=pageRows(products,params.get('page'),30);
  const eligible=selectGardenProducts(categories,{sort},opportunities).length;
  const empty=gardenEmptyReason(categories,opportunities,!!error,eligible,products.length);
- const reset=()=>update({categoryKey:null,signal:null,sort:null,q:null,minPrice:null,maxPrice:null,page:null});
+ const reset=()=>update({categoryKey:null,signal:null,discovery:null,sort:null,q:null,minPrice:null,maxPrice:null,page:null});
  const filter=(changes:Record<string,string|null>)=>update({...changes,page:null});
  const returnTo=`${opportunities?'/garden/opportunities':'/garden/products'}?${params}`;
  return <>
@@ -25,6 +27,7 @@ export function ProductBrowser({ categories, opportunities = false, error, updat
   <div className="gardenFilters gardenCommandGrid">
    <label>所属榜单<select aria-label="所属榜单" value={categoryKey} onChange={e=>filter({categoryKey:e.target.value,signal:null})}><option value="">全部榜单</option>{categories.map(c=><option key={c.key} value={c.key}>{c.label}</option>)}</select></label>
    <label>机会信号<select aria-label="机会信号" value={signal} onChange={e=>filter({signal:e.target.value})}><option value="">全部信号</option>{signals.map(s=><option key={s}>{s}</option>)}</select></label>
+   <label>发现线索<select aria-label="发现线索" value={discovery} onChange={e=>filter({discovery:e.target.value})}><option value="">全部线索</option>{discoverySignals.map(s=><option key={s}>{s}</option>)}</select></label>
    <label>搜索产品或 ASIN<input value={q} onChange={e=>update({q:e.target.value,page:null},true)}/></label>
    <label>最低价格（USD）<input type="number" min="0" step="0.01" value={minPrice} onChange={e=>filter({minPrice:e.target.value})}/></label>
    <label>最高价格（USD）<input type="number" min="0" step="0.01" value={maxPrice} onChange={e=>filter({maxPrice:e.target.value})}/></label>
@@ -45,7 +48,8 @@ export function ProductBrowser({ categories, opportunities = false, error, updat
     <p>所属榜单：{categories.flatMap(c=>c.products.filter(x=>x.asin===p.asin).map(x=>`${c.label} #${x.rank}`)).join('；')}</p>
     <p>{p.asin} · 数据截至 {p.category.marketDate||'日期未知'}{!p.category.latestComplete&&' · 最近采集不完整'}</p>
     <dl className="gardenMetrics"><div><dt>价格</dt><dd>{p.price===null?'缺失':`$${p.price}`}</dd></div><div><dt>评分 / 评论</dt><dd>{p.rating??'—'} / {p.reviews??'—'}</dd></div><div><dt>排名提升</dt><dd>{p.rankChange??'—'}</dd></div><div><dt>评论增长</dt><dd>{p.reviewGrowth??'—'}</dd></div></dl>
-    {opportunities&&<><section className="opportunityCardSection"><strong>为什么入选</strong><p>{p.signals.join(' · ')||'达到现有商机初筛规则'}</p></section><section className="opportunityCardSection"><strong>数据依据</strong><p>初筛评分 {p.score??'—'} · 置信度 {p.confidence} · {p.category.completeMarketDays} 个完整市场日</p><p>指标比较区间：{p.history[0]?.marketDate??'不足'} 至 {p.history.at(-1)?.marketDate??'不足'} · {p.history.length} 条观测</p></section><section className="opportunityCardSection"><strong>还需核验</strong><p>指标缺口：{gaps.length?gaps.join('、'):'当前展示指标无缺失'}</p><p>需求、竞争、差异化及销售障碍仍需人工核验。</p></section><a target="_top" href={`/garden/review?asin=${encodeURIComponent(p.asin)}&categoryKey=${encodeURIComponent(p.category.key)}&returnTo=${encodeURIComponent(returnTo)}`}>进入人工核验 →</a></>}
+    {p.discoverySignals.length>0&&<section className="opportunityCardSection"><strong>发现线索</strong><p>{p.discoverySignals.join(' · ')}</p><p>这些线索用于发现低评论壁垒和新形态，不能直接代表销量或成交概率。</p></section>}
+    {opportunities&&<><section className="opportunityCardSection"><strong>为什么入选</strong><p>{p.signals.join(' · ')||'达到现有商机初筛规则'}</p></section><section className="opportunityCardSection"><strong>数据依据</strong><p>初筛评分 {p.score??'—'} · 置信度 {p.confidence} · {p.category.completeMarketDays} 个完整市场日</p><p>指标比较区间：{p.history[0]?.marketDate??'不足'} 至 {p.history.at(-1)?.marketDate??'不足'} · {p.history.length} 条观测</p><p>相对缺口：排名前 {p.marketGap.rankTopPercent??'—'}% · 评论低于同榜 {p.marketGap.reviewBelowPercent??'—'}% · 跨榜单 {p.marketGap.crossCategoryCount} 个</p></section><section className="opportunityCardSection"><strong>还需核验</strong><p>指标缺口：{gaps.length?gaps.join('、'):'当前展示指标无缺失'}</p><p>需求、竞争、差异化及销售障碍仍需人工核验。</p></section><a target="_top" href={`/garden/review?asin=${encodeURIComponent(p.asin)}&categoryKey=${encodeURIComponent(p.category.key)}&returnTo=${encodeURIComponent(returnTo)}`}>进入人工核验 →</a></>}
     <details><summary>同榜单历史 ({p.history.length})</summary><div className="gardenTable"><table><thead><tr><th>市场日</th><th>排名</th><th>价格</th><th>评论数</th></tr></thead><tbody>{p.history.map(h=><tr key={h.marketDate}><td>{h.marketDate}</td><td>{h.rank??'—'}</td><td>{h.price===null?'—':`$${h.price}`}</td><td>{h.reviews??'—'}</td></tr>)}</tbody></table></div></details>
    </article>;
   })}</div>}
