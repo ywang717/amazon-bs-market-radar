@@ -314,6 +314,41 @@
       "tree_verified_at": "2026-10-13T07:31:36.164771+00:00"
     },
     {
+      "category_key": "garden_hoses",
+      "slug": "garden-hoses",
+      "label_zh": "花园软管",
+      "label_en": "Garden Hoses",
+      "amazon_node_id": "553966",
+      "source_url": "https://www.amazon.com/Best-Sellers-Garden-Hoses/zgbs/lawn-garden/553966",
+      "target_count": 30,
+      "enabled": true,
+      "report_file_token": "GardenHoses",
+      "classification_config_path": "config/garden-product-classification.json",
+      "attribute_schema_path": "config/v2-product-attributes.json",
+      "segments": [
+        {
+          "key": "all",
+          "label_zh": "全部榜单",
+          "product_types": []
+        }
+      ],
+      "defaults": {
+        "overview": "all",
+        "market": "all",
+        "products": "all",
+        "brands": "all",
+        "rankings": "all",
+        "reports": "all",
+        "alerts": "all",
+        "data_status": "all",
+        "product_detail": "all"
+      },
+      "group_key": "patio_lawn_garden",
+      "parent_category_key": "patio_lawn_garden",
+      "tree_level": 1,
+      "tree_verified_at": "2026-11-12T07:20:23.507063+00:00"
+    },
+    {
       "category_key": "garden_generators",
       "slug": "garden-generators",
       "label_zh": "发电机与便携电源",
