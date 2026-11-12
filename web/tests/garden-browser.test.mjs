@@ -39,3 +39,10 @@ test('signal choices retain every eligible membership before ASIN deduplication'
  assert.equal(selectGardenProducts(shared,{signal:'B'},true)[0].category.key,'garden_b');
  assert.deepEqual(gardenSignalOptions([{...shared[0],completeMarketDays:6}], '',true),[]);
 });
+
+test('discovery filters preserve candidate selection while exposing new-form evidence',async()=>{
+ const {gardenDiscoverySignalOptions}=await import('../lib/garden-browser.ts');
+ const enriched={...categories[0],products:[{...product('B000000004',1),discoverySignals:['新形态词首次进入：壁挂'],marketGap:{rankTopPercent:4,reviewBelowPercent:90,crossCategoryCount:2}}]};
+ assert.deepEqual(gardenDiscoverySignalOptions([enriched], '', true),['新形态词首次进入：壁挂']);
+ assert.deepEqual(selectGardenProducts([enriched],{discovery:'新形态词首次进入：壁挂'},true).map(p=>p.asin),['B000000004']);
+});
